@@ -11,6 +11,7 @@ export interface Env extends AiEnv, MailEnv {
   MEET_DB?: D1Database; // Kayak Meet meetings, transcripts and feedback
   MEET_REC?: R2Bucket; // Kayak Meet recordings
   MEET_SIGNING_KEY?: string;
+  TOOLBAR_TOKEN?: string; // KSA Office Toolbar Assistant access token, shown to staff to paste into the add-in
   AI?: Ai;
   ASSETS: Fetcher;
   AUTH_ENCRYPTION_KEY: string;

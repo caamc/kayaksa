@@ -6,6 +6,7 @@ import { newTotpSecret, totpUri, verifyTotp } from "../../../packages/core/src/t
 import { createSession, readSession, endSession, endAllSessions, audit } from "../../../packages/core/src/session";
 import { readJson, str, email as cleanEmail, rateLimit, clientIp, HttpError } from "../../../packages/core/src/http";
 import { Env, User, SESSION, superadmins, uid } from "./env";
+import { mailEnabled, mailHtml, sendMail } from "../../../packages/core/src/mail";
 
 export const auth = new Hono<{ Bindings: Env }>();
 
@@ -212,6 +213,37 @@ auth.post("/redeem", async (c) => {
   await audit(c, c.env.DB, u.id, t.kind === "invite" ? "auth.invite_accepted" : "auth.password_reset");
   await createSession(c, c.env.DB, SESSION, u.id, "pre");
   return c.json({ next: u.totp_enabled ? "totp" : "enrol" });
+});
+
+// Self-service password reset. The answer is the same whether or not the address has an account,
+// so it cannot be used to discover who works at Kayak. The link lasts 30 minutes, works once, and the
+// authenticator code is still required afterwards: a reset never bypasses two-factor authentication.
+auth.post("/forgot", async (c) => {
+  const ip = clientIp(c);
+  if (!(await rateLimit(c.env.DB, `forgot:${ip}`, 5, 3600))) return c.json({ error: "Too many requests. Wait an hour and try again." }, 429);
+  const b = await readJson<{ email?: string }>(c, 1024);
+  const e = cleanEmail(b.email);
+  if (!e) return c.json({ error: "Enter your work email." }, 400);
+  const generic = { ok: true, mail: mailEnabled(c.env), message: "If that address belongs to an active Kayak account, a reset link is on its way. It works once and expires in 30 minutes." };
+  if (!(await rateLimit(c.env.DB, `forgot:${e}`, 3, 3600))) return c.json(generic);
+  const u = await userByEmail(c.env.DB, e);
+  if (!u || u.status !== "active") {
+    await securityEvent(c, c.env.DB, "internal", { kind: "auth.reset_unknown", severity: "low", detail: { email: e } });
+    return c.json(generic);
+  }
+  if (mailEnabled(c.env)) {
+    const url = await issueLink(c.env, "reset", u.id, "self-service", 1 / 48);
+    await sendMail(c.env, u.email, "Reset your Kayak Internal password", mailHtml({
+      title: "Reset your password",
+      intro: `Someone, hopefully you, asked to reset the password for ${u.email} on Kayak Internal. The link below works once and expires in 30 minutes. You will still need your authenticator code to sign in.`,
+      action: { label: "Choose a new password", url },
+      outro: "If you did not ask for this, ignore this email; your password has not changed. If it keeps happening, tell an administrator.",
+      site: "Kayak Internal",
+    }));
+  }
+  await audit(c, c.env.DB, u.id, "auth.reset_requested", { mail: mailEnabled(c.env) });
+  await securityEvent(c, c.env.DB, "internal", { kind: "auth.reset_requested", severity: "low", userId: u.id });
+  return c.json(generic);
 });
 
 /** Creates a single-use invite or reset link; returns the URL. */

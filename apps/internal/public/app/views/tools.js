@@ -9,6 +9,9 @@ export async function render(main, ctx) {
   main.innerHTML = String(html`<div class="page">
     <div class="page-head"><div class="stack-sm"><span class="eyebrow">Kayak Tools</span><h1>Our platforms and studio tools</h1><p class="lead">Client platforms built by Kayak Technology Solutions, and the internal tools we use every day.</p></div>
       ${me.can.edit ? html`<button class="btn btn-primary" id="add">${ico("plus")} Add a tool</button>` : ""}</div>
+    <section class="panel2" style="border-top:6px solid #0E2F3C"><div class="row between wrap-row"><div class="stack-sm"><span class="eyebrow">Office add-in</span><h2 style="font-size:1.35rem">KSA Office Toolbar</h2><p class="muted">The Kayak brand inside Word, Excel, PowerPoint, Outlook and Teams: 2,405 logos, icons, patterns, templates and chart styles, Apply KSA style, and the KSA Assistant.</p></div>
+      <div class="row wrap-row"><a class="btn btn-primary btn-sm" href="https://toolbar.kayaksa.com/src/preview.html" target="_blank" rel="noopener">${ico("external")} Try it in the browser</a><a class="btn btn-ghost btn-sm" href="https://toolbar.kayaksa.com/manifest/manifest.xml" download>${ico("download")} Word, Excel, PowerPoint manifest</a><a class="btn btn-ghost btn-sm" href="https://toolbar.kayaksa.com/manifest/manifest-outlook.xml" download>${ico("download")} Outlook manifest</a><button class="btn btn-ghost btn-sm" id="tbtok">${ico("key")} Assistant access</button></div></div>
+      <ol class="small muted" style="margin:0;padding-left:18px"><li>Firm-wide: a Microsoft 365 admin uploads the manifests under Settings › Integrated apps › Upload custom apps, for a pilot group first.</li><li>Just you: in Office, Insert › Get Add-ins › My Add-ins › Upload My Add-in, and choose the manifest.</li><li>For the Assistant, open the pane's Settings and paste the access token. The address is already filled in.</li></ol></section>
     <div class="grid wide" id="grid"></div>
   </div>`);
   $("#grid").innerHTML = tools.map((t) => {
@@ -42,6 +45,10 @@ export async function render(main, ctx) {
       } }],
     });
   $("#add")?.addEventListener("click", () => edit());
+  $("#tbtok")?.addEventListener("click", async () => {
+    const t = await api("/api/workspace/toolbar");
+    dialog({ title: "KSA Assistant access", body: t.token ? `<p class="small">Paste these into the KSA Toolbar's Settings. Keep the token inside Kayak; do not share it with clients.</p><div class="field"><label>Assistant address</label><input class="input" readonly value="${esc(t.assistantUrl)}"></div><div class="field"><label>Access token</label><input class="input" readonly id="tk" value="${esc(t.token)}"></div><button class="btn btn-ghost btn-sm" id="cp">${ico("copy")} Copy token</button>` : `<p>The toolbar has not been published yet, so there is no token. It is created on the first deployment of toolbar.kayaksa.com.</p>`, actions: [{ id: "ok", label: "Done", kind: "primary" }], onOpen: (d) => d.querySelector("#cp")?.addEventListener("click", () => { navigator.clipboard.writeText(t.token); toast("Copied."); }) });
+  });
   $$("[data-edit]", main).forEach((b) => (b.onclick = () => edit(tools.find((t) => t.id === b.dataset.edit))));
   $$("[data-del]", main).forEach((b) => (b.onclick = async () => {
     if (!(await confirmDialog("Delete this tool?", "It will disappear from Kayak Tools for everyone.", "Delete", true))) return;

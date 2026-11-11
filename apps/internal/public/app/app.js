@@ -5,22 +5,30 @@ initTheme();
 export const NAV = [
   { group: "Workspace", items: [
     { id: "home", label: "Home", icon: "home" },
+    { id: "digital", label: "Digital Dashboard", icon: "activity" },
+    { id: "updates", label: "Kayakers Update", icon: "send" },
     { id: "meet", label: "Kayak Meet", icon: "play" },
     { id: "brand", label: "Brand Portal", icon: "brand" },
     { id: "tools", label: "Kayak Tools", icon: "tools" },
+    { id: "clienttools", label: "Client Tools", icon: "grid" },
     { id: "network", label: "Kayak Network", icon: "network" },
   ] },
   { group: "Studio", items: [
+    { id: "studio", label: "Kayak Studio", icon: "sun" },
     { id: "ai", label: "Kayak AI", icon: "spark" },
+    { id: "board", label: "Whiteboard", icon: "palette" },
+    { id: "briefs", label: "Briefing studio", icon: "briefcase" },
     { id: "confluence", label: "Confluence", icon: "book" },
     { id: "cards", label: "Business Cards", icon: "card" },
     { id: "decks", label: "Presentations", icon: "slides" },
+    { id: "store", label: "Kayakers Store", icon: "pin" },
   ] },
+  { group: "Governance", items: [{ id: "launch", label: "Launch monitor", icon: "clock" }, { id: "certs", label: "Certifications", icon: "award" }] },
   { group: "Grow", items: [{ id: "website", label: "Website", icon: "globe" }, { id: "learn", label: "Kayak Learn", icon: "learn" }] },
-  { group: "Administration", admin: true, items: [{ id: "admin", label: "People & access", icon: "users" }, { id: "sales", label: "Learn sales", icon: "briefcase" }, { id: "security", label: "Security", icon: "shield" }, { id: "audit", label: "Audit log", icon: "activity" }] },
+  { group: "Administration", admin: true, items: [{ id: "admin", label: "People & access", icon: "users" }, { id: "brain", label: "Kayak AI memory", icon: "key" }, { id: "sales", label: "Learn sales", icon: "briefcase" }, { id: "security", label: "Security", icon: "shield" }, { id: "audit", label: "Audit log", icon: "activity" }] },
 ];
 
-const VIEWS = { home: "home", meet: "meet", confluence: "confluence", brand: "brand", tools: "tools", network: "network", ai: "ai", cards: "cards", decks: "decks", learn: "learn", website: "website", security: "security", sales: "sales", admin: "admin", audit: "security", account: "account" };
+const VIEWS = { home: "home", digital: "digital", updates: "updates", meet: "meet", confluence: "confluence", brand: "brand", tools: "tools", clienttools: "clienttools", network: "network", studio: "studio", ai: "ai", board: "board", briefs: "briefs", cards: "cards", decks: "decks", store: "store", launch: "launch", certs: "certs", learn: "learn", website: "website", security: "security", sales: "sales", admin: "admin", brain: "brain", audit: "security", account: "account" };
 
 export const state = { me: null };
 
@@ -82,6 +90,7 @@ async function route() {
 (async () => {
   try { state.me = await api("/api/me"); } catch { return; }
   shell();
+  import("/app/fab.js").then((m) => m.mount(state.me)).catch(() => {});
   window.addEventListener("hashchange", route);
   if (!location.hash) location.replace("#/home");
   else route();

@@ -288,7 +288,7 @@ app.post("/api/a", async (c) => {
     const up = (dim: string, v: string) => db.prepare("INSERT INTO stat_dims (day, dim, value, n) VALUES (?,?,?,1) ON CONFLICT(day, dim, value) DO UPDATE SET n = n + 1").bind(day, dim, v);
     await db.batch([
       db.prepare("INSERT INTO stat_views (day, path, views) VALUES (?,?,1) ON CONFLICT(day, path) DO UPDATE SET views = views + 1").bind(day, path),
-      up("referrer", ref), up("country", country), up("device", device), up("browser", browser),
+      up("referrer", ref), up("country", country), up("device", device), up("browser", browser), up("hour", String(new Date().getUTCHours())),
     ]);
   } else if (b.t === "cwv") {
     const n = (v: any) => (Number.isFinite(Number(v)) ? Number(v) : null);
@@ -347,6 +347,9 @@ app.get("/confluence/:id", async (c) => {
 // The cluster was renamed from "Tax & Regulatory" to "Tax, Legal & Regulatory" in November 2026.
 app.get("/services/tax-regulatory", (c) => c.redirect("/services/tax-legal-regulatory", 301));
 app.get("/services/tax-regulatory/:slug", (c) => c.redirect(`/services/tax-legal-regulatory/${c.req.param("slug")}`, 301));
+// The KSA Toolbar's Office manifests link to these addresses for its privacy statement and terms.
+app.get("/privacy", (c) => c.redirect("/legal", 301));
+app.get("/terms", (c) => c.redirect("/legal#terms", 301));
 app.get("/robots.txt", (c) => c.text(`# Search engines and AI assistants are welcome. Scrapers and SEO harvesters are not, and are blocked.\n${["SemrushBot", "AhrefsBot", "MJ12bot", "DotBot", "Bytespider", "PetalBot", "BLEXBot", "DataForSeoBot", "serpstatbot", "MegaIndex", "CCBot", "Diffbot", "omgili", "Timpibot", "ImagesiftBot"].map((b) => `User-agent: ${b}\nDisallow: /\n`).join("\n")}\nUser-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${site(c)}/sitemap.xml\n`));
 app.get("/sitemap.xml", async (c) => {
   const data = await siteData(c);

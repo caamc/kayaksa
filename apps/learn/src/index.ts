@@ -2,6 +2,7 @@
 // Anyone can browse the catalogue; an enrolment opens a course for 12 months with a verifiable certificate.
 import { shield, pruneSecurity } from "../../../packages/core/src/shield";
 import { Hono } from "hono";
+import { statsBeacon } from "../../../packages/core/src/stats";
 import { securityHeaders, sameOrigin, HttpError, readJson, str, email as cleanEmail, rateLimit, clientIp } from "../../../packages/core/src/http";
 import { hashPassword, verifyPassword, passwordProblems, randomToken, sha256hex } from "../../../packages/core/src/crypto";
 import { createSession, readSession, endSession, endAllSessions, audit, SessionConfig } from "../../../packages/core/src/session";
@@ -26,6 +27,8 @@ const app = new Hono<C>();
 // Razorpay Checkout runs in an iframe from checkout.razorpay.com.
 app.use("*", securityHeaders({ script: ["https://checkout.razorpay.com"], frame: ["https://api.razorpay.com", "https://checkout.razorpay.com"], connect: ["https://api.razorpay.com", "https://lumberjack.razorpay.com"], img: ["https://cdn.razorpay.com"] }));
 app.post("/hooks/razorpay", razorpayWebhook);
+// Cookieless page statistics, read by the internal dashboards.
+app.post("/api/a", (c) => statsBeacon(c, c.env.DB, "kayak-learn"));
 app.use("*", shield("learn", (e) => e.DB, { allowGoodBots: true }));
 app.use("/api/*", sameOrigin());
 app.onError((e: any, c) => {

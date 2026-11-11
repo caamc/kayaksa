@@ -1,0 +1,17 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "kayaksa-toolbar",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "routes": [{ "pattern": "toolbar.kayaksa.com", "custom_domain": true }],
+  // public/ is built from brand-assets/07_Office_Templates_and_Toolbar/KSA_Toolbar_v1.0.0.zip by scripts/build-toolbar.mjs
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": true, "not_found_handling": "none" },
+  "observability": { "enabled": true },
+  "vars": {
+    "MODEL": "claude-sonnet-5-5",
+    "ALLOWED_ORIGINS": "https://toolbar.kayaksa.com"
+  }
+  // Secrets: ANTHROPIC_API_KEY (from GitHub) and ASSISTANT_TOKEN (generated once by the deploy workflow,
+  // shared with the internal portal so staff can copy it into the add-in's Settings).
+}

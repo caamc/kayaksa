@@ -8,9 +8,13 @@ const COMPANY = {
   technology: { label: "Kayak Technology Solutions", legal: "Kayak Technology Solutions", descriptor: "TECHNOLOGY SOLUTIONS", under: "build" },
   group: { label: "Kayak Group (all three companies)", legal: "Kayak Group", descriptor: "GROUP", under: "stem" },
 };
+// Four designs, all drawn in vector so the print PDF stays sharp: Heritage (deep with a gold frame,
+// for hot-foil), Open Water (light, with a band of Kayak blades), Minimal (white, wordmark and one
+// saffron rule) and Contour (deep, with chart-contour lines).
+const DESIGNS = { heritage: "Heritage · deep, gold frame", openwater: "Open Water · light, blade band", minimal: "Minimal · white, one saffron rule", contour: "Contour · deep, contour lines" };
 const DEFAULTS = {
   name: "", title: "Founder & Director", department: "", phones: ["", ""], email: "", website: "www.kayaksa.com",
-  address: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road, Mumbai 400013", locations: "Mumbai · Thane", company: "ksa",
+  address: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road, Mumbai 400013", locations: "Mumbai · Thane", company: "ksa", design: "heritage",
 };
 
 // ---- Kayak geometry (master artwork) ----
@@ -46,8 +50,25 @@ function frame(B) {
   <rect x="12" y="12" width="${W - 24}" height="${H - 24}" fill="none" stroke="#C9A25A" stroke-opacity="0.45" stroke-width="0.5"/>`;
 }
 
+function bladeBand(y, h, B) {
+  let g = "";
+  for (let x = -B, i = 0; x < W + B; x += 22, i++) g += `<g transform="translate(${x} ${y + (i % 2 ? 4 : 0)}) scale(0.16)"><path fill="${i % 3 ? "#17807E" : "#EE9B1E"}" d="${BL}"/><path fill="${i % 3 ? "#EE9B1E" : "#17807E"}" d="${BR}"/></g>`;
+  return `<rect x="${-B}" y="${y - 6}" width="${W + 2 * B}" height="${h}" fill="#0E2F3C"/>${g}`;
+}
+function contours(B) {
+  let g = "";
+  for (let i = 0; i < 9; i++) { const y0 = 20 + i * 22; g += `<path d="M${-B} ${y0} C ${W * 0.25} ${y0 - 26 + i * 3}, ${W * 0.55} ${y0 + 30 - i * 2}, ${W + B} ${y0 - 8}" fill="none" stroke="${i === 4 ? "#EE9B1E" : "#17807E"}" stroke-opacity="${i === 4 ? 0.9 : 0.45}" stroke-width="${i === 4 ? 0.9 : 0.6}"/>`; }
+  return g;
+}
+function lightLogo(d, co, x, y, s) {
+  return `<g transform="translate(${x} ${y}) scale(${s})">${wordmark("#0E2F3C", "#17807E", co.under, "#17807E")}</g><text x="${x}" y="${y + 134 * s}" font-family="Archivo" font-size="${13.2 * s}" font-weight="600" fill="#17807E" textLength="${416 * s}" lengthAdjust="spacing">${E(co.descriptor)}</text>`;
+}
 function front(d, B) {
   const co = COMPANY[d.company] || COMPANY.ksa;
+  const web = (d.website || "www.kayaksa.com").toUpperCase();
+  if (d.design === "openwater") return svg(B, `<rect x="${-B}" y="${-B}" width="${W + 2 * B}" height="${H + 2 * B}" fill="#FBFAF5"/>${lightLogo(d, co, 64, 44, 0.5)}${bladeBand(150, 48 + B, B)}${T(W - 22, 30, (d.locations || "").toUpperCase(), { size: 5.6, weight: 600, fill: "#9C630E", anchor: "end", ls: 1.6 })}${T(22, 132, web, { size: 6.6, weight: 600, fill: "#0E2F3C", ls: 2.2 })}`);
+  if (d.design === "minimal") return svg(B, `<rect x="${-B}" y="${-B}" width="${W + 2 * B}" height="${H + 2 * B}" fill="#FFFFFF"/>${lightLogo(d, co, 76, 58, 0.44)}<rect x="76" y="132" width="40" height="1.6" fill="#EE9B1E"/>${T(76, 150, web, { size: 6.4, weight: 600, fill: "#3E5563", ls: 2 })}`);
+  if (d.design === "contour") return svg(B, `<rect x="${-B}" y="${-B}" width="${W + 2 * B}" height="${H + 2 * B}" fill="#0E2F3C"/>${contours(B)}<rect x="22" y="40" width="${416 * 0.44 + 28}" height="76" fill="#0E2F3C"/><g transform="translate(36 50) scale(0.44)">${wordmark("#FFFFFF", "#3FB0A9", co.under)}</g><text x="36" y="${50 + 134 * 0.44}" font-family="Archivo" font-size="${13.2 * 0.44}" font-weight="600" fill="#CDE8E3" textLength="${416 * 0.44}" lengthAdjust="spacing">${E(co.descriptor)}</text>${T(W - 22, H - 22, web, { size: 6.4, weight: 600, fill: "#F5C46D", anchor: "end", ls: 2 })}`);
   let logo;
   if (d.company === "ksa") logo = `<g transform="translate(76 50) scale(0.44)">${MASTER_REVERSED}</g>`;
   else {
@@ -111,7 +132,8 @@ function back(d, B) {
     footer = T(x0, H - 20, co.legal.toUpperCase(), { size: 5.4, weight: 600, fill: "#0E2F3C", ls: 1 }) + (d.locations ? T(right, H - 20, d.locations.toUpperCase(), { size: 5.2, weight: 600, fill: "#9C630E", anchor: "end", ls: 1.2 }) : "");
     footer += `<rect x="${-B}" y="${H - 5}" width="${W + 2 * B}" height="${5 + B}" fill="#0E2F3C"/><rect x="${W - 64}" y="${H - 5}" width="${64 + B}" height="${5 + B}" fill="#EE9B1E"/>`;
   }
-  return svg(B, `<rect x="${-B}" y="${-B}" width="${W + 2 * B}" height="${H + 2 * B}" fill="#FBFAF5"/>${panel}${body}${footer}`);
+  const accent = d.design && d.design !== "heritage" && d.company !== "group" ? (d.design === "openwater" ? `<rect x="${-B}" y="${-B}" width="${W + 2 * B}" height="${4 + B}" fill="#17807E"/>` : d.design === "contour" ? `<g opacity="0.18">${contours(B)}</g>` : "") : "";
+  return svg(B, `<rect x="${-B}" y="${-B}" width="${W + 2 * B}" height="${H + 2 * B}" fill="${d.design === "minimal" ? "#FFFFFF" : "#FBFAF5"}"/>${accent}${panel}${body}${footer}`);
 }
 
 function splitAddress(a, max) {
@@ -211,7 +233,7 @@ export async function render(main, ctx) {
   const { items } = await api("/api/cards");
 
   main.innerHTML = String(html`<div class="page">
-    <div class="page-head"><div class="stack-sm"><span class="eyebrow">Business Cards</span><h1>Kayak business cards</h1><p class="lead">Describe the card or fill in the details. The design is locked to the Kayak brand; only the details change. Export print-ready PDF with bleed, or SVG, PNG and JPG.</p></div></div>
+    <div class="page-head"><div class="stack-sm"><span class="eyebrow">Business Cards</span><h1>Kayak business cards</h1><p class="lead">Describe the card or fill in the details. Choose the company and one of four designs, all locked to the Kayak brand; only the details change. Export print-ready PDF with bleed, or SVG, PNG and JPG.</p></div></div>
     <div class="split">
       <div class="stack">
         <form class="card stack" id="ai">
@@ -220,7 +242,8 @@ export async function render(main, ctx) {
           <div class="row"><button class="btn btn-primary" id="aibtn" ${providers.length ? "" : "disabled"}>${ico("spark")} Fill in from my description</button>${providers.length ? "" : html`<span class="small muted">Connect an AI key to use this; the form below always works.</span>`}</div>
         </form>
         <form class="card form-grid" id="f">
-          <div class="field" style="grid-column:1/-1"><label for="company">Company</label><select class="select" id="company" name="company">${Object.entries(COMPANY).map(([k, v]) => html`<option value="${k}">${v.label}</option>`)}</select></div>
+          <div class="field"><label for="company">Company</label><select class="select" id="company" name="company">${Object.entries(COMPANY).map(([k, v]) => html`<option value="${k}">${v.label}</option>`)}</select></div>
+          <div class="field"><label for="design">Design</label><select class="select" id="design" name="design">${Object.entries(DESIGNS).map(([k, v]) => html`<option value="${k}">${v}</option>`)}</select></div>
           <div class="field"><label for="name">Name</label><input class="input" id="name" name="name" maxlength="40"></div>
           <div class="field"><label for="title">Designation</label><input class="input" id="title" name="title" maxlength="48"></div>
           <div class="field"><label for="department">Practice or department</label><input class="input" id="department" name="department" maxlength="40"></div>
@@ -251,7 +274,7 @@ export async function render(main, ctx) {
 
   const form = $("#f");
   const fill = () => {
-    form.company.value = d.company; form.name.value = d.name; form.title.value = d.title; form.department.value = d.department; form.email.value = d.email;
+    form.company.value = d.company; form.design.value = d.design || "heritage"; form.name.value = d.name; form.title.value = d.title; form.department.value = d.department; form.email.value = d.email;
     form.p0.value = d.phones[0] || ""; form.p1.value = d.phones[1] || ""; form.website.value = d.website; form.locations.value = d.locations; form.address.value = d.address;
   };
   const read = () => { const v = Object.fromEntries(new FormData(form)); d = { ...d, ...v, phones: [v.p0, v.p1] }; delete d.p0; delete d.p1; };

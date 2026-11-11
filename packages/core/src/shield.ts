@@ -22,7 +22,7 @@ export const RETENTION_DAYS = 180;
 export const DIRECTORS = ["anuj@kayaksa.com", "deepak@kayaksa.com", "ca.anuj@hotmail.com", "seema@kayaksa.com"];
 
 // Crawlers that make Kayak visible. On public sites they are allowed (and robots.txt still rules).
-const GOOD_BOTS = /(googlebot|google-inspectiontool|googleother|adsbot-google|mediapartners-google|bingbot|bingpreview|duckduckbot|applebot|yandexbot|baiduspider|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-user|claude-searchbot|anthropic-ai|perplexitybot|perplexity-user|linkedinbot|facebookexternalhit|meta-externalagent|twitterbot|slackbot|whatsapp|telegrambot|discordbot|cloudflare-healthchecks)/i;
+const GOOD_BOTS = /(kayakmonitor|googlebot|google-inspectiontool|googleother|adsbot-google|mediapartners-google|bingbot|bingpreview|duckduckbot|applebot|yandexbot|baiduspider|gptbot|chatgpt-user|oai-searchbot|claudebot|claude-user|claude-searchbot|anthropic-ai|perplexitybot|perplexity-user|linkedinbot|facebookexternalhit|meta-externalagent|twitterbot|slackbot|whatsapp|telegrambot|discordbot|cloudflare-healthchecks)/i;
 // Scrapers, SEO harvesters and scripted clients.
 const BAD_BOTS = /(python-requests|python-urllib|aiohttp|httpx|scrapy|curl\/|wget|go-http-client|java\/|okhttp|libwww|lwp-|httpclient|node-fetch|axios|undici|phantomjs|headlesschrome|puppeteer|playwright|selenium|zgrab|masscan|nmap|nikto|sqlmap|nuclei|wpscan|dirbuster|gobuster|ffuf|semrush|ahrefs|mj12bot|dotbot|bytespider|petalbot|blexbot|dataforseo|serpstat|megaindex|seekport|barkrowler|ccbot|diffbot|omgili|imagesift|timpibot|amazonbot|scrapingbee|zenrows|crawler4j|httrack|webcopier|sitesucker|offline explorer)/i;
 // Paths only attackers ask for.

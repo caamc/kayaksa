@@ -271,3 +271,18 @@ async function route() {
 window.addEventListener("hashchange", route);
 await refreshState();
 route();
+
+// Cookieless page statistics: one count per page view, no cookies or identifiers.
+{
+  let last = "";
+  const send = (b) => { try { navigator.sendBeacon("/api/a", JSON.stringify(b)); } catch {} };
+  const view = () => {
+    const p = "/" + (location.hash.replace(/^#\/?/, "").split("?")[0] || "");
+    if (p === last) return; last = p;
+    send({ t: "pv", p, r: document.referrer && !document.referrer.startsWith(location.origin) ? new URL(document.referrer).hostname : "", w: innerWidth });
+  };
+  view(); window.addEventListener("hashchange", view);
+  try {
+    new PerformanceObserver((l) => { const e = l.getEntries().at(-1); if (e) send({ t: "cwv", p: last, lcp: Math.round(e.startTime) }); }).observe({ type: "largest-contentful-paint", buffered: true });
+  } catch {}
+}

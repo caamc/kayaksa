@@ -16,11 +16,16 @@ import { security } from "./security";
 import { learnSales } from "./learnsales";
 import { meet } from "./meet";
 import { confluence, scheduledConfluence } from "./confluence";
+import { dash } from "./dash";
+import { ops } from "./ops";
+import { workspace } from "./workspace";
+import { briefs } from "./briefs";
+import { clientTools, runChecks } from "./clienttools";
 
 type V = { Bindings: Env; Variables: { user: User } };
 const app = new Hono<V>();
 
-app.use("*", securityHeaders({ noindex: true }));
+app.use("*", securityHeaders({ noindex: true, permissions: "camera=(), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
 app.use("*", shield("internal", (e) => e.DB, { allowGoodBots: false }));
 app.use("/api/*", sameOrigin());
 app.onError((e: any, c) => {
@@ -70,6 +75,7 @@ app.use("/api/meet/*", guard);
 app.use("/api/meet", guard);
 app.use("/api/confluence/*", guard);
 app.use("/api/confluence", guard);
+for (const p of ["dash", "ops", "workspace", "briefs", "clienttools"]) { app.use(`/api/${p}`, guard); app.use(`/api/${p}/*`, guard); }
 app.use("/files/*", guard);
 app.use("/app", guard);
 app.use("/app/*", guard);
@@ -88,6 +94,11 @@ app.route("/api/security", security);
 app.route("/api/learnsales", learnSales);
 app.route("/api/meet", meet);
 app.route("/api/confluence", confluence);
+app.route("/api/dash", dash);
+app.route("/api/ops", ops);
+app.route("/api/workspace", workspace);
+app.route("/api/briefs", briefs);
+app.route("/api/clienttools", clientTools);
 app.route(
   "/api/learn",
   learnApi({
@@ -127,7 +138,11 @@ app.all("*", async (c) => {
 
 export default {
   fetch: app.fetch,
-  async scheduled(_e: ScheduledEvent, env: Env) {
+  async scheduled(e: ScheduledEvent, env: Env) {
+    // Every 15 minutes: client tools monitoring. The rest runs once a day, at 01:30 to 01:45 UTC.
+    await runChecks(env.DB).catch((err) => console.error("monitors", err?.message));
+    const t = new Date(e.scheduledTime);
+    if (!(t.getUTCHours() === 1 && t.getUTCMinutes() >= 30 && t.getUTCMinutes() < 45)) return;
     await pruneSecurity(env.DB);
     if (env.WWW_DB) await pruneSecurity(env.WWW_DB).catch(() => {});
     // Confluence: after the 25th, Kayak AI drafts the next issue on its own. It is never released without approval.

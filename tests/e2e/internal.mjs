@@ -59,22 +59,30 @@ const codes = (await page.$$eval(".codes span", (s) => s.map((x) => x.textConten
 check(codes.length === 10, "ten recovery codes issued");
 await page.check("#saved");
 await page.click("#go");
-await page.waitForSelector(".hero h1", { timeout: 15000 });
-check((await page.textContent(".hero h1")).includes("Anuj"), "lands on the portal home");
+await page.waitForSelector(".dash-hero h1", { timeout: 15000 });
+check((await page.textContent(".dash-hero h1")).includes("Anuj"), "lands on the portal home dashboard");
+await page.waitForSelector(".kpis", { timeout: 15000 });
+check(await page.locator(".kpi2").count() >= 6, "home dashboard shows its KPI cards");
+check(await page.locator(".fab-btn").count() === 1, "floating Kayak AI is on the page");
 await page.screenshot({ path: OUT + "internal-home.png" });
+
+// Forgot password answers the same way whether or not the account exists
+const fg1 = await page.request.post(`${BASE}/api/auth/forgot`, { data: { email: EMAIL }, headers: { Origin: BASE } });
+const fg2 = await page.request.post(`${BASE}/api/auth/forgot`, { data: { email: "nobody@kayaksa.com" }, headers: { Origin: BASE } });
+check(fg1.ok() && fg2.ok() && (await fg1.json()).message === (await fg2.json()).message, "forgot password does not reveal which accounts exist");
 
 // Set-up cannot be repeated for an active account
 const again = await page.request.post(`${BASE}/api/auth/setup`, { data: { email: EMAIL, token: vars.BOOTSTRAP_TOKEN, name: "X", password: PASSWORD + "x" }, headers: { Origin: BASE } });
 check(again.status() === 409 || again.status() === 403, "set-up refuses an already active SuperAdmin");
 
-for (const v of ["brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "confluence", "account"]) {
+for (const v of ["digital", "updates", "clienttools", "clienttools/monitoring", "studio", "board", "briefs", "store", "launch", "certs", "brain", "brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "confluence", "account"]) {
   await page.goto(`${BASE}/app#/${v}`);
   await page.waitForFunction(() => !document.querySelector("#main .spinner") || document.querySelector("#main h1"), null, { timeout: 15000 });
   await page.waitForTimeout(600);
   const h1 = await page.textContent("#main h1").catch(() => "");
-  const err = await page.textContent("#main .note.danger").catch(() => null);
+  const err = await page.$("#main .note.danger").then((e) => (e ? e.textContent() : null));
   check(!!h1 && !err, `${v} renders (${(h1 || "").trim().slice(0, 40)})${err ? " — " + err : ""}`);
-  await page.screenshot({ path: OUT + `internal-${v.replace("/", "-")}.png`, fullPage: v === "cards" || v === "brand" });
+  await page.screenshot({ path: OUT + `internal-${v.replace("/", "-")}.png`, fullPage: v === "cards" });
 }
 
 // Invite a colleague and accept the invite in a fresh browser
@@ -97,7 +105,7 @@ await p2.fill("#code", totp(s2));
 await p2.click("button[type=submit]");
 await p2.waitForSelector(".codes");
 await p2.check("#saved"); await p2.click("#go");
-await p2.waitForSelector(".hero h1");
+await p2.waitForSelector(".dash-hero h1");
 const adminLink = await p2.$("#side a[href='#/admin']");
 check(!adminLink, "an employee does not see administration");
 const forbidden = await p2.request.get(`${BASE}/api/admin/users`);

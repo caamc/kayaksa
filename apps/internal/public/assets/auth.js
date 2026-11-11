@@ -40,10 +40,28 @@ function loginView() {
     <div class="field"><label for="password">Password</label><input class="input" id="password" name="password" type="password" autocomplete="current-password" required></div>
     <button class="btn btn-primary" type="submit">Continue ${ico("arrow")}</button>
   </form>
-  <p class="small muted">Forgotten your password or lost your phone? Ask a Kayak administrator for a reset link.</p>`);
+  <p class="small"><a href="/login?forgot=1" id="forgot">Forgot your password?</a></p>
+  <p class="small muted">Lost your phone? Sign in with one of your recovery codes, or ask a Kayak administrator.</p>`);
+  $("#forgot").onclick = (e) => { e.preventDefault(); forgotView($("#email").value); };
   submitWith($("#f"), async (v) => {
     const r = await api("/api/auth/login", { body: { email: v.email, password: v.password }, authRedirect: false });
     route(r.next);
+  });
+}
+
+function forgotView(prefill = "") {
+  render(html`${head(0, 0, "Reset your password", "Enter your work email. If it belongs to an active Kayak account, we will email a link to choose a new password. You will still confirm with your authenticator app.")}
+  <form class="stack" id="f" novalidate>
+    <div class="field"><label for="email">Work email</label><input class="input" id="email" name="email" type="email" autocomplete="username" required value="${prefill}"></div>
+    <button class="btn btn-primary" type="submit">Email me a reset link</button>
+  </form>
+  <a class="small" href="/login">Back to sign in</a>`);
+  submitWith($("#f"), async (v) => {
+    const r = await api("/api/auth/forgot", { body: { email: v.email }, authRedirect: false });
+    render(html`${head(0, 0, "Check your email", r.message)}
+      ${r.mail ? "" : raw(`<p class="note warn small">Email sending is not switched on yet, so no link can be sent. Ask a Kayak administrator to create a reset link for you from People &amp; access.</p>`)}
+      <p class="small muted">The link expires in 30 minutes. Nothing arrived? Check spam, or try again in a few minutes.</p>
+      <a class="btn btn-ghost" href="/login">Back to sign in</a>`);
   });
 }
 
@@ -161,6 +179,7 @@ function route(nextStep, email) {
   if (st.mode === "full") return (location.href = next);
   if (location.pathname === "/setup") return setupView();
   if (st.mode === "pre") return route(st.next, st.email);
+  if (params.get("forgot")) return forgotView();
   loginView();
   if (st.setup) card.insertAdjacentHTML("beforeend", `<p class="small faint">Setting up Kayak Internal for the first time? <a href="/setup">First-run set-up</a></p>`);
 })();

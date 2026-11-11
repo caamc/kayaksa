@@ -20,7 +20,7 @@ on:
         default: false
   push:
     branches: [main]
-    paths: ["apps/**", "packages/**", "scripts/**", ".github/workflows/deploy.yml"]
+    paths: ["apps/**", "packages/**", "scripts/**", "brand-assets/07_Office_Templates_and_Toolbar/**", ".github/workflows/deploy.yml"]
 
 concurrency: { group: deploy, cancel-in-progress: false }
 
@@ -51,8 +51,8 @@ jobs:
         run: |
           A="${{ github.event.inputs.apps }}"
           # A push to main republishes the sites listed in the DEPLOY_APPS repository variable (default: all three).
-          if [ -z "$A" ]; then A="${{ vars.DEPLOY_APPS || 'www,learn,internal,meet' }}"; fi
-          if [ "$A" = "all" ]; then A="www,learn,internal,meet"; fi
+          if [ -z "$A" ]; then A="${{ vars.DEPLOY_APPS || 'www,learn,internal,meet' }},toolbar"; fi
+          if [ "$A" = "all" ]; then A="www,learn,internal,meet,toolbar"; fi
           echo "list=$A" >> "$GITHUB_OUTPUT"
           echo "Publishing: $A" >> "$GITHUB_STEP_SUMMARY"
 
@@ -231,6 +231,29 @@ jobs:
           [ "$(cat /tmp/m.json)" = "{}" ] || npx wrangler secret bulk /tmp/m.json --name kayaksa-meet; rm -f /tmp/m.json
           echo "### meet.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Publish toolbar.kayaksa.com (KSA Office Toolbar)
+        if: contains(format(',{0},', steps.apps.outputs.list), ',toolbar,')
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -e
+          node scripts/build-toolbar.mjs
+          # Go-live checks on the files before anything is published (the browser checks run locally before release).
+          NO_BROWSER=1 node scripts/check-toolbar.mjs https://toolbar.kayaksa.com || { echo "::warning::A file check failed; see above."; }
+          npx wrangler deploy -c apps/toolbar/wrangler.jsonc
+          have=$(npx wrangler secret list --name kayaksa-toolbar --format json 2>/dev/null | jq -r '.[].name' || true)
+          echo '{}' > /tmp/t.json
+          # One access token for the Assistant, created once and shared with the internal portal, where staff copy it.
+          if ! echo "$have" | grep -qx ASSISTANT_TOKEN; then
+            K=$(node -e 'console.log(require("crypto").randomBytes(24).toString("base64url"))')
+            node -e 'const f="/tmp/t.json";const j=JSON.parse(require("fs").readFileSync(f));j.ASSISTANT_TOKEN=process.argv[1];require("fs").writeFileSync(f,JSON.stringify(j))' "$K"
+            printf '%s' "$K" | npx wrangler secret put TOOLBAR_TOKEN --name kayaksa-internal >/dev/null
+            echo "Created the KSA Toolbar Assistant token (staff copy it from Kayak Tools in the internal portal)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -n "$ANTHROPIC_API_KEY" ]; then node -e 'const f="/tmp/t.json";const j=JSON.parse(require("fs").readFileSync(f));j.ANTHROPIC_API_KEY=process.env.ANTHROPIC_API_KEY;require("fs").writeFileSync(f,JSON.stringify(j))'; fi
+          [ "$(cat /tmp/t.json)" = "{}" ] || npx wrangler secret bulk /tmp/t.json --name kayaksa-toolbar; rm -f /tmp/t.json
+          echo "### toolbar.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload the brand library
         if: github.event.inputs.sync_brand == 'true' || env.NEW_BUCKET == '1'
         run: node scripts/sync-brand.mjs
@@ -241,4 +264,5 @@ jobs:
           case ",${{ steps.apps.outputs.list }}," in *",www,"*) [ -f /tmp/www-preview ] && curl -fsS "$(cat /tmp/www-preview)/api/health" && echo; curl -fsS -A "Mozilla/5.0 (KayakDeployCheck)" -o /dev/null -w "Kay voice test: %{http_code} %{content_type}\n" -X POST -H "Content-Type: application/json" -H "Origin: https://www.kayaksa.com" -d '{"text":"Hello, I am Kay."}' https://www.kayaksa.com/api/kay/speak || true; curl -fsS https://www.kayaksa.com/api/health && echo || echo "www.kayaksa.com is not on the new site yet";; esac
           case ",${{ steps.apps.outputs.list }}," in *",learn,"*) curl -fsS https://learn.kayaksa.com/healthz && echo;; esac
           case ",${{ steps.apps.outputs.list }}," in *",internal,"*) curl -fsS https://internal.kayaksa.com/healthz && echo;; esac
+          case ",${{ steps.apps.outputs.list }}," in *",toolbar,"*) curl -fsS https://toolbar.kayaksa.com/healthz && echo && NO_BROWSER=1 node scripts/check-toolbar.mjs https://toolbar.kayaksa.com || echo "toolbar.kayaksa.com is not answering yet (new address; give DNS a few minutes)";; esac
           case ",${{ steps.apps.outputs.list }}," in *",meet,"*) curl -fsS https://meet.kayaksa.com/healthz && echo || echo "meet.kayaksa.com is not answering yet (new address; give DNS a few minutes)";; esac
