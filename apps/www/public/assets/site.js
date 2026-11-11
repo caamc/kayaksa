@@ -86,8 +86,6 @@ const heroCarousel = () => `
     </div></div>
   </div>`).join("")}
   <svg class="hx-mark" viewBox="-4 -4 100 108" aria-hidden="true"><path fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path fill="#F3F7F6" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/></svg>
-  <div class="wrap hx-nav"><div class="hx-dots" role="tablist" aria-label="Choose a scene">${HERO.map((x, i) => `<button role="tab" aria-selected="${i ? "false" : "true"}" aria-label="${esc(x.eyebrow)}" data-hx="${i}"><span>${String(i + 1).padStart(2, "0")}</span><i><b></b></i><em>${esc(x.eyebrow)}</em></button>`).join("")}</div>
-  <button class="hx-pause" type="button" aria-label="Pause the slideshow" data-hxp="1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2.4"/></svg></button></div>
 </section>`;
 let hxTimer = null, hxPaused = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function armHero() {
@@ -100,16 +98,12 @@ function armHero() {
     $$(".hx-dots button", root).forEach((b, i) => { b.setAttribute("aria-selected", String(i === cur)); b.classList.remove("run"); if (i === cur && !hxPaused) { void b.offsetWidth; b.classList.add("run"); } });
   };
   const start = () => { clearInterval(hxTimer); if (!hxPaused) hxTimer = setInterval(() => show(cur + 1), 7000); show(cur); };
-  $$(".hx-dots button", root).forEach((b) => b.addEventListener("click", () => { cur = Number(b.dataset.hx); start(); }));
-  const pb = $(".hx-pause", root);
-  const paint = () => { pb.innerHTML = hxPaused ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7Z" fill="currentColor"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2.4"/></svg>'; pb.setAttribute("aria-label", hxPaused ? "Play the slideshow" : "Pause the slideshow"); root.classList.toggle("paused", hxPaused); };
-  pb.addEventListener("click", () => { hxPaused = !hxPaused; paint(); start(); });
   root.addEventListener("mouseenter", () => clearInterval(hxTimer));
   root.addEventListener("mouseleave", () => start());
   root.addEventListener("focusin", () => clearInterval(hxTimer));
   let x0 = null; root.addEventListener("touchstart", (e) => (x0 = e.touches[0].clientX), { passive: true });
   root.addEventListener("touchend", (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) { cur += dx < 0 ? 1 : -1; start(); } x0 = null; });
-  paint(); start();
+  start();
 }
 
 /* ---------- Confluence cover: full-bleed photograph with Kayak tints ---------- */
@@ -124,7 +118,7 @@ const magCover = (big = false) => `
     <span class="mc-kicker">Cover story</span>
     <span class="mc-head">Growth and risk are one decision</span>
     <span class="mc-dek">Why the companies that move well through rough water treat them as one conversation</span>
-    <span class="mc-more"><span>Diligence is the decision now</span><span>Data protection is a board question</span><span>Counterfeits at marketplace speed</span></span>
+    <span class="mc-more"><span>Diligence is the decision now</span><span>Data protection is a board question</span><span>Five questions before you fund AI</span></span>
   </span>
   <svg class="mc-mark" viewBox="-4 -4 100 108" aria-hidden="true"><path fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path fill="#F3F7F6" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/></svg>
 </a>`;
@@ -133,7 +127,7 @@ const magCover = (big = false) => `
 const P = {};
 
 P.home = () => {
-  const feat = ["growth-and-risk", "data-protection-board", "counterfeits-marketplace-speed"].map((id) => A[id]);
+  const feat = ["growth-and-risk", "data-protection-board", "ai-five-questions"].map((id) => A[id]);
   return `
 ${heroCarousel()}
 <section class="featured"><div class="wrap"><div class="grid">
@@ -318,12 +312,12 @@ P.tools = () => `
 <section class="phero colored" style="--c:${C["technology-ai"].color};--p:var(--pc-technology-ai);--ps:var(--ps-technology-ai)"><div class="wrap">
   ${crumbs([["Kayak Solutions"]])}
   <span class="eyebrow" style="color:#F5C46D;display:block;margin-top:18px">${SOLUTIONS_LINE}</span>
-  <h1>Kayak Solutions</h1><p class="lead">Platforms born of our advisory practice, for ethics and compliance, counterfeiting case intelligence, third-party risk and e-signatures.</p>
+  <h1>Kayak Solutions</h1><p class="lead">Platforms born of our advisory practice, for ethics and compliance, case intelligence, third-party risk and e-signatures.</p>
 </div></section>
 <section class="sec"><div class="wrap">${toolsGrid()}</div></section>
 <section class="sec alt"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Tools and advice together</span><h2>Three ways to use them</h2></div></div>
-  <div class="models three">${[["website", "Licence the platform", "Your team runs the tool, with onboarding, configuration and training from us."], ["calendar", "Run it with us", "Our Managed Services team operates the tool for you, with agreed service levels and regular reporting."], ["user", "Advisers on call", "When a report, a counterfeit or a vendor needs investigation, our clusters step in alongside the software."]].map((m) => `<article class="model">${ic(m[0])}<h3>${esc(m[1])}</h3><p>${esc(m[2])}</p></article>`).join("")}</div>
+  <div class="models three">${[["website", "Licence the platform", "Your team runs the tool, with onboarding, configuration and training from us."], ["calendar", "Run it with us", "Our Managed Services team operates the tool for you, with agreed service levels and regular reporting."], ["user", "Advisers on call", "When a report, an allegation or a vendor needs investigation, our clusters step in alongside the software."]].map((m) => `<article class="model">${ic(m[0])}<h3>${esc(m[1])}</h3><p>${esc(m[2])}</p></article>`).join("")}</div>
 </div></section>
 ${ctaBand("Find the right tool for your programme", "technology-ai")}`;
 

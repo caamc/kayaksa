@@ -767,3 +767,4 @@ main:focus{outline:none}
 .issue-hero .ih-right .subscribe{width:100%}
 .mc-mast{font-size:10.4cqw!important}.mc-issue{top:calc(11.5% + 12.4cqw)}
 .mc-mast{font-size:9.4cqw!important;left:7%;right:7%;text-align:left}
+.hx-in{padding-block:110px 96px}@media (max-width:760px){.hx-in{padding-block:96px 72px}}

@@ -628,7 +628,7 @@
    "id": "pharma",
    "name": "Pharma and healthcare",
    "questions": [
-    "Counterfeit medicines and supply-chain integrity",
+    "Supply-chain integrity and product quality",
     "Distributor and partner due diligence",
     "Protecting patient data under the DPDP Act"
    ],
@@ -743,7 +743,7 @@
    "id": "retail",
    "name": "Retail and consumer",
    "questions": [
-    "Counterfeits and grey-market selling",
+    "Grey-market selling and channel integrity",
     "Distributor networks you can rely on",
     "Fraud and impersonation in festive peaks"
    ],
@@ -998,19 +998,6 @@
    ]
   },
   {
-   "id": "counterfeits-marketplace-speed",
-   "section": "Storm Watch",
-   "cluster": "crisis-resilience",
-   "mins": 3,
-   "title": "Counterfeits move at marketplace speed",
-   "dek": "Fakes, look-alike listings and impersonation now appear and spread online faster than most brand teams can respond.",
-   "body": [
-    "A counterfeit that once took months to reach shelves can now be listed across marketplaces and social channels in days, often with the brand's own photographs. Festive seasons and product launches are the busiest periods for this kind of misuse.",
-    "Brand protection that works at this speed has three parts. Monitoring that looks where your customers actually shop. A clear way to sort the serious cases from the noise. And a working relationship with platforms and counsel so that takedowns and enforcement follow quickly.",
-    "Evidence matters at every step. Test purchases, screenshots and seller details collected properly are what allow your lawyers and the platforms to act."
-   ]
-  },
-  {
    "id": "ai-five-questions",
    "section": "Signal",
    "cluster": "technology-ai",
@@ -1124,7 +1111,7 @@
   ],
   [
    "Risk has gone digital",
-   "Counterfeits, impersonation and fraud now spread online at the speed of a marketplace."
+   "Impersonation, data misuse and fraud now spread online at the speed of a marketplace."
   ],
   [
    "Boards are answerable",
