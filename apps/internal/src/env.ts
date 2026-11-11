@@ -8,6 +8,10 @@ export interface Env extends AiEnv, MailEnv {
   LEARN_DB?: D1Database;
   WWW_DB?: D1Database; // www.kayaksa.com content, enquiries and statistics // learn.kayaksa.com, for public certificate verification and learner statistics
   BRAND: R2Bucket;
+  MEET_DB?: D1Database; // Kayak Meet meetings, transcripts and feedback
+  MEET_REC?: R2Bucket; // Kayak Meet recordings
+  MEET_SIGNING_KEY?: string;
+  AI?: Ai;
   ASSETS: Fetcher;
   AUTH_ENCRYPTION_KEY: string;
   BOOTSTRAP_TOKEN?: string;

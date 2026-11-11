@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       apps:
-        description: "Which sites to publish (comma-separated: www, learn, internal, or all)"
+        description: "Which sites to publish (comma-separated: www, learn, internal, meet, or all)"
         default: "www"
         required: true
       replace_dns:
@@ -51,8 +51,8 @@ jobs:
         run: |
           A="${{ github.event.inputs.apps }}"
           # A push to main republishes the sites listed in the DEPLOY_APPS repository variable (default: all three).
-          if [ -z "$A" ]; then A="${{ vars.DEPLOY_APPS || 'www,learn,internal' }}"; fi
-          if [ "$A" = "all" ]; then A="www,learn,internal"; fi
+          if [ -z "$A" ]; then A="${{ vars.DEPLOY_APPS || 'www,learn,internal,meet' }}"; fi
+          if [ "$A" = "all" ]; then A="www,learn,internal,meet"; fi
           echo "list=$A" >> "$GITHUB_OUTPUT"
           echo "Publishing: $A" >> "$GITHUB_STEP_SUMMARY"
 
@@ -88,12 +88,13 @@ jobs:
             [ -n "$ID" ] || { echo "::error::Could not create or find the D1 database $1. The token needs Account: D1 Edit."; exit 1; }
             echo "$ID"
           }
-          WWW=$(ensure kayaksa-www) || exit 1; LEARN=$(ensure kayaksa-learn) || exit 1; INTERNAL=$(ensure kayaksa-internal) || exit 1
+          WWW=$(ensure kayaksa-www) || exit 1; LEARN=$(ensure kayaksa-learn) || exit 1; INTERNAL=$(ensure kayaksa-internal) || exit 1; MEET=$(ensure kayaksa-meet) || exit 1
+          sed -i "s/00000000-0000-0000-0000-000000000003/$MEET/" apps/meet/wrangler.jsonc apps/internal/wrangler.jsonc
           sed -i "s/00000000-0000-0000-0000-000000000002/$WWW/" apps/www/wrangler.jsonc apps/internal/wrangler.jsonc
           sed -i "s/00000000-0000-0000-0000-000000000001/$LEARN/" apps/learn/wrangler.jsonc apps/internal/wrangler.jsonc
           sed -i "s/00000000-0000-0000-0000-000000000000/$INTERNAL/" apps/internal/wrangler.jsonc
           sed -i "s/00000000-0000-0000-0000-000000000000/$LEARN/" apps/learn/wrangler.jsonc
-          for a in www learn internal; do
+          for a in www learn internal meet; do
             case ",${{ steps.apps.outputs.list }}," in *",$a,"*) npx wrangler d1 migrations apply "kayaksa-$a" --remote -c "apps/$a/wrangler.jsonc";; esac
           done
 
@@ -107,6 +108,7 @@ jobs:
           case ",${{ steps.apps.outputs.list }}," in *",www,"*) hosts="$hosts www.kayaksa.com kayaksa.com";; esac
           case ",${{ steps.apps.outputs.list }}," in *",learn,"*) hosts="$hosts learn.kayaksa.com";; esac
           case ",${{ steps.apps.outputs.list }}," in *",internal,"*) hosts="$hosts internal.kayaksa.com";; esac
+          case ",${{ steps.apps.outputs.list }}," in *",meet,"*) hosts="$hosts meet.kayaksa.com";; esac
           blocked=0
           for h in $hosts; do
             R=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?name=$h&per_page=100")
@@ -186,6 +188,7 @@ jobs:
         run: |
           set -e
           if ! npx wrangler r2 bucket list | grep -q "kayaksa-brand"; then npx wrangler r2 bucket create kayaksa-brand; echo "NEW_BUCKET=1" >> "$GITHUB_ENV"; fi
+          if ! npx wrangler r2 bucket list | grep -q "kayaksa-meet"; then npx wrangler r2 bucket create kayaksa-meet; fi
           npx wrangler deploy -c apps/internal/wrangler.jsonc
           have=$(npx wrangler secret list --name kayaksa-internal --format json 2>/dev/null | jq -r '.[].name' || true)
           node scripts/secrets.mjs ANTHROPIC_API_KEY OPENAI_API_KEY XAI_API_KEY GEMINI_API_KEY RESEND_API_KEY > /tmp/s.json
@@ -200,6 +203,34 @@ jobs:
             echo "First-run set-up code (works once, only for the SuperAdmin emails): \`$NEWBOOT\`. Open https://internal.kayaksa.com/setup to create your account and two-factor sign-in." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Publish meet.kayaksa.com
+        if: contains(format(',{0},', steps.apps.outputs.list), ',meet,')
+        run: |
+          set -e
+          if ! npx wrangler r2 bucket list | grep -q "kayaksa-meet"; then npx wrangler r2 bucket create kayaksa-meet; fi
+          npx wrangler deploy -c apps/meet/wrangler.jsonc
+          have=$(npx wrangler secret list --name kayaksa-meet --format json 2>/dev/null | jq -r '.[].name' || true)
+          echo '{}' > /tmp/m.json
+          # One signing key, shared with the internal portal, which issues the invitation links.
+          if ! echo "$have" | grep -qx MEET_SIGNING_KEY; then
+            K=$(node -e 'console.log(require("crypto").randomBytes(32).toString("base64url"))')
+            node -e 'const f="/tmp/m.json";const j=JSON.parse(require("fs").readFileSync(f));j.MEET_SIGNING_KEY=process.argv[1];require("fs").writeFileSync(f,JSON.stringify(j))' "$K"
+            printf '%s' "$K" | npx wrangler secret put MEET_SIGNING_KEY --name kayaksa-internal >/dev/null
+            echo "Created the Kayak Meet signing key (shared with the internal portal)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          # TURN relay for participants behind strict firewalls (Cloudflare Realtime). Optional.
+          if ! echo "$have" | grep -qx TURN_KEY_ID; then
+            R=$(curl -sS -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" -d '{"name":"kayak-meet"}' "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/calls/turn_keys")
+            if [ "$(echo "$R" | jq -r '.success')" = "true" ]; then
+              node -e 'const f="/tmp/m.json";const j=JSON.parse(require("fs").readFileSync(f));const r=JSON.parse(process.argv[1]).result;j.TURN_KEY_ID=r.uid;j.TURN_KEY_API_TOKEN=r.key;require("fs").writeFileSync(f,JSON.stringify(j))' "$R"
+              echo "Created a TURN relay key for Kayak Meet." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::warning::Could not create a TURN relay key ($(echo "$R" | jq -r '.errors[0].message // "unknown"')). Meetings still work; people behind strict firewalls may not connect. Add 'Calls: Edit' (Realtime) to the Cloudflare token to enable the relay."
+            fi
+          fi
+          [ "$(cat /tmp/m.json)" = "{}" ] || npx wrangler secret bulk /tmp/m.json --name kayaksa-meet; rm -f /tmp/m.json
+          echo "### meet.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload the brand library
         if: github.event.inputs.sync_brand == 'true' || env.NEW_BUCKET == '1'
         run: node scripts/sync-brand.mjs
@@ -210,3 +241,4 @@ jobs:
           case ",${{ steps.apps.outputs.list }}," in *",www,"*) [ -f /tmp/www-preview ] && curl -fsS "$(cat /tmp/www-preview)/api/health" && echo; curl -fsS -A "Mozilla/5.0 (KayakDeployCheck)" -o /dev/null -w "Kay voice test: %{http_code} %{content_type}\n" -X POST -H "Content-Type: application/json" -H "Origin: https://www.kayaksa.com" -d '{"text":"Hello, I am Kay."}' https://www.kayaksa.com/api/kay/speak || true; curl -fsS https://www.kayaksa.com/api/health && echo || echo "www.kayaksa.com is not on the new site yet";; esac
           case ",${{ steps.apps.outputs.list }}," in *",learn,"*) curl -fsS https://learn.kayaksa.com/healthz && echo;; esac
           case ",${{ steps.apps.outputs.list }}," in *",internal,"*) curl -fsS https://internal.kayaksa.com/healthz && echo;; esac
+          case ",${{ steps.apps.outputs.list }}," in *",meet,"*) curl -fsS https://meet.kayaksa.com/healthz && echo || echo "meet.kayaksa.com is not answering yet (new address; give DNS a few minutes)";; esac

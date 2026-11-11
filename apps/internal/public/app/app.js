@@ -5,6 +5,7 @@ initTheme();
 export const NAV = [
   { group: "Workspace", items: [
     { id: "home", label: "Home", icon: "home" },
+    { id: "meet", label: "Kayak Meet", icon: "play" },
     { id: "brand", label: "Brand Portal", icon: "brand" },
     { id: "tools", label: "Kayak Tools", icon: "tools" },
     { id: "network", label: "Kayak Network", icon: "network" },
@@ -18,7 +19,7 @@ export const NAV = [
   { group: "Administration", admin: true, items: [{ id: "admin", label: "People & access", icon: "users" }, { id: "sales", label: "Learn sales", icon: "briefcase" }, { id: "security", label: "Security", icon: "shield" }, { id: "audit", label: "Audit log", icon: "activity" }] },
 ];
 
-const VIEWS = { home: "home", brand: "brand", tools: "tools", network: "network", ai: "ai", cards: "cards", decks: "decks", learn: "learn", website: "website", security: "security", sales: "sales", admin: "admin", audit: "security", account: "account" };
+const VIEWS = { home: "home", meet: "meet", brand: "brand", tools: "tools", network: "network", ai: "ai", cards: "cards", decks: "decks", learn: "learn", website: "website", security: "security", sales: "sales", admin: "admin", audit: "security", account: "account" };
 
 export const state = { me: null };
 

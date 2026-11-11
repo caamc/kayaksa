@@ -14,6 +14,7 @@ import { cards, decks } from "./studio";
 import { website } from "./website";
 import { security } from "./security";
 import { learnSales } from "./learnsales";
+import { meet } from "./meet";
 
 type V = { Bindings: Env; Variables: { user: User } };
 const app = new Hono<V>();
@@ -64,6 +65,8 @@ app.use("/api/website/*", guard);
 app.use("/api/security/*", guard);
 app.use("/api/learnsales/*", guard);
 app.use("/api/learnsales", guard);
+app.use("/api/meet/*", guard);
+app.use("/api/meet", guard);
 app.use("/files/*", guard);
 app.use("/app", guard);
 app.use("/app/*", guard);
@@ -80,6 +83,7 @@ app.route("/api/decks", decks);
 app.route("/api/website", website);
 app.route("/api/security", security);
 app.route("/api/learnsales", learnSales);
+app.route("/api/meet", meet);
 app.route(
   "/api/learn",
   learnApi({

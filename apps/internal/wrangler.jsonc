@@ -11,9 +11,11 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "kayaksa-internal", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" },
     { "binding": "LEARN_DB", "database_name": "kayaksa-learn", "database_id": "00000000-0000-0000-0000-000000000001" },
-    { "binding": "WWW_DB", "database_name": "kayaksa-www", "database_id": "00000000-0000-0000-0000-000000000002" }
+    { "binding": "WWW_DB", "database_name": "kayaksa-www", "database_id": "00000000-0000-0000-0000-000000000002" },
+    { "binding": "MEET_DB", "database_name": "kayaksa-meet", "database_id": "00000000-0000-0000-0000-000000000003" }
   ],
-  "r2_buckets": [{ "binding": "BRAND", "bucket_name": "kayaksa-brand" }],
+  "r2_buckets": [{ "binding": "BRAND", "bucket_name": "kayaksa-brand" }, { "binding": "MEET_REC", "bucket_name": "kayaksa-meet" }],
+  "ai": { "binding": "AI" },
   "rules": [{ "type": "Data", "globs": ["**/*.ttf"], "fallthrough": false }],
   "observability": { "enabled": true },
   "vars": {
