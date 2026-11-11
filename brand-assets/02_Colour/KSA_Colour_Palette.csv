@@ -1,0 +1,23 @@
+Group,Name,HEX,R,G,B,C,M,Y,K,Use
+Primary,Deep Current,#0E2F3C,14,47,60,77,22,0,76,"Wordmark, headings, dark grounds"
+Primary,Open Water,#17807E,23,128,126,82,0,2,50,"Left blade, links, charts, panels"
+Primary,Beacon Saffron,#EE9B1E,238,155,30,0,35,87,7,"Right blade, highlights (accent only)"
+Primary,Sea Mist,#EEF4F1,238,244,241,2,0,1,4,Page backgrounds and panels
+Secondary,Storm Slate,#3E5563,62,85,99,37,14,0,61,"Body text, risk and investigations"
+Secondary,Tidewater Blue,#2D6A9F,45,106,159,72,33,0,38,Technology and data
+Secondary,Kelp Green,#4B7A4E,75,122,78,39,0,36,52,"People, ESG, sustainability"
+Secondary,Estuary Sand,#D8C5A1,216,197,161,0,9,25,15,"Warm panels, print stock"
+Secondary,Red Clay,#B4472F,180,71,47,0,61,74,29,Risk flags and alerts
+Secondary,Riverstone,#8B9A9C,139,154,156,11,1,0,39,"Rules, dividers, icons"
+Tertiary,Deep Lagoon,#0B5654,11,86,84,87,0,2,66,
+Tertiary,Shallows,#5DB2AB,93,178,171,48,0,4,30,
+Tertiary,Spray,#CDE8E3,205,232,227,12,0,2,9,
+Tertiary,Burnished Gold,#9C630E,156,99,14,0,37,91,39,
+Tertiary,Dawn,#F5C46D,245,196,109,0,20,56,4,
+Tertiary,Haze,#FBEBCD,251,235,205,0,6,18,2,
+Tertiary,Undertow,#1F4B5F,31,75,95,67,21,0,63,
+Tertiary,Drizzle,#7A96A3,122,150,163,25,8,0,36,
+Tertiary,Fog,#D4DEE2,212,222,226,6,2,0,11,
+Tertiary,Dusk Plum,#5E4B78,94,75,120,22,37,0,53,
+Tertiary,Lichen,#9AAD5A,154,173,90,11,0,48,32,
+Tertiary,Coral Flare,#E2735C,226,115,92,0,49,59,11,

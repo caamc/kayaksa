@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416 134">
+<g fill="#0E2F3C">
+<path d="M0 0 H28 V38.7 L52 0 H82 L50.1 51.5 L84 100 H54 L36 74.2 L28 87.1 V100 H0 Z"/>
+<path transform="translate(92 0)" d="M0 100 L31 0 L59 0 L90 100 L61 100 L45 44 L29 100 Z"/>
+<path transform="translate(161 0)" d="M32 74 H60 V100 H32 Z"/>
+<path transform="translate(232 0)" d="M0 100 L31 0 L59 0 L90 100 L61 100 L45 44 L29 100 Z"/>
+<path transform="translate(332 0)" d="M0 0 H28 V38.7 L52 0 H82 L50.1 51.5 L84 100 H54 L36 74.2 L28 87.1 V100 H0 Z"/>
+</g>
+<path transform="translate(161 0)" fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/>
+<path transform="translate(161 0)" fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/>
+<path transform="translate(161 0)" fill="#17807E" d="M42 63 H50 V71 H42 Z"/>
+<text x="0" y="134" textLength="416" lengthAdjust="spacing" fill="#3E5563" font-family="Archivo, Arial, sans-serif" font-weight="600" font-size="13.2">TECH SOLUTIONS</text>
+</svg>

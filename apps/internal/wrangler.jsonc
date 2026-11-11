@@ -1,0 +1,24 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "kayaksa-internal",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [{ "pattern": "internal.kayaksa.com", "custom_domain": true }],
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none", "not_found_handling": "none" },
+  "d1_databases": [{ "binding": "DB", "database_name": "kayaksa-internal", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }],
+  "r2_buckets": [{ "binding": "BRAND", "bucket_name": "kayaksa-brand" }],
+  "rules": [{ "type": "Data", "globs": ["**/*.ttf"], "fallthrough": false }],
+  "observability": { "enabled": true },
+  "vars": {
+    "SITE_URL": "https://internal.kayaksa.com",
+    "LEARN_URL": "https://learn.kayaksa.com",
+    "SUPERADMIN_EMAILS": "anuj@kayaksa.com,ca.anuj@hotmail.com",
+    "AI_DEFAULT_PROVIDER": "anthropic",
+    "AI_DAILY_MESSAGE_LIMIT": "200",
+    "MAIL_FROM": "Kayak Strategic Advisors <no-reply@kayaksa.com>"
+  }
+  // Secrets (set by the deploy workflow from GitHub): AUTH_ENCRYPTION_KEY, BOOTSTRAP_TOKEN,
+  // ANTHROPIC_API_KEY, OPENAI_API_KEY, XAI_API_KEY, RESEND_API_KEY, and optional ANTHROPIC_MODEL / OPENAI_MODEL / XAI_MODEL.
+}

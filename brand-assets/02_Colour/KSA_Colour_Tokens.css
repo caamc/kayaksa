@@ -1,0 +1,25 @@
+/* Kayak Strategic Advisors colour tokens */
+:root {
+  --ksa-deep-current: #0E2F3C;
+  --ksa-open-water: #17807E;
+  --ksa-beacon-saffron: #EE9B1E;
+  --ksa-sea-mist: #EEF4F1;
+  --ksa-storm-slate: #3E5563;
+  --ksa-tidewater-blue: #2D6A9F;
+  --ksa-kelp-green: #4B7A4E;
+  --ksa-estuary-sand: #D8C5A1;
+  --ksa-red-clay: #B4472F;
+  --ksa-riverstone: #8B9A9C;
+  --ksa-deep-lagoon: #0B5654;
+  --ksa-shallows: #5DB2AB;
+  --ksa-spray: #CDE8E3;
+  --ksa-burnished-gold: #9C630E;
+  --ksa-dawn: #F5C46D;
+  --ksa-haze: #FBEBCD;
+  --ksa-undertow: #1F4B5F;
+  --ksa-drizzle: #7A96A3;
+  --ksa-fog: #D4DEE2;
+  --ksa-dusk-plum: #5E4B78;
+  --ksa-lichen: #9AAD5A;
+  --ksa-coral-flare: #E2735C;
+}

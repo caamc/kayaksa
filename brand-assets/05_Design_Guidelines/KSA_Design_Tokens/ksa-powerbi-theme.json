@@ -1,0 +1,46 @@
+{
+  "name": "Kayak Strategic Advisors",
+  "dataColors": [
+    "#17807E",
+    "#2D6A9F",
+    "#4B7A4E",
+    "#3E5563",
+    "#D8C5A1",
+    "#5E4B78",
+    "#5DB2AB",
+    "#9AAD5A",
+    "#0B5654",
+    "#7A96A3"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#0E2F3C",
+  "tableAccent": "#17807E",
+  "good": "#4B7A4E",
+  "neutral": "#9C630E",
+  "bad": "#B4472F",
+  "maximum": "#0E2F3C",
+  "center": "#D4DEE2",
+  "minimum": "#CDE8E3",
+  "textClasses": {
+    "title": {
+      "fontFace": "Archivo",
+      "fontSize": 14,
+      "color": "#0E2F3C"
+    },
+    "label": {
+      "fontFace": "Archivo",
+      "fontSize": 10,
+      "color": "#3E5563"
+    },
+    "callout": {
+      "fontFace": "Archivo",
+      "fontSize": 28,
+      "color": "#0E2F3C"
+    },
+    "header": {
+      "fontFace": "Archivo",
+      "fontSize": 12,
+      "color": "#0E2F3C"
+    }
+  }
+}

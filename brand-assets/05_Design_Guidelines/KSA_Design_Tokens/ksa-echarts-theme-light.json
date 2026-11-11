@@ -1,0 +1,102 @@
+{
+  "color": [
+    "#17807E",
+    "#2D6A9F",
+    "#4B7A4E",
+    "#3E5563",
+    "#D8C5A1",
+    "#5E4B78",
+    "#5DB2AB",
+    "#9AAD5A"
+  ],
+  "backgroundColor": "#FFFFFF",
+  "textStyle": {
+    "fontFamily": "Archivo, Arial, sans-serif",
+    "color": "#3E5563"
+  },
+  "title": {
+    "textStyle": {
+      "color": "#0E2F3C",
+      "fontWeight": 700,
+      "fontSize": 16
+    },
+    "subtextStyle": {
+      "color": "#3E5563",
+      "fontSize": 12
+    }
+  },
+  "line": {
+    "lineStyle": {
+      "width": 2
+    },
+    "symbol": "none",
+    "smooth": false,
+    "areaStyle": {
+      "opacity": 0
+    }
+  },
+  "bar": {
+    "barCategoryGap": "33%",
+    "itemStyle": {
+      "borderRadius": 0
+    }
+  },
+  "categoryAxis": {
+    "axisLine": {
+      "lineStyle": {
+        "color": "#8B9A9C"
+      }
+    },
+    "axisTick": {
+      "show": false
+    },
+    "axisLabel": {
+      "color": "#3E5563",
+      "fontSize": 10
+    },
+    "splitLine": {
+      "show": false
+    }
+  },
+  "valueAxis": {
+    "axisLine": {
+      "show": false
+    },
+    "axisLabel": {
+      "color": "#3E5563",
+      "fontSize": 10
+    },
+    "splitLine": {
+      "lineStyle": {
+        "color": "#D4DEE2",
+        "width": 1
+      }
+    }
+  },
+  "tooltip": {
+    "backgroundColor": "#0E2F3C",
+    "borderWidth": 0,
+    "textStyle": {
+      "color": "#FFFFFF",
+      "fontSize": 12
+    },
+    "extraCssText": "border-radius:4px;transition:all 120ms ease-out;",
+    "axisPointer": {
+      "lineStyle": {
+        "color": "#8B9A9C",
+        "width": 1
+      }
+    }
+  },
+  "legend": {
+    "textStyle": {
+      "color": "#3E5563",
+      "fontSize": 11
+    },
+    "icon": "rect",
+    "itemWidth": 10,
+    "itemHeight": 10
+  },
+  "animationDuration": 600,
+  "animationEasing": "cubicOut"
+}

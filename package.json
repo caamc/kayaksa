@@ -1,0 +1,37 @@
+{
+  "name": "kayaksa",
+  "private": true,
+  "description": "Kayak Strategic Advisors: www, internal and learn sites on Cloudflare Workers",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build-assets.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test tests/unit/*.test.mjs",
+    "e2e": "node tests/e2e/run.mjs",
+    "dev:www": "npm run build && wrangler dev -c apps/www/wrangler.jsonc --port 8701",
+    "dev:internal": "npm run build && wrangler dev -c apps/internal/wrangler.jsonc --port 8702",
+    "dev:learn": "npm run build && wrangler dev -c apps/learn/wrangler.jsonc --port 8703"
+  },
+  "dependencies": {
+    "@pdf-lib/fontkit": "1.1.1",
+    "hono": "4.12.9",
+    "pdf-lib": "1.17.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261031.1",
+    "dompurify": "3.3.0",
+    "jspdf": "3.0.3",
+    "marked": "16.4.1",
+    "pptxgenjs": "4.0.1",
+    "qrcode-generator": "1.5.2",
+    "svg2pdf.js": "2.6.0",
+    "typescript": "5.9.3",
+    "wrangler": "4.150.0"
+  }
+}
