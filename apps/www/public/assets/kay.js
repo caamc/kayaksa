@@ -18,6 +18,8 @@ const ico = {
   min: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>`,
   wave: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>`,
   chat: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter"/></svg>`,
+  up: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v9H4v-9Zm0 0 4-7a2 2 0 0 1 2 2v4h5.5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.3 20H7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`,
+  down: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 13V4h3v9Zm0 0-4 7a2 2 0 0 1-2-2v-4H5.5a2 2 0 0 1-2-2.3l1.2-6A2 2 0 0 1 6.7 4H17" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`,
   stop: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" fill="currentColor"/></svg>`,
   speaker: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
   mute: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
@@ -132,6 +134,7 @@ export async function mountKay() {
     const { clean, chips, handoff } = m.role === "assistant" ? parseTags(m.content) : { clean: m.content, chips: [], handoff: false };
     return `<div class="kay-msg ${m.role}" data-i="${i}">${m.role === "assistant" ? `<span class="kay-av xs" aria-hidden="true">${AV}</span>` : ""}
       <div class="kay-b">${m.role === "assistant" ? md(clean) || '<span class="kay-typing"><i></i><i></i><i></i></span>' : `<p>${esc(clean).replace(/\n/g, "<br>")}</p>`}
+      ${m.role === "assistant" && i > 0 && clean && !(state.busy && i === state.msgs.length - 1) ? `<div class="kay-rate" aria-label="Was this helpful?">${m.rated ? `<span>${m.rated > 0 ? "Thanks!" : "Thanks, I'll learn from that."}</span>` : `<button data-rate="1" data-i="${i}" title="Helpful" aria-label="Helpful">${ico.up}</button><button data-rate="-1" data-i="${i}" title="Not helpful" aria-label="Not helpful">${ico.down}</button>`}</div>` : ""}
       ${chips.length || handoff ? `<div class="kay-chips">${chips.map((c) => `<a class="kay-chip" href="${esc(c.p)}" data-kaygo="1">${esc(c.l)}</a>`).join("")}${handoff ? `<button class="kay-chip strong" data-k="handoff">Leave a message for the team</button>` : ""}</div>` : ""}</div></div>`;
   }
   function renderAll() {
@@ -150,6 +153,13 @@ export async function mountKay() {
     const s = e.target.closest("[data-s]");
     if (s) return send(s.dataset.s);
     if (e.target.closest('[data-k="handoff"]')) return handoffForm();
+    const r = e.target.closest("[data-rate]");
+    if (r) {
+      const i = Number(r.dataset.i), m = state.msgs[i], q = state.msgs.slice(0, i).reverse().find((x) => x.role === "user");
+      m.rated = Number(r.dataset.rate); save();
+      fetch("/api/kay/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating: m.rated, question: q?.content || "", answer: parseTags(m.content).clean }) }).catch(() => {});
+      const el = $(`.kay-msg[data-i="${i}"]`, log); if (el) el.outerHTML = bubble(m, i);
+    }
   });
   root.addEventListener("click", (e) => {
     const a = e.target.closest("a[data-kaygo]");
@@ -223,7 +233,7 @@ export async function mountKay() {
       if (state.voice && !state.muted && ai.content) speech.say(speakable(ai.content));
     } finally {
       state.busy = false; root.classList.remove("busy"); save(); renderLast();
-      if (state.voice) speech.whenDone(() => { if (state.voice) listen(); });
+      if (state.voice) speech.whenDone(() => { if (state.voice && !bargeIn.interrupted) listen(); });
     }
   }
 
@@ -344,6 +354,34 @@ export async function mountKay() {
     try { r.start(); } catch { btn.classList.remove("on"); }
   }
 
+  // ------------------------------------------------------------ barge-in: talk over Kay to interrupt him
+  // While Kay speaks in voice mode, a second recogniser listens. Words that are not Kay's own (his voice
+  // can leak from speakers into the microphone) stop him at once, and what the visitor said is answered.
+  const bargeIn = (() => {
+    let r = null, said = "", heardText = "", interrupted = false;
+    const stopR = () => { if (r) { const x = r; r = null; try { x.stop(); } catch {} } };
+    const words = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "").split(/\s+/).filter(Boolean);
+    const isEcho = (t) => { const w = words(t), k = new Set(words(said)); return w.length && w.filter((x) => k.has(x)).length / w.length > 0.5; };
+    return {
+      saying(t) { said += " " + t; },
+      start() {
+        if (!SR || !state.voice || r) return;
+        said = ""; heardText = ""; interrupted = false;
+        r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = true;
+        r.onresult = (e) => {
+          let t = ""; for (const x of e.results) t += x[0].transcript;
+          if (!interrupted && words(t).length >= 2 && !isEcho(t)) { interrupted = true; speech.stop(); heard(t); status("Listening…"); setListening(true); }
+          if (interrupted) { heardText = t; heard(t); if ([...e.results].every((x) => x.isFinal)) { const final = heardText.trim(); stopR(); setListening(false); if (final) { status("Thinking…"); send(final); } } }
+        };
+        r.onend = () => { r = null; if (interrupted && heardText.trim()) { setListening(false); } };
+        r.onerror = () => { r = null; };
+        try { r.start(); } catch { r = null; }
+      },
+      stop() { if (!interrupted) stopR(); },
+      get interrupted() { return interrupted; },
+    };
+  })();
+
   // ------------------------------------------------------------ speech output with a moving mouth
   const speech = (() => {
     const q = []; let playing = false, ctx = null, cur = null, waiters = [], serverOk = true;
@@ -390,13 +428,15 @@ export async function mountKay() {
     }
     async function pump() {
       if (playing) return;
-      playing = true; status("Speaking…");
+      playing = true; status("Speaking… (just talk to interrupt)");
+      bargeIn.start();
       while (q.length) {
         const text = q.shift();
+        bargeIn.saying(text);
         try { if (serverOk) await playServer(text); else await playBrowser(text); }
         catch { await playBrowser(text); }
       }
-      playing = false; cur = null; setMouth(0);
+      playing = false; cur = null; setMouth(0); bargeIn.stop();
       if (state.voice && !listening) status("Tap the microphone to reply, or just keep talking.");
       const w = waiters; waiters = []; w.forEach((f) => f());
     }

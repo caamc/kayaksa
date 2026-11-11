@@ -1,12 +1,14 @@
 // One interface over Anthropic (Claude), OpenAI (GPT / Codex) and xAI (Grok).
 // Keys live only in Worker secrets; nothing here is ever sent to a browser.
 
-export type ProviderId = "anthropic" | "openai" | "xai";
+export type ProviderId = "anthropic" | "openai" | "xai" | "google";
 
 export interface AiEnv {
   ANTHROPIC_API_KEY?: string;
   OPENAI_API_KEY?: string;
   XAI_API_KEY?: string;
+  GEMINI_API_KEY?: string;
+  GEMINI_MODEL?: string;
   ANTHROPIC_MODEL?: string;
   OPENAI_MODEL?: string;
   XAI_MODEL?: string;
@@ -22,6 +24,7 @@ export const PROVIDERS: Record<ProviderId, { label: string; vendor: string; key:
   anthropic: { label: "Claude", vendor: "Anthropic", key: "ANTHROPIC_API_KEY", model: "ANTHROPIC_MODEL", fallbackModel: "claude-sonnet-5-5" },
   openai: { label: "GPT / Codex", vendor: "OpenAI", key: "OPENAI_API_KEY", model: "OPENAI_MODEL", fallbackModel: "gpt-5" },
   xai: { label: "Grok", vendor: "xAI", key: "XAI_API_KEY", model: "XAI_MODEL", fallbackModel: "grok-4" },
+  google: { label: "Gemini", vendor: "Google", key: "GEMINI_API_KEY", model: "GEMINI_MODEL", fallbackModel: "gemini-flash-latest" },
 };
 
 export function availableProviders(env: AiEnv) {
@@ -48,13 +51,15 @@ interface CallOpts {
   maxTokens?: number;
   temperature?: number;
   stream: boolean;
+  /** Overrides the provider's default model for this call (e.g. a cheaper "lite" model). */
+  model?: string;
   /** Anthropic prompt caching for a long, stable system prompt (cuts cost and latency). */
   cacheSystem?: boolean;
 }
 
 async function call(env: AiEnv, id: ProviderId, o: CallOpts): Promise<Response> {
   const key = env[PROVIDERS[id].key] as string;
-  const model = modelFor(env, id);
+  const model = o.model || modelFor(env, id);
   if (id === "anthropic") {
     return fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -62,7 +67,7 @@ async function call(env: AiEnv, id: ProviderId, o: CallOpts): Promise<Response> 
       body: JSON.stringify({ model, max_tokens: o.maxTokens ?? 2048, system: o.cacheSystem ? [{ type: "text", text: o.system, cache_control: { type: "ephemeral" } }] : o.system, messages: o.messages, stream: o.stream, ...(o.temperature != null ? { temperature: o.temperature } : {}) }),
     });
   }
-  const url = id === "openai" ? "https://api.openai.com/v1/chat/completions" : "https://api.x.ai/v1/chat/completions";
+  const url = id === "openai" ? "https://api.openai.com/v1/chat/completions" : id === "google" ? "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" : "https://api.x.ai/v1/chat/completions";
   return fetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },

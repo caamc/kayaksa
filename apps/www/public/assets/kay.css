@@ -88,3 +88,5 @@
 }
 @media (prefers-reduced-motion:reduce){.kay-panel,.kay-nudge,.kay-av.xl img,#kay.listening .kay-ring{animation:none}}
 @media print{#kay{display:none}}
+
+.kay-rate{display:flex;gap:4px;margin-top:6px;align-items:center;font-size:.74rem;color:var(--muted)}.kay-rate button{display:grid;place-items:center;width:26px;height:26px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}.kay-rate button:hover{border-color:var(--line);color:var(--fg)}#kay .kay-rate svg{width:15px;height:15px}

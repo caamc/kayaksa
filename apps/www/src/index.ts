@@ -7,7 +7,8 @@ import { randomToken, sha256hex } from "../../../packages/core/src/crypto";
 import { mailEnabled, mailHtml, sendMail } from "../../../packages/core/src/mail";
 import BODY from "./body.html";
 import STATIC_DATA from "./site-data.json";
-import { kayApi } from "./kay";
+import { kayApi, redact } from "./kay";
+import { syncMemory, weeklyDrafts, dailyCleanup, seedMemory } from "./learning";
 import type { Env } from "./env";
 
 type C = { Bindings: Env };
@@ -240,8 +241,17 @@ app.post("/api/a", async (c) => {
   return c.body(null, 204);
 });
 
+// Visitors can rate Kay's answers; low ratings feed the weekly review.
+app.post("/api/kay/feedback", async (c) => {
+  if (!(await rateLimit(c.env.DB, `kayfb:${clientIp(c)}`, 30, 3600))) return c.json({ ok: true });
+  const b: any = await c.req.json().catch(() => ({}));
+  const rating = b.rating === 1 ? 1 : b.rating === -1 ? -1 : 0;
+  if (!rating) return c.json({ error: "Rating missing." }, 400);
+  await c.env.DB.prepare("INSERT INTO kay_feedback (at, rating, question, answer, comment) VALUES (?,?,?,?,?)").bind(new Date().toISOString(), rating, redact(str(b.question, 500)), str(b.answer, 2000), redact(str(b.comment, 500))).run();
+  return c.json({ ok: true });
+});
 app.route("/api/kay", kayApi(siteData));
-app.get("/api/health", (c) => c.json({ ok: true, site: "www", kay: !!(c.env.ANTHROPIC_API_KEY || c.env.OPENAI_API_KEY || c.env.XAI_API_KEY), voice: !!c.env.OPENAI_API_KEY }));
+app.get("/api/health", (c) => c.json({ ok: true, site: "www", kay: !!(c.env.ANTHROPIC_API_KEY || c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY || c.env.XAI_API_KEY), voice: !!(c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY) }));
 app.all("/api/*", (c) => c.json({ error: "Not found." }, 404));
 
 // ------------------------------------------------------------------ SEO and AI discoverability
@@ -282,12 +292,16 @@ app.get("*", async (c) => {
 export default {
   fetch: app.fetch,
   // Daily housekeeping: drop stale rate-limit rows and keep detailed speed samples for 90 days.
-  async scheduled(_e: ScheduledEvent, env: Env) {
+  async scheduled(e: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    if (e.cron === "17 * * * *") { await seedMemory(env); await syncMemory(env); return; }
+    if (e.cron === "45 3 * * 1") { await weeklyDrafts(env, await siteData({ env } as any)).catch((x) => console.error("weekly drafts", x?.message)); return; }
+    // Daily housekeeping: drop stale rate-limit rows and keep detailed speed samples for 90 days.
     const cutoff = new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10);
     await env.DB.batch([
       env.DB.prepare("DELETE FROM stat_vitals WHERE day < ?").bind(cutoff),
       env.DB.prepare("DELETE FROM rate_limits"),
       env.DB.prepare("DELETE FROM enquiries WHERE created_at < ? AND status IN ('closed','spam')").bind(new Date(Date.now() - 3 * 365 * 86400_000).toISOString()),
     ]);
+    await dailyCleanup(env);
   },
 };
