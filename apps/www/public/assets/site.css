@@ -775,3 +775,4 @@ main:focus{outline:none}
 .aff h3{margin:0;font-size:var(--step1)}
 .aff p{margin:0;color:var(--muted);line-height:1.65}
 .aff .textlink{margin-top:auto}
+.diagram{max-width:100%;height:auto;overflow:visible}

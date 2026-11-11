@@ -384,7 +384,7 @@ P.about = () => `
   <div><p class="serif">A kayak is a disciplined, agile craft. It crosses changing water through balance, direction and steady navigation.</p>
   <p style="margin-top:18px;color:var(--muted)">That is how we help clients through complex business, regulatory, technology and risk conditions. We are a strategy and risk advisory firm for boards, promoters and investors in India, built around six clusters and one standard of work.</p>
   <p style="color:var(--muted)">The name carries the story. Our identifier's two blades are the client and Kayak: two strokes that converge on one stem, one decision carried through.</p></div>
-  <svg class="diagram" viewBox="-70 -18 232 140" role="img" aria-label="The Kayak identifier: the client blade and the Kayak blade converge on one stem, the decision">
+  <svg class="diagram" viewBox="-74 -18 256 140" role="img" aria-label="The Kayak identifier: the client blade and the Kayak blade converge on one stem, the decision">
     <path fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path fill="var(--logo-ink)" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/>
     <line x1="10" y1="10" x2="-14" y2="10"/><text class="k" x="-16" y="7" text-anchor="end">CLIENT</text><text x="-16" y="20" text-anchor="end">first blade</text>
     <line x1="82" y1="10" x2="104" y2="10"/><text class="k" x="106" y="7">KAYAK</text><text x="106" y="20">second blade</text>
