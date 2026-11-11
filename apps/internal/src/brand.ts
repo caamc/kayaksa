@@ -56,6 +56,8 @@ brand.delete("/assets/:id", async (c) => {
   return c.json({ ok: true });
 });
 
+const MIME: Record<string, string> = { svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif", pdf: "application/pdf", mp4: "video/mp4", ttf: "font/ttf", otf: "font/otf", woff2: "font/woff2", woff: "font/woff", zip: "application/zip", txt: "text/plain", ai: "application/postscript", eps: "application/postscript", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
+
 // Streams a library file. Inline viewing is limited to images and PDFs; everything else downloads.
 brandFiles.get("/*", async (c) => {
   const key = decodeURIComponent(new URL(c.req.url).pathname.replace(/^\/files\/brand\//, ""));
@@ -72,7 +74,13 @@ brandFiles.get("/*", async (c) => {
   h.set("Content-Security-Policy", "sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'");
   h.set("X-Content-Type-Options", "nosniff");
   const name = key.split("/").pop()!;
-  const type = h.get("Content-Type") || "";
+  // Older uploads carry no content type in R2, so fall back to the manifest, then the extension.
+  let type = h.get("Content-Type") || "";
+  if (!type || type === "application/octet-stream") {
+    const m = (manifest as any[]).find((x) => x.file_key === key);
+    type = m?.mime || MIME[(name.split(".").pop() || "").toLowerCase()] || "application/octet-stream";
+    h.set("Content-Type", type);
+  }
   const inline = c.req.query("view") === "1" && /^(image\/(png|jpeg|webp|gif|svg\+xml)|application\/pdf|video\/mp4)$/.test(type);
   h.set("Content-Disposition", `${inline ? "inline" : "attachment"}; filename="${name.replace(/"/g, "")}"`);
   if (range && "range" in obj && obj.range) {

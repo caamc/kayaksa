@@ -16,6 +16,22 @@ const MODES: Record<string, string> = {
   review: "Review the text the user pastes: point out gaps, risks, unclear wording and factual claims that need support, then offer a corrected version.",
 };
 
+// ----- Cost control -----
+// Most staff questions are short look-ups or rewrites. They go to a light model; substantive work
+// (drafting, research, reviews, long inputs, long threads) stays on Sonnet 5.5. History is trimmed,
+// older turns are clipped, and the whole prefix is prompt-cached, so a typical turn costs roughly a
+// tenth of what it did.
+const LIGHT_ANTHROPIC = "claude-haiku-5-5";
+const LIGHT_GEMINI = "gemini-flash-lite-latest";
+const HEAVY = /\b(draft|proposal|scope|engagement letter|report|analy[sz]e|research|review|compare|strategy|due diligence|regulation|legal|contract|policy|plan|table|summar(y|ise|ize) (this|the attached))\b/i;
+function isLight(mode: string, text: string, turns: number) {
+  return mode === "general" && text.length < 280 && turns <= 6 && !HEAVY.test(text) && !/```|\n.*\n.*\n/.test(text);
+}
+function trimHistory(rows: ChatMessage[]): ChatMessage[] {
+  const keep = rows.slice(-12);
+  return keep.map((m, i) => (i < keep.length - 4 && m.content.length > 2500 ? { ...m, content: m.content.slice(0, 2500) + "\n…[earlier text shortened]" } : m));
+}
+
 async function underLimit(c: any, u: User) {
   const lim = Number(c.env.AI_DAILY_MESSAGE_LIMIT || 200);
   return rateLimit(c.env.DB, `ai:${u.id}:${new Date().toISOString().slice(0, 10)}`, lim, 86_400);
@@ -59,20 +75,33 @@ ai.post("/chat", async (c) => {
     await c.env.DB.prepare("INSERT INTO ai_conversations (id, user_id, title, provider, model, created_at, updated_at) VALUES (?,?,?,?,?,?,?)")
       .bind(convId, u.id, text.replace(/\s+/g, " ").slice(0, 70), provider, modelFor(c.env, provider), now, now).run();
   }
-  const { results: prior } = await c.env.DB.prepare("SELECT role, content FROM ai_messages WHERE conv_id = ? ORDER BY id DESC LIMIT 30").bind(convId).all<any>();
-  const history: ChatMessage[] = prior.reverse().map((m: any) => ({ role: m.role, content: m.content }));
+  const { results: prior } = await c.env.DB.prepare("SELECT role, content FROM ai_messages WHERE conv_id = ? ORDER BY id DESC LIMIT 12").bind(convId).all<any>();
+  const history: ChatMessage[] = trimHistory(prior.reverse().map((m: any) => ({ role: m.role, content: m.content })));
   history.push({ role: "user", content: text });
   await c.env.DB.prepare("INSERT INTO ai_messages (conv_id, role, content, created_at) VALUES (?, 'user', ?, ?)").bind(convId, text, now).run();
-  const system = `${KAYAK_VOICE}\n\nYou are Kayak AI, the internal assistant for Kayak staff. The colleague is ${u.name || "a Kayak colleague"}${u.title ? `, ${u.title}` : ""}. Today is ${new Date().toDateString()}.\n${MODES[mode]}\nFormat answers in Markdown.`;
+  const system = `${KAYAK_VOICE}\n\nYou are Kayak AI, the internal assistant for Kayak staff. The colleague is ${u.name || "a Kayak colleague"}${u.title ? `, ${u.title}` : ""}. Today is ${new Date().toDateString()}.\n${MODES[mode]}\nBe concise: use as few words as the question needs, and never pad. Format answers in Markdown.`;
+
+  // Route: light questions to Haiku (or Gemini Flash-Lite when no Claude key is chosen); the rest to the provider's main model.
+  const light = b.quality !== "best" && isLight(mode, text, history.length);
+  const useProvider = provider;
+  let model: string | undefined;
+  if (light && provider === "anthropic") model = LIGHT_ANTHROPIC;
+  else if (light && provider === "google") model = LIGHT_GEMINI;
+  const maxTokens = mode === "draft" || mode === "review" ? 3000 : light ? 700 : 1800;
+  const shown = model || modelFor(c.env, useProvider);
 
   return streamSSE(c, async (s) => {
-    await s.writeSSE({ event: "meta", data: JSON.stringify({ conversationId: convId, provider, model: modelFor(c.env, provider) }) });
+    await s.writeSSE({ event: "meta", data: JSON.stringify({ conversationId: convId, provider: useProvider, model: shown, light }) });
     let full = "";
     try {
-      for await (const chunk of streamText(c.env, provider, { system, messages: history, maxTokens: 4096 })) {
-        full += chunk;
-        await s.writeSSE({ event: "delta", data: JSON.stringify({ t: chunk }) });
-      }
+      const run = async (m?: string) => {
+        for await (const chunk of streamText(c.env, useProvider, { system, messages: history, maxTokens, model: m, cacheSystem: true, cacheMessages: true })) {
+          full += chunk;
+          await s.writeSSE({ event: "delta", data: JSON.stringify({ t: chunk }) });
+        }
+      };
+      try { await run(model); }
+      catch (e) { if (model && !full) await run(undefined); else throw e; } // light model unavailable: fall back to the main one
       await s.writeSSE({ event: "done", data: "{}" });
     } catch (e: any) {
       await s.writeSSE({ event: "error", data: JSON.stringify({ error: e?.message || "The AI service failed." }) });

@@ -55,6 +55,16 @@ interface CallOpts {
   model?: string;
   /** Anthropic prompt caching for a long, stable system prompt (cuts cost and latency). */
   cacheSystem?: boolean;
+  /** Anthropic: also cache the conversation so far, so each new turn re-reads it at a tenth of the price. */
+  cacheMessages?: boolean;
+}
+
+function anthropicMessages(o: CallOpts) {
+  if (!o.cacheMessages || !o.messages.length) return o.messages;
+  const out: any[] = o.messages.map((m) => ({ role: m.role, content: m.content }));
+  const last = out[out.length - 1];
+  last.content = [{ type: "text", text: last.content, cache_control: { type: "ephemeral" } }];
+  return out;
 }
 
 async function call(env: AiEnv, id: ProviderId, o: CallOpts): Promise<Response> {
@@ -64,7 +74,7 @@ async function call(env: AiEnv, id: ProviderId, o: CallOpts): Promise<Response> 
     return fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: o.maxTokens ?? 2048, system: o.cacheSystem ? [{ type: "text", text: o.system, cache_control: { type: "ephemeral" } }] : o.system, messages: o.messages, stream: o.stream, ...(o.temperature != null ? { temperature: o.temperature } : {}) }),
+      body: JSON.stringify({ model, max_tokens: o.maxTokens ?? 2048, system: o.cacheSystem ? [{ type: "text", text: o.system, cache_control: { type: "ephemeral" } }] : o.system, messages: anthropicMessages(o), stream: o.stream, ...(o.temperature != null ? { temperature: o.temperature } : {}) }),
     });
   }
   const url = id === "openai" ? "https://api.openai.com/v1/chat/completions" : id === "google" ? "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" : "https://api.x.ai/v1/chat/completions";
