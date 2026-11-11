@@ -179,10 +179,10 @@ Every client engagement is held to five promises. They are on our website, so cl
 When you are unsure how to handle a situation, ask which answer best keeps these promises.
 """),
    ("What we do", 6, """
-Our work is organised into six practice clusters, serving clients across more than forty sectors:
+Our work is organised into six practice clusters, serving clients across a wide range of industries and sectors:
 
 - **Strategy, Deal & Transactions:** growth and market-entry strategy, M&A advisory, commercial, financial and integrity due diligence, valuation support and post-deal integration.
-- **Tax & Regulatory:** direct tax, GST and transfer pricing; SEBI, RBI, FEMA and Companies Act compliance; DPDP readiness; ESG and BRSR reporting.
+- **Tax, Legal & Regulatory:** direct tax, GST and transfer pricing; SEBI, RBI, FEMA and Companies Act compliance; DPDP readiness; ESG and BRSR reporting; paralegal and research services; evidence-backed response drafting support for law firms and family offices; deal negotiation, agreement and closure; contract drafting and management; compliance and legal housekeeping. Kayak is not a law firm: legal advice and representation come from the client's advocates or independent law firms we work alongside.
 - **Crisis & Resilience:** enterprise and third-party risk, conduct forensics, brand and marketplace integrity, IP enforcement support with counsel, expert witness and arbitration support, and crisis management.
 - **Technology & AI:** digital and data strategy, AI adoption and governance, analytics, cyber-risk assessment and technology due diligence.
 - **Managed Services:** compliance calendars, virtual CFO, HR and payroll compliance, brand monitoring and due diligence as a service.

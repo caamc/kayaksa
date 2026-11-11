@@ -4,7 +4,7 @@
 const DATA = JSON.parse(document.getElementById("site-data").textContent);
 [DATA.logos, DATA.services] = await Promise.all([
   fetch("/assets/logos.json").then((r) => r.json()).catch(() => ({})),
-  fetch("/assets/services.json?v=2").then((r) => r.json()).catch(() => []),
+  fetch("/assets/services.json?v=3").then((r) => r.json()).catch(() => []),
 ]);
 const FLAGS = DATA.flags || {};
 const CFG = DATA.config || {};
@@ -217,6 +217,7 @@ P.service = (x) => {
   <div class="svc-overview">${x.overview.map((p, i) => `<p class="${i ? "" : "serif"}">${esc(p)}</p>`).join("")}</div>
   <div class="aside"><h3>When to call us</h3><ul class="ticks">${x.when.map((w) => `<li>${esc(w)}</li>`).join("")}</ul><a class="textlink" href="#contact" data-cluster="${c.id}">Talk to the ${esc(c.short)} team ${arrow}</a></div>
 </div></section>
+${x.note ? `<section class="sec tight"><div class="wrap"><aside class="legal-note" style="--c:${c.color}"><span class="eyebrow">How legal work is delivered</span><p>${esc(x.note)}</p></aside></div></section>` : ""}
 <section class="sec alt" style="--c:${c.color}"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">What we do</span><h2>The work, in detail</h2></div></div>
   <ol class="svc-what">${x.what.map((w, i) => `<li><span class="n">${String(i + 1).padStart(2, "0")}</span><p>${esc(w)}</p></li>`).join("")}</ol>
@@ -251,6 +252,7 @@ P.cluster = (c) => {
   <p class="serif">${esc(c.intro)}</p>
   <div class="aside"><h3>How we engage</h3><p>A defined project, an advisory retainer, a managed service or a rapid response when time is short. One lead partner throughout.</p><a class="textlink" href="#contact" data-cluster="${c.id}">Talk to the ${esc(c.short)} team ${arrow}</a></div>
 </div></section>
+${c.note ? `<section class="sec tight"><div class="wrap"><aside class="legal-note" style="--c:${c.color}"><span class="eyebrow">How legal work is delivered</span><p>${esc(c.note)}</p></aside></div></section>` : ""}
 <section class="sec alt" style="--c:${c.color}"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">What we do</span><h2>${esc(c.short)} services</h2></div></div>
   <div class="svc-grid">${c.services.map((s, i) => { const x = svcAt(c.id, i); return x ? `<a class="svc-card link" href="#svc-${x.slug}">${ic(s[0])}<h3>${esc(s[1])}</h3><p>${esc(s[2])}</p><span class="textlink">Explore ${arrow}</span></a>` : `<article class="svc-card">${ic(s[0])}<h3>${esc(s[1])}</h3><p>${esc(s[2])}</p></article>`; }).join("")}</div>

@@ -6,9 +6,11 @@ def slug(s):
     return re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", s.lower())).strip("-")
 
 S = []
-def svc(cluster, name, summary, overview, when, what, approach, deliverables, outcomes, s=None):
-    S.append({"cluster": cluster, "slug": s or slug(name), "name": name, "summary": summary, "overview": overview,
-              "when": when, "what": what, "approach": approach, "deliverables": deliverables, "outcomes": outcomes})
+def svc(cluster, name, summary, overview, when, what, approach, deliverables, outcomes, s=None, note=None):
+    x = {"cluster": cluster, "slug": s or slug(name), "name": name, "summary": summary, "overview": overview,
+         "when": when, "what": what, "approach": approach, "deliverables": deliverables, "outcomes": outcomes}
+    if note: x["note"] = note
+    S.append(x)
 
 STD_APPROACH = None
 
@@ -64,8 +66,8 @@ svc(C, "Post-deal integration and fundraising readiness",
   ["Integration or readiness plan", "Synergy or readiness tracker", "Governance and reporting fixes", "Investor-ready data room checklist"],
   ["Deal value realised, not just announced", "A smoother, faster raise", "A stronger organisation afterwards"])
 
-# ---------------------------------------------------------------- Tax & Regulatory
-C = "tax-regulatory"
+# ---------------------------------------------------------------- Tax, Legal & Regulatory
+C = "tax-legal-regulatory"
 svc(C, "Direct tax, GST and transfer-pricing support",
   "Tax positions that are defensible, documented and aligned with how your business actually runs.",
   ["Tax is where strategy meets scrutiny. We help businesses take clear, well-documented positions on direct tax, GST and transfer pricing, review existing positions for exposure, and prepare for assessments and audits before they arrive.",
@@ -115,6 +117,94 @@ svc(C, "Regulatory change monitoring and board briefings",
   [["Track", "The sources and changes relevant to you."], ["Interpret", "What each change means for your business."], ["Brief", "Concise board and management updates."], ["Track action", "Owners and deadlines until implemented."]],
   ["Regulatory horizon report", "Impact notes on significant changes", "Board briefing papers", "Implementation tracker"],
   ["No surprises from new rules", "Faster, cheaper implementation", "A better-informed board"])
+
+
+# ---- Legal support services. Kayak is not a law firm: under the Advocates Act, 1961 only enrolled
+# advocates may practise law in India. These services are research, evidence, drafting-support,
+# negotiation and process work done alongside the client's advocates or independent law firms.
+LEGAL_NOTE = ("Kayak Strategic Advisors is not a law firm and does not practise law. Legal advice, legal opinions, "
+  "the settling and signing of pleadings and legal documents, and appearances before courts, tribunals and authorities "
+  "are provided by your advocates or by independent law firms that we work alongside. Our work supports theirs.")
+
+svc(C, "Paralegal and research services",
+  "Careful legal research, document work and matter support that gives lawyers back their time for judgement.",
+  ["Every legal matter rests on work that is painstaking rather than glamorous: finding the right judgment, checking that a provision is still in force, reading thousands of pages for the one that matters, and keeping a chronology that never slips. We take on that work for law firms, in-house legal teams and family offices, to a standard their advocates can rely on.",
+   "Our researchers combine legal training with Kayak's investigation and data skills, so research is thorough, sourced and fast. Every output is prepared for review by the instructing advocate, who keeps control of the advice."],
+  ["Your legal team is stretched across too many matters at once", "A dispute, arbitration or regulatory proceeding involves large volumes of documents", "You need research across statutes, rules, circulars and case law, quickly and with sources", "A family office or promoter group wants its legal papers organised and tracked"],
+  ["Statutory, regulatory and case-law research with full citations, including the Bharatiya Nyaya Sanhita, Bharatiya Nagarik Suraksha Sanhita and Bharatiya Sakshya Adhiniyam, which replaced the colonial-era codes in 2024",
+   "Research memos for the advocate's review, separating settled positions from open questions",
+   "Document review, indexing and coding for disputes, arbitrations and due diligence",
+   "Case chronologies, lists of dates and dramatis personae",
+   "Matter, hearing and limitation tracking, with cause-list monitoring",
+   "Translation support for documents in Indian languages, with certified translation arranged where required"],
+  [["Brief", "Agree the question, the sources, the format and the deadline with the instructing advocate."], ["Research", "Search, read and verify, recording every source."], ["Review", "Senior quality checks before anything leaves us."], ["Hand over", "Clear, sourced work product for the advocate's use."]],
+  ["Sourced research memos", "Document indices and review logs", "Chronologies and lists of dates", "Matter and limitation trackers"],
+  ["More advocate time spent on judgement", "Fewer missed authorities and dates", "Lower cost per matter"],
+  note=LEGAL_NOTE)
+
+svc(C, "Evidence-backed response drafting support for law firms and family offices",
+  "Replies to notices, allegations and regulators built on verified facts and organised evidence, ready for counsel to settle.",
+  ["A strong response to a legal notice, a show-cause notice, a tax or regulatory query, or a public allegation is won or lost on facts. We gather the facts, test them, assemble the evidence and prepare a first draft of the factual response, so that the advocate settling it starts from a complete and accurate record rather than an empty page.",
+   "For family offices and promoter families, we bring the same discipline to sensitive matters: allegations against the family or its businesses, disputes between members or with former employees, and questions from banks or regulators, handled discreetly and with a clear chain of evidence."],
+  ["You have received a legal notice, show-cause notice or regulatory query with a tight deadline", "Allegations against a company, promoter or family member need a fact-based answer", "Your law firm needs a factual record and evidence bundle before drafting", "Records are scattered across entities, people and years"],
+  ["Fact-finding from documents, records, interviews and lawful open sources",
+   "Evidence bundles indexed to each allegation or query, with documents traced to their source",
+   "Electronic-record handling with chain-of-custody notes, and support for the certificates required under section 63 of the Bharatiya Sakshya Adhiniyam, 2023",
+   "Chronologies, reconciliations and analysis that answer the points raised",
+   "First drafts of factual responses and annexures, for the advocate to settle and sign",
+   "Response trackers for deadlines, follow-ups and hearings"],
+  [["Understand", "What is alleged or asked, by when, and what must be proved."], ["Establish", "Collect and verify the facts and the evidence for each point."], ["Draft", "A factual response and annexures, organised point by point."], ["Hand over", "To your advocate to settle, sign and file; we support follow-ups."]],
+  ["Point-by-point fact matrix", "Indexed evidence bundle", "Draft factual response and annexures", "Deadline and follow-up tracker"],
+  ["Responses that rest on evidence, not assertion", "Deadlines met without panic", "Stronger positions for counsel"],
+  s="evidence-backed-response-drafting-support", note=LEGAL_NOTE)
+
+svc(C, "Deal negotiation, agreement and closure services",
+  "From term sheet to signing to closing: negotiation strategy, clean documents and a closing that actually happens.",
+  ["Deals rarely fail on headline price. They fail on conditions nobody tracked, positions conceded too early and documents that do not say what the parties agreed. We sit on your side of the table to prepare the negotiation, keep commercial positions consistent from term sheet to definitive agreements, and run the process to a clean closing.",
+   "We work hand in hand with your deal counsel, who drafts and settles the transaction documents. We bring the commercial, financial and risk view, the issues list and the discipline that gets every condition precedent ticked off."],
+  ["You are buying, selling, investing in or partnering with a business", "A term sheet is on the table and the negotiation strategy is not yet clear", "Definitive agreements are drifting from what was agreed commercially", "Closing keeps slipping because conditions and approvals are not tracked"],
+  ["Negotiation preparation: objectives, walk-away points, trade-offs and counterparty analysis",
+   "Term sheet and heads of terms support, aligned with valuation and diligence findings",
+   "Issues lists and mark-up reviews from a commercial and risk perspective, alongside counsel",
+   "Disclosure, warranty and indemnity support linked to diligence findings",
+   "Conditions-precedent, approvals and closing checklists, including regulatory and FEMA filings coordinated with your advisers",
+   "Closing coordination, funds-flow memos and post-closing integration plans"],
+  [["Prepare", "Objectives, limits and the negotiation plan."], ["Negotiate", "Consistent positions from term sheet to final documents."], ["Document", "With your counsel, documents that match the deal."], ["Close", "Every condition, approval and signature, on time."]],
+  ["Negotiation playbook", "Issues list and position tracker", "Closing checklist and CP tracker", "Funds-flow memo and post-closing plan"],
+  ["Better terms, held to the end", "Fewer surprises after signing", "Deals that close"],
+  note=LEGAL_NOTE)
+
+svc(C, "Contract drafting and management services",
+  "Contracts that say what you mean, and a contract book you can actually see, search and manage.",
+  ["Most organisations sign more contracts than they can track. Renewal dates pass, obligations go unmet and risky clauses hide in old templates. We help businesses prepare first drafts and playbooks for routine commercial contracts, and put in place contract management that shows what has been signed, what it commits you to and what is due next.",
+   "Routine agreements are drafted from templates and playbooks approved by your legal team or counsel; anything non-standard, high-value or contentious goes to your advocates to settle. Execution can be digital, through DocuVow, Kayak's e-signature solution, with stamp duty under the applicable state law handled correctly."],
+  ["Contracts sit in inboxes and shared drives, and nobody knows what is due", "Your team spends too long on routine agreements", "Templates are old, inconsistent or one-sided in the wrong direction", "An audit, dispute or transaction requires a quick view of all contracts"],
+  ["Template libraries and negotiation playbooks for routine contracts: NDAs, service, supply, distribution, consultancy and licence agreements, settled with your counsel",
+   "First drafts and mark-ups of routine contracts within agreed playbooks, escalating anything outside them",
+   "Contract repository set-up, with key terms, dates and obligations extracted and searchable",
+   "Obligation, renewal and expiry tracking with alerts to owners",
+   "Stamp duty and execution checklists, and digital signing through DocuVow where the law permits",
+   "Contract audits that flag risky, missing or outdated clauses"],
+  [["Gather", "Every contract, wherever it sits."], ["Organise", "A searchable repository with key terms extracted."], ["Standardise", "Templates and playbooks agreed with your counsel."], ["Manage", "Alerts, renewals and reports, month after month."]],
+  ["Contract repository and key-terms register", "Template library and playbooks", "Obligation and renewal calendar", "Contract audit report"],
+  ["No missed renewals or obligations", "Faster routine contracting", "Less risk hidden in old paper"],
+  note=LEGAL_NOTE)
+
+svc(C, "Compliance and legal housekeeping services",
+  "Registers, filings, licences and records kept in order, so the company is always ready for an audit, a diligence or a deal.",
+  ["Legal housekeeping is invisible when it is done well and very expensive when it is not. Missing registers, lapsed licences, unfiled forms and minutes that cannot be found surface at the worst moments: in a due diligence, a fundraise, an inspection or a dispute. We keep the house in order, on a schedule, and show you its state at any time.",
+   "We work with your company secretary, chartered accountants and counsel. Filings and certifications that the law reserves for a practising company secretary, chartered accountant or advocate are signed by them; we prepare, track and organise everything around those filings."],
+  ["You are preparing for a fundraise, a sale, an IPO or a lender's diligence", "Registers, minutes and filings are incomplete or scattered", "Licences and registrations across states are hard to keep track of", "Group entities have grown faster than their paperwork"],
+  ["Corporate housekeeping health checks across group entities: statutory registers, minutes, resolutions and MCA filings",
+   "Compliance calendars for corporate, labour, tax, environmental and sector-specific obligations, including the four labour codes",
+   "Licence, registration and renewal trackers across states and sites",
+   "Board, committee and shareholder meeting support: agendas, notes and action tracking, alongside the company secretary",
+   "Virtual data-room build and maintenance, ready for diligence",
+   "Remediation of gaps found, with owners, dates and evidence"],
+  [["Inventory", "Entities, obligations, records and owners."], ["Fix", "Close the gaps, oldest and riskiest first."], ["Run", "Calendars, trackers and reminders that keep it clean."], ["Prove", "A data room and a status report that answers diligence questions."]],
+  ["Housekeeping health-check report", "Compliance calendar and licence tracker", "Organised registers and records", "Diligence-ready data room"],
+  ["Always ready for diligence and audits", "No lapsed licences or late filings", "Lower compliance cost"],
+  note=LEGAL_NOTE)
 
 # ---------------------------------------------------------------- Crisis & Resilience
 C = "crisis-resilience"

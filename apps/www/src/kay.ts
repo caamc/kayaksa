@@ -20,7 +20,7 @@ export function kayKnowledge(d: SiteData): string {
   L.push("What happens after someone gets in touch: " + d.next.map((n: any) => `${n[0]}: ${n[1]}`).join("; "));
   L.push("\nSIX SERVICE CLUSTERS (page path in brackets):");
   for (const c of d.clusters) {
-    L.push(`- ${c.name} [/services/${c.id}]: ${c.intro || c.line || ""}`);
+    L.push(`- ${c.name} [/services/${c.id}]: ${c.intro || c.line || ""}${c.note ? ` IMPORTANT: ${c.note} If asked for legal advice or an opinion, say Kayak can support the work with research, evidence and drafting support, but the advice itself must come from an advocate.` : ""}`);
     for (const v of (SERVICES as any[]).filter((x: any) => x.cluster === c.id)) L.push(`  - ${v.name} [/services/${c.id}/${v.slug}]: ${v.summary} When to call: ${v.when.join("; ")}.`);
   }
   L.push("\nKAYAK SOLUTIONS (Thought, Designed and Developed in India for the World; built by Kayak Technology Solutions):");

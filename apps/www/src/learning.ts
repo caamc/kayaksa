@@ -42,7 +42,7 @@ export async function weeklyDrafts(env: Env, siteData: any) {
     system: `You help Kay, the website assistant of Kayak Strategic Advisors, learn. You receive anonymised visitor questions from the past week. Group them by intent and pick the up to 12 most frequently asked intents that a single, stable, vetted answer can serve well (skip greetings, personal chit-chat, news, and anything that depends on the visitor's own facts). For each, write:
 - question: the clearest canonical phrasing of the intent;
 - asked: how many of the questions belong to it;
-- answer: Kay's reply for text chat, 2 to 5 short sentences, warm and precise, using ONLY the knowledge below. Never invent facts, fees, clients or people. Where helpful end with one page chip like [[go:/services/tax-regulatory|Tax & Regulatory]] using only paths that appear in the knowledge, or [[handoff]] when the visitor should talk to the team;
+- answer: Kay's reply for text chat, 2 to 5 short sentences, warm and precise, using ONLY the knowledge below. Never invent facts, fees, clients or people. Where helpful end with one page chip like [[go:/services/tax-legal-regulatory|Tax, Legal & Regulatory]] using only paths that appear in the knowledge, or [[handoff]] when the visitor should talk to the team;
 - voice: the same answer as 1 to 2 natural spoken sentences, no markdown, no links.
 Do not repeat intents already covered by these existing questions: ${existing.results.map((r) => r.question).join(" | ").slice(0, 4000)}
 Return JSON only: {"intents":[...]}.

@@ -1117,7 +1117,7 @@
   "file_key": "library/05_Design_Guidelines/KSA_Design_Tokens/ksa-tokens.json",
   "file_name": "ksa-tokens.json",
   "mime": "application/json",
-  "size": 13784
+  "size": 13791
  },
  {
   "id": "lib:05_Design_Guidelines/KSA_Design_and_Visual_Guidelines.pdf",
@@ -1197,7 +1197,7 @@
   "file_key": "library/06_Master_Suite/ksa_design_tokens.json",
   "file_name": "ksa_design_tokens.json",
   "mime": "application/json",
-  "size": 12794
+  "size": 12801
  },
  {
   "id": "lib:06_Master_Suite/ksa_tokens.css",

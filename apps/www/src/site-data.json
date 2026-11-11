@@ -43,14 +43,14 @@
    ]
   },
   {
-   "id": "tax-regulatory",
-   "name": "Tax & Regulatory",
-   "short": "Tax & Regulatory",
+   "id": "tax-legal-regulatory",
+   "name": "Tax, Legal & Regulatory",
+   "short": "Tax, Legal & Regulatory",
    "color": "#9C630E",
    "icon": "regulatory",
    "pattern": "k-lattice",
-   "line": "Tax, compliance and reporting that keep pace with new rules.",
-   "intro": "Rules for Indian companies are changing faster and reaching higher, into the boardroom. We help you see what applies, put the controls in place and report with confidence, working alongside your auditors and counsel.",
+   "line": "Tax, legal support and compliance that keep pace with new rules.",
+   "intro": "Rules for Indian companies are changing faster and reaching higher, into the boardroom. We help you see what applies, put the controls in place and report with confidence. Our legal support teams take on the research, evidence, drafting support, negotiation and housekeeping that legal work depends on, working alongside your advocates, auditors and counsel.",
    "services": [
     [
      "tax",
@@ -76,13 +76,41 @@
      "report",
      "Regulatory change monitoring and board briefings",
      "A regular read of what has changed, what it means for you and what the board should decide."
+    ],
+    [
+     "search",
+     "Paralegal and research services",
+     "Sourced legal research, document review, chronologies and matter tracking for law firms, legal teams and family offices."
+    ],
+    [
+     "investigations",
+     "Evidence-backed response drafting support for law firms and family offices",
+     "Facts verified and evidence organised for replies to notices, allegations and regulators, ready for counsel to settle."
+    ],
+    [
+     "transactions",
+     "Deal negotiation, agreement and closure services",
+     "Negotiation strategy, consistent positions from term sheet to signing, and a closing that happens on time."
+    ],
+    [
+     "contract",
+     "Contract drafting and management services",
+     "Templates, playbooks and first drafts of routine contracts, and a contract book you can search and manage."
+    ],
+    [
+     "calendar",
+     "Compliance and legal housekeeping services",
+     "Registers, filings, licences and records kept in order, ready for any audit, diligence or deal."
     ]
    ],
    "questions": [
     "Which new rules apply to us, and by when?",
     "Can we show the board how we know we comply?",
-    "Is our ESG data good enough to publish?"
-   ]
+    "Is our ESG data good enough to publish?",
+    "Could our records survive a buyer's due diligence tomorrow?",
+    "Is our reply to this notice backed by evidence we can produce?"
+   ],
+   "note": "Kayak Strategic Advisors is not a law firm and does not practise law. Legal advice, legal opinions, the settling and signing of pleadings and legal documents, and appearances before courts, tribunals and authorities are provided by your advocates or by independent law firms that we work alongside."
   },
   {
    "id": "crisis-resilience",
@@ -332,7 +360,7 @@
    ],
    "clusters": [
     "technology-ai",
-    "tax-regulatory",
+    "tax-legal-regulatory",
     "crisis-resilience"
    ],
    "how": [
@@ -570,7 +598,7 @@
    ],
    "clusters": [
     "technology-ai",
-    "tax-regulatory",
+    "tax-legal-regulatory",
     "managed-services"
    ],
    "how": [
@@ -605,7 +633,7 @@
    ],
    "clusters": [
     "crisis-resilience",
-    "tax-regulatory",
+    "tax-legal-regulatory",
     "technology-ai"
    ],
    "members": [
@@ -634,7 +662,7 @@
    ],
    "clusters": [
     "crisis-resilience",
-    "tax-regulatory",
+    "tax-legal-regulatory",
     "strategy-deals"
    ],
    "members": [
@@ -712,7 +740,7 @@
    ],
    "clusters": [
     "technology-ai",
-    "tax-regulatory",
+    "tax-legal-regulatory",
     "international-desk"
    ],
    "members": [
@@ -791,7 +819,7 @@
    "clusters": [
     "strategy-deals",
     "crisis-resilience",
-    "tax-regulatory"
+    "tax-legal-regulatory"
    ],
    "members": [
     {
@@ -823,7 +851,7 @@
    ],
    "clusters": [
     "strategy-deals",
-    "tax-regulatory",
+    "tax-legal-regulatory",
     "international-desk"
    ],
    "members": [
@@ -985,7 +1013,7 @@
   {
    "id": "data-protection-board",
    "section": "Regulatory Radar",
-   "cluster": "tax-regulatory",
+   "cluster": "tax-legal-regulatory",
    "mins": 4,
    "title": "Data protection is now a board question",
    "dek": "The Digital Personal Data Protection Act, 2023 moves personal data from the IT department's list to the board's.",

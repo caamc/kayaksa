@@ -45,7 +45,7 @@ async function siteData(c: any) {
   const data = { ...D, articles: [...D.articles] };
   try {
     const rows = await c.env.DB.prepare("SELECT id, section, cluster, pattern, mins, title, dek, body, published_at FROM articles WHERE status = 'published' ORDER BY published_at DESC LIMIT 60").all();
-    const live = (rows.results as any[]).map((r) => ({ ...r, body: JSON.parse(r.body || "[]") }));
+    const live = (rows.results as any[]).map((r) => ({ ...r, cluster: r.cluster === "tax-regulatory" ? "tax-legal-regulatory" : r.cluster, body: JSON.parse(r.body || "[]") }));
     const ids = new Set(live.map((a) => a.id));
     data.articles = [...live, ...data.articles.filter((a: any) => !ids.has(a.id))];
   } catch (e: any) {
@@ -94,7 +94,7 @@ function render(path: string, data: any): PageMeta {
     const x = SV.find((v) => v.cluster === m![1] && v.slug === m![2]);
     if (x) {
       const cl = C(x.cluster);
-      return { status: 200, title: `${x.name} | ${cl.name}`, desc: x.summary, ssr: `<p><a href="/services/${cl.id}">${esc(cl.name)}</a></p><h1>${esc(x.name)}</h1><p><b>${esc(x.summary)}</b></p>${x.overview.map((o: string) => `<p>${esc(o)}</p>`).join("")}<h2>When to call us</h2><ul>${x.when.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>What we do</h2><ul>${x.what.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>How we work</h2><ol>${x.approach.map((a: string[]) => `<li><b>${esc(a[0])}</b>: ${esc(a[1])}</li>`).join("")}</ol><h2>What you receive</h2><ul>${x.deliverables.map((d: string) => `<li>${esc(d)}</li>`).join("")}</ul><p><a href="/contact">Start a confidential conversation</a></p>`,
+      return { status: 200, title: `${x.name} | ${cl.name}`, desc: x.summary, ssr: `<p><a href="/services/${cl.id}">${esc(cl.name)}</a></p><h1>${esc(x.name)}</h1><p><b>${esc(x.summary)}</b></p>${x.overview.map((o: string) => `<p>${esc(o)}</p>`).join("")}<h2>When to call us</h2><ul>${x.when.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>What we do</h2><ul>${x.what.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>How we work</h2><ol>${x.approach.map((a: string[]) => `<li><b>${esc(a[0])}</b>: ${esc(a[1])}</li>`).join("")}</ol><h2>What you receive</h2><ul>${x.deliverables.map((d: string) => `<li>${esc(d)}</li>`).join("")}</ul>${x.note ? `<p><small>${esc(x.note)}</small></p>` : ""}<p><a href="/contact">Start a confidential conversation</a></p>`,
         ld: { "@context": "https://schema.org", "@type": "Service", name: x.name, serviceType: cl.name, description: x.summary, provider: { "@type": "ProfessionalService", name: "Kayak Strategic Advisors Private Limited", url: "https://www.kayaksa.com/" }, areaServed: ["IN", "Worldwide"] } };
     }
   }
@@ -145,7 +145,7 @@ ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replac
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=120, must-revalidate" },
   });
 }
-const VERSION = "2026-11-11f";
+const VERSION = "2026-11-11g";
 
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);
@@ -291,6 +291,9 @@ app.get("/tools", (c) => c.redirect("/solutions", 301));
 app.get("/tools/:id", (c) => c.redirect(`/solutions/${c.req.param("id")}`, 301));
 
 // ------------------------------------------------------------------ SEO and AI discoverability
+// The cluster was renamed from "Tax & Regulatory" to "Tax, Legal & Regulatory" in November 2026.
+app.get("/services/tax-regulatory", (c) => c.redirect("/services/tax-legal-regulatory", 301));
+app.get("/services/tax-regulatory/:slug", (c) => c.redirect(`/services/tax-legal-regulatory/${c.req.param("slug")}`, 301));
 app.get("/robots.txt", (c) => c.text(`# Search engines and AI assistants are welcome. Scrapers and SEO harvesters are not, and are blocked.\n${["SemrushBot", "AhrefsBot", "MJ12bot", "DotBot", "Bytespider", "PetalBot", "BLEXBot", "DataForSeoBot", "serpstatbot", "MegaIndex", "CCBot", "Diffbot", "omgili", "Timpibot", "ImagesiftBot"].map((b) => `User-agent: ${b}\nDisallow: /\n`).join("\n")}\nUser-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${site(c)}/sitemap.xml\n`));
 app.get("/sitemap.xml", async (c) => {
   const data = await siteData(c);
