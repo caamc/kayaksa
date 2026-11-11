@@ -15,6 +15,7 @@ import { website } from "./website";
 import { security } from "./security";
 import { learnSales } from "./learnsales";
 import { meet } from "./meet";
+import { confluence, scheduledConfluence } from "./confluence";
 
 type V = { Bindings: Env; Variables: { user: User } };
 const app = new Hono<V>();
@@ -67,6 +68,8 @@ app.use("/api/learnsales/*", guard);
 app.use("/api/learnsales", guard);
 app.use("/api/meet/*", guard);
 app.use("/api/meet", guard);
+app.use("/api/confluence/*", guard);
+app.use("/api/confluence", guard);
 app.use("/files/*", guard);
 app.use("/app", guard);
 app.use("/app/*", guard);
@@ -84,6 +87,7 @@ app.route("/api/website", website);
 app.route("/api/security", security);
 app.route("/api/learnsales", learnSales);
 app.route("/api/meet", meet);
+app.route("/api/confluence", confluence);
 app.route(
   "/api/learn",
   learnApi({
@@ -126,6 +130,8 @@ export default {
   async scheduled(_e: ScheduledEvent, env: Env) {
     await pruneSecurity(env.DB);
     if (env.WWW_DB) await pruneSecurity(env.WWW_DB).catch(() => {});
+    // Confluence: after the 25th, Kayak AI drafts the next issue on its own. It is never released without approval.
+    await scheduledConfluence(env).catch((e) => console.error("confluence", e?.message));
     // Kayak Meet housekeeping (meet.kayaksa.com has no cron of its own; the account allows five).
     if (env.MEET_DB) {
       await pruneSecurity(env.MEET_DB).catch(() => {});

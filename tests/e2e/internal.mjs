@@ -67,7 +67,7 @@ await page.screenshot({ path: OUT + "internal-home.png" });
 const again = await page.request.post(`${BASE}/api/auth/setup`, { data: { email: EMAIL, token: vars.BOOTSTRAP_TOKEN, name: "X", password: PASSWORD + "x" }, headers: { Origin: BASE } });
 check(again.status() === 409 || again.status() === 403, "set-up refuses an already active SuperAdmin");
 
-for (const v of ["brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "account"]) {
+for (const v of ["brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "confluence", "account"]) {
   await page.goto(`${BASE}/app#/${v}`);
   await page.waitForFunction(() => !document.querySelector("#main .spinner") || document.querySelector("#main h1"), null, { timeout: 15000 });
   await page.waitForTimeout(600);

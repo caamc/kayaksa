@@ -21,13 +21,40 @@ export interface Story {
   sources: [string, string][];
 }
 
-export const EDITION = {
+export interface Edition {
+  id: string; issue: string; month: string; period: string; periodShort: string; published: string;
+  editorsTitle: string; coverTitle: string; coverDek: string; coverLines: string[]; coverImage?: string;
+  editorsNote: string[]; numbers: [string, string][]; cast: [string, string][];
+  stories: Story[]; spotlight?: Spotlight; agenda: string[];
+}
+
+export interface Spotlight {
+  tool: string;
+  url: string;
+  kicker: string;
+  title: string;
+  dek: string;
+  why: string[];
+  regulation: { date: string; text: string }[];
+  modules: [string, string, string][]; // name, status as published, what it does
+  helps: [string, string][]; // team, how it helps
+  numbers: [string, string][];
+  cast: [string, string][];
+  scenario: string[];
+  howItHelps: string[];
+  disclosure: string;
+  cta: string;
+  sources: [string, string][];
+}
+
+export const EDITION: Edition = {
   id: "2026-11",
   issue: "Issue 01",
   month: "November 2026",
   period: "25 September – 25 October 2026",
   periodShort: "25 Sep – 25 Oct 2026",
   published: "2026-11-11",
+  editorsTitle: "Two currents, one month",
   coverTitle: "Calibrated",
   coverDek: "The month money got dearer and the rulebook got kinder. What it means for boards, promoters and family offices.",
   coverLines: ["GST's lighter hand", "Settling with SEBI before the notice", "A record IPO month", "AI rules are on their way"],
@@ -45,7 +72,7 @@ export const EDITION = {
     ["$3 bn+", "TCS's annualised AI revenue, reported 8 October"],
     ["10,000", "AI compute units sought for the IndiaAI Mission"],
     ["13 Nov", "Consent Manager registration opens under the DPDP Rules"],
-  ] as [string, string][],
+  ],
   cast: [
     ["Ram", "Promoter and managing director of A Ltd, a listed mid-sized manufacturer that imports raw material"],
     ["Shyam", "Chief financial officer, the person who signs the numbers"],
@@ -54,7 +81,7 @@ export const EDITION = {
     ["John", "Partner at P Capital, an overseas private equity fund"],
     ["Johnny", "Runs R Services, an exporter of engineering services"],
     ["Janardan", "Head of a family office that owns stakes in B and C"],
-  ] as [string, string][],
+  ],
   stories: [
     {
       id: "gst-lighter-hand",
@@ -306,7 +333,51 @@ export const EDITION = {
       questions: ["Do we have a current map of the personal data we hold?", "Which vendors hold our customers' data today?", "Who would decide, within hours, whether a breach must be reported?"],
       sources: [["The Privacy Labs: DPDP, 13 November 2026, what starts", "https://theprivacylabs.com/blogs/dpdp-13-november-2026-what-starts"]],
     },
-  ] as Story[],
+  ],
+  spotlight: {
+    tool: "NexaPair UAE",
+    url: "https://www.nexapair.ae",
+    kicker: "Kayak Solutions spotlight",
+    title: "NexaPair UAE: third-party risk, built around UAE regulation",
+    dek: "Every vendor is a door into the organisation. In the UAE, the Central Bank's new operational risk rules, in force since 14 September 2026, expect regulated firms to know exactly who is behind each one.",
+    why: [
+      "Banks, insurers and payment firms rely on hundreds of outside providers: cloud platforms, payment processors, call centres and consultants. Each one can carry fraud, sanctions, cyber or continuity risk into the business, and regulators increasingly hold the firm accountable for all of it.",
+      "Most organisations still manage vendors across spreadsheets, email and separate tools for screening, cyber ratings and contracts. Findings are scattered, links between suppliers and staff go unnoticed, and preparing for an inspection takes weeks. NexaPair UAE brings these checks onto one vendor record, with a single explainable risk score.",
+    ],
+    regulation: [
+      { date: "3 Feb 2026", text: "The Central Bank of the UAE issued the Operational Risk Management Regulation (Circular No. 1/2026), replacing the 2018 regulation and standards." },
+      { date: "14 Sep 2026", text: "The regulation took effect. It requires risk assessment and due diligence before any third-party arrangement, mapping of third-party dependencies for each Critical Operation, and the CBUAE's no-objection, with 30 days' notice, before material changes to Critical Operations." },
+      { date: "Clock", text: "Material events affecting Critical Operations must be notified to the CBUAE within 4 hours, followed by a summary report within 24 hours, and within 72 hours for high-risk incidents. The Master System of Record must be kept in the UAE." },
+    ],
+    modules: [
+      ["NexaVerify", "Live", "Know who you are paying before anyone signs: identity, bank account and registration checks at onboarding."],
+      ["NexaGraph", "Live", "Find the links nobody declared: shared addresses, accounts and people between vendors and your own staff."],
+      ["NexaSentinel", "Live", "Hear about it first: sanctions re-screening every hour and incident clocks that run per regulator."],
+      ["NexaCybe", "Live", "An outside-in cyber grade for every vendor."],
+      ["NexaVatVeri", "Coming soon", "Protect input VAT under the FTA's supplier checks."],
+      ["NexaComply", "Coming soon", "Compliance management for any country's laws, with the UAE pre-loaded."],
+    ],
+    helps: [
+      ["Finance", "Pay the right party: bank and account checks before release, with a reason for every hold."],
+      ["Procurement", "Onboard vendors by risk tier, with the right checks for each tier."],
+      ["Compliance", "A requirement map across seven regimes, each line tied to its legal reference."],
+      ["Risk", "One explainable score with factor weights, fourth-party mapping and concentration checks."],
+      ["Board", "A board pack and a readiness view for each regulator."],
+    ],
+    numbers: [["7", "Regulatory regimes covered: CBUAE, DFSA, FSRA, CMA, VARA, government and federal law"], ["192", "Requirements mapped from 48 instruments"], ["Every hour", "Sanctions lists re-checked"], ["~6 weeks", "Typical plan from kickoff to first vendors live"]],
+    cast: [["Geeta", "Chief risk officer of P Bank, a mid-sized bank in Dubai"], ["Johnny", "Runs Q Pay, a cloud payments provider P Bank wants to onboard"]],
+    scenario: [
+      "P Bank wants to move card payments to Johnny's company, Q Pay, a Dubai cloud payments provider. Payments are a Critical Operation, so the change needs the Central Bank's no-objection, an external expert's report and evidence of due diligence.",
+      "Geeta has six weeks. Her team must verify Q Pay and its subcontractors, check for links to P Bank staff, assess cyber posture, confirm where data will sit, and brief the board.",
+    ],
+    howItHelps: [
+      "In this scenario, a platform like NexaPair would let Geeta's team run verification, link analysis, sanctions screening and a cyber grade on one record, map Q Pay's own subcontractors, and see each finding in a risk score that can be explained to the board and the regulator.",
+      "The requirement map would show which CBUAE articles each step answers, and the incident clocks would be set up before go-live, not after the first outage. The decision, as always, stays with P Bank and its advisers.",
+    ],
+    disclosure: "Disclosure: NexaPair is a Kayak solution, developed and marketed by Kayak Technology Solutions, with its intellectual property held by Kayak Innovations (OPC) Private Limited. Kayak therefore has a commercial interest in it. Feature status (Live, Preview, Coming soon) is as published on nexapair.ae in November 2026. Regulatory summaries are not legal advice.",
+    cta: "See it with your own vendors: a 30-minute demo in English or Arabic at www.nexapair.ae, or write to advisory@kayaksa.com.",
+    sources: [["NexaPair UAE", "https://www.nexapair.ae"], ["Trowers & Hamlins: UAE Central Bank raises the bar on operational risk", "https://www.trowers.com/insights/2026/september/uae-central-bank-raises-the-bar-on-operational-risk"]],
+  },
   agenda: [
     "Review the hedging policy and stress-test margins for higher rates and a weaker rupee.",
     "Ask how quickly the company could respond to a GST order or a SEBI letter, and who decides.",

@@ -174,3 +174,17 @@ html:not(.js) .pg{width:min(760px,100%)}
 
 /* a page whose text runs long shows a soft fade and scrolls within itself */
 .pi.more{-webkit-mask-image:linear-gradient(#000 88%,#0000);mask-image:linear-gradient(#000 88%,#0000)}
+
+/* Kayak Solutions spotlight */
+.spot-l .pi{background:linear-gradient(180deg,#FBEBCD 0,#FBFAF6 calc(30 * var(--u)))}
+.spot-h{font-size:calc(5.4 * var(--u))}
+.mods{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.mods li{display:grid;grid-template-columns:calc(17 * var(--u)) calc(11 * var(--u)) 1fr;gap:calc(1.4 * var(--u));align-items:baseline;padding:calc(1.1 * var(--u)) 0;border-top:1px solid var(--line);font-size:calc(2.05 * var(--u));line-height:1.45}
+.mods b{font:800 calc(2.3 * var(--u)) var(--display);color:var(--deep)}
+.mods em{font:700 calc(1.5 * var(--u)) var(--sans);font-style:normal;letter-spacing:.1em;text-transform:uppercase;padding:calc(.3 * var(--u)) calc(.9 * var(--u));justify-self:start}
+.mods em.live{background:#E3F1EF;color:#0B5654}.mods em.soon{background:#FBEBCD;color:#9C630E}
+.teams{margin:calc(2.4 * var(--u)) 0;display:grid}
+.teams div{display:grid;grid-template-columns:calc(15 * var(--u)) 1fr;gap:calc(2 * var(--u));padding:calc(1.1 * var(--u)) 0;border-top:1px solid var(--line);font-size:calc(2.1 * var(--u))}
+.teams dt{font:800 calc(2.2 * var(--u)) var(--display);color:#9C630E}.teams dd{margin:0}
+.spot-cta{font:700 calc(2.3 * var(--u))/1.4 var(--sans);color:var(--deep);border-left:calc(.6 * var(--u)) solid var(--saffron);padding-left:calc(2 * var(--u))}
+.preview-flag{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:30;background:#B4472F;color:#fff;font:700 .78rem var(--sans);letter-spacing:.12em;padding:6px 14px;border-radius:999px}
