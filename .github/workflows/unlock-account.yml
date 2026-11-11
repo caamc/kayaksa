@@ -42,7 +42,9 @@ jobs:
       - name: Recent sign-in failures for this account (last 24 hours)
         run: |
           npx wrangler d1 execute kayaksa-internal --remote -c /tmp/w.json --json --command "SELECT e.at, e.kind, e.ip, substr(e.fp,1,10) AS device, substr(e.ua,1,60) AS browser FROM security_events e JOIN users u ON u.id = e.user_id WHERE lower(u.email) = '${E}' AND e.kind LIKE 'auth.%' AND e.at > datetime('now','-1 day') ORDER BY e.at DESC LIMIT 25" > /tmp/ev.json
-          { echo "### Sign-in failures for ${E}, last 24 hours"; echo; echo "| Time (UTC) | Event | IP | Device | Browser |"; echo "|---|---|---|---|---|"; jq -r '.[0].results[] | "| \(.at) | \(.kind) | \(.ip) | \(.device) | \(.browser) |"' /tmp/ev.json; echo; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "### Sign-in failures for ${E}, last 24 hours"; echo; echo "| Time (UTC) | Event | IP | Device | Browser |"; echo "|---|---|---|---|---|"; jq -r '.[0].results[] | "| \(.at) | \(.kind) | \(.ip) | \(.device) | \(.browser) |"' /tmp/ev.json; echo; } | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Account state before unlocking:"
+          npx wrangler d1 execute kayaksa-internal --remote -c /tmp/w.json --json --command "SELECT email, status, failed, locked_until, totp_enabled, last_login FROM users WHERE lower(email) = '${E}'" | jq -c '.[0].results'
       - name: Clear the lock
         run: |
           npx wrangler d1 execute kayaksa-internal --remote -c /tmp/w.json --json --command "UPDATE users SET failed = 0, locked_until = NULL WHERE lower(email) = '${E}'; INSERT INTO audit_log (at, user_id, action, detail) SELECT datetime('now'), id, 'auth.unlocked', 'Unlocked by the Unlock workflow, run ${{ github.run_id }} by ${{ github.actor }}' FROM users WHERE lower(email) = '${E}'; SELECT email, failed, locked_until FROM users WHERE lower(email) = '${E}'" > /tmp/u.json
