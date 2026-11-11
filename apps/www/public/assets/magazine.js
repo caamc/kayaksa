@@ -82,7 +82,11 @@
       lf.classList.toggle("flipped", flipped);
       lf.style.zIndex = flipped ? String(i + 1) : String(2 * L - i);
       // Separate the leaves slightly in depth so stacked pages never fight over which is on top.
-      lf.style.transform = single ? (flipped ? "rotateY(-110deg)" : `translateZ(${(L - i) * 0.3}px)`) : flipped ? `rotateY(-180deg) translateZ(${-(i + 1) * 0.3}px)` : `translateZ(${(L - i) * 0.3}px)`;
+      // Phones: flat 2D pages, and only the current page and its neighbours are kept in the render tree.
+      // Stacking every leaf in 3D on a phone exhausts its GPU memory and the tab crashes.
+      lf.classList.toggle("cur", single && i === cur);
+      lf.classList.toggle("near", single && Math.abs(i - cur) <= 1);
+      lf.style.transform = single ? "" : flipped ? `rotateY(-180deg) translateZ(${-(i + 1) * 0.3}px)` : `translateZ(${(L - i) * 0.3}px)`;
       const front = lf.querySelector(".front"), back = lf.querySelector(".back");
       const showFront = i === cur, showBack = !single && i === cur - 1;
       front.inert = !showFront; front.setAttribute("aria-hidden", String(!showFront));

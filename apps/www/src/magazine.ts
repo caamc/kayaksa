@@ -222,9 +222,9 @@ export function magazinePage(E: Edition, origin: string, opts: { preview?: boole
 <title>${esc(title)} | Kayak Strategic Advisors</title><meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${origin}/confluence/${E.id}"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${origin}/assets/hero/cover-01-1024.webp"><meta property="og:type" content="article">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="preload" href="${A}/_shared/fonts/Archivo.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="${A}/assets/magazine.css?v=3">${opts.preview ? `<meta name="robots" content="noindex,nofollow">` : ""}
+<link rel="stylesheet" href="${A}/assets/magazine.css?v=4">${opts.preview ? `<meta name="robots" content="noindex,nofollow">` : ""}
 <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": "PublicationIssue", name: title, issueNumber: "1", datePublished: E.published, description: desc, isPartOf: { "@type": "Periodical", name: "Confluence", publisher: { "@type": "Organization", name: "Kayak Strategic Advisors" } } }).replace(/</g, "\\u003c")}</script>
-<script src="${A}/assets/magazine.js?v=3" defer></script></head>
+<script src="${A}/assets/magazine.js?v=4" defer></script></head>
 <body>${opts.preview ? `<div class="preview-flag">PREVIEW · NOT RELEASED · awaiting approval</div>` : ""}<a class="skip" href="#book">Skip to the magazine</a>
 <header class="mz-bar"><a class="mz-home" href="/insights" aria-label="Back to Confluence on kayaksa.com">${WM}</a><span class="mz-t"><b>Confluence</b> · ${esc(E.issue)} · ${esc(E.month)}</span>
   <nav class="mz-tools" aria-label="Magazine controls"><button type="button" data-act="contents">Contents</button><button type="button" data-act="mode" aria-pressed="false">Single page</button></nav></header>

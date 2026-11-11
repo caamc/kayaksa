@@ -45,9 +45,16 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(-
 /* single-page mode (phones, or by choice) */
 .single .stage{width:var(--pw);transform:translate(-50%,-50%)}
 .single .leaf{left:0}
-.single .leaf.flipped{opacity:0;pointer-events:none;transition:transform .7s cubic-bezier(.3,.7,.2,1),opacity .5s .2s}
+.js .single .book{perspective:none}
+.single .leaf{transform-style:flat;transition:opacity .35s ease,transform .35s ease}
+.single .face{backface-visibility:visible;-webkit-backface-visibility:visible}
+.single .leaf:not(.near){display:none}
+.single .leaf:not(.cur){opacity:0;pointer-events:none}
+.single .leaf.flipped:not(.cur){transform:translateX(-6%)}
+.single .leaf:not(.flipped):not(.cur){transform:translateX(6%)}
+.single .leaf.turning{box-shadow:none}
 .single .face.back{display:none}
-@media (prefers-reduced-motion:reduce){.leaf,.stage,.single .leaf.flipped{transition:none}}
+@media (prefers-reduced-motion:reduce){.leaf,.stage,.single .leaf{transition:none}}
 
 /* ---------- pages */
 .pg{--u:1cqw;position:relative;background:var(--paper);color:var(--ink);container-type:inline-size;font-family:var(--serif);overflow:hidden;width:100%;aspect-ratio:1/1.414}
