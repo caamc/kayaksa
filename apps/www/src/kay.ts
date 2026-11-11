@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { pickProvider, streamText, ProviderId, ChatMessage, availableProviders } from "../../../packages/core/src/ai";
 import { rateLimit, clientIp, HttpError } from "../../../packages/core/src/http";
 import type { Env } from "./env";
+import SERVICES from "../public/assets/services.json";
 
 type SiteData = any;
 
@@ -10,7 +11,7 @@ type SiteData = any;
 export function kayKnowledge(d: SiteData): string {
   const L: string[] = [];
   L.push("KAYAK STRATEGIC ADVISORS PRIVATE LIMITED (\"Kayak\", \"KSA\"). Indian advisory firm. Offices: Mumbai (registered office: A/2, 314, Shah & Nahar Industrial Estate, Delisle Road, Mumbai 400013) and Thane, Maharashtra. Website www.kayaksa.com. Enquiries: enquiries@kayaksa.com (a senior member of the team replies within one working day).");
-  L.push("Founder and director: Anuj Matushankar Choudhary. He founded and directs all three Kayak companies. Group companies: Kayak Innovations (OPC) Private Limited (products and new ventures) and Kayak Technology Solutions Private Limited (technology; builds and runs the Kayak tools).");
+  L.push("Group companies: Kayak Innovations (OPC) Private Limited (products and new ventures) and Kayak Technology Solutions Private Limited (technology; builds and runs Kayak Solutions). Kayak's leadership profiles will be published on the website in January 2027; until then, do not name or describe individual team members.");
   L.push("Values: " + d.values.map((v: any) => `${v[1]} (${v[2]})`).join("; "));
   L.push("Promises: " + d.promises.map((p: any) => `${p[0]}: ${p[1]}`).join("; "));
   L.push("Standards: " + d.standards.map((s: any) => `${s[1]}: ${s[2]}`).join("; "));
@@ -18,14 +19,17 @@ export function kayKnowledge(d: SiteData): string {
   L.push("Engagement models: " + d.models.map((m: any) => `${m[1]}: ${m[2]}`).join("; "));
   L.push("What happens after someone gets in touch: " + d.next.map((n: any) => `${n[0]}: ${n[1]}`).join("; "));
   L.push("\nSIX SERVICE CLUSTERS (page path in brackets):");
-  for (const c of d.clusters) L.push(`- ${c.name} [/services/${c.id}]: ${c.line || c.intro || ""} Services: ${(c.services || []).map((s: any) => (Array.isArray(s) ? s[0] : s.name || s)).join("; ")}.`);
-  L.push("\nKAYAK TOOLS (built by Kayak Technology Solutions):");
+  for (const c of d.clusters) {
+    L.push(`- ${c.name} [/services/${c.id}]: ${c.intro || c.line || ""}`);
+    for (const v of (SERVICES as any[]).filter((x: any) => x.cluster === c.id)) L.push(`  - ${v.name} [/services/${c.id}/${v.slug}]: ${v.summary} When to call: ${v.when.join("; ")}.`);
+  }
+  L.push("\nKAYAK SOLUTIONS (Thought, Designed and Developed in India for the World; built by Kayak Technology Solutions):");
   for (const t of d.tools) {
     const live = (t.modules || []).filter((m: any) => !String(m[2]).startsWith("[")).map((m: any) => m[1]);
     const planned = (t.modules || []).filter((m: any) => String(m[2]).startsWith("[")).map((m: any) => m[1]);
-    L.push(`- ${t.name}, ${t.kind} [/tools/${t.id}]: ${t.line} Modules: ${live.join(", ")}${planned.length ? `. Planned: ${planned.join(", ")}` : ""}.${t.site ? ` Live at ${t.site}.` : ""}${t.soon ? ` ${t.soon} coming soon.` : ""} For: ${(t.for || []).join(", ")}.`);
+    L.push(`- ${t.name}, ${t.kind} [/solutions/${t.id}]: ${t.line} Modules: ${live.join(", ")}${planned.length ? `. Planned: ${planned.join(", ")}` : ""}.${t.site ? ` Live at ${t.site}.` : ""}${t.soon ? ` ${t.soon} coming soon.` : ""} For: ${(t.for || []).join(", ")}.`);
   }
-  L.push("\nINDUSTRIES: Kayak serves all 45 IBEF industries across sector groups: " + d.groups.map((g: any) => g.name).join("; ") + " [/industries].");
+  L.push("\nINDUSTRIES: wide industry and sector exposure across sector families: " + d.groups.map((g: any) => g.name).join("; ") + " [/industries]. Never quote a number of industries.");
   L.push("\nCONFLUENCE, Kayak's monthly magazine (first Tuesday of the month) [/insights]. Articles:");
   for (const a of d.articles) L.push(`- ${a.section}: "${a.title}" [/insights/${a.id}]: ${a.dek || ""}`);
   L.push("\nOTHER PAGES: About us [/about], Careers [/careers] (founding team; no open listings; send a short note), Contact [/contact], Privacy and terms [/legal]. Kayak Learn, free courses with certificates on ethics, compliance, risk, governance and responsible AI: https://learn.kayaksa.com");

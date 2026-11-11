@@ -2,7 +2,11 @@
 // www.kayaksa.com: the page data arrives inline from the server (published articles and
 // SeeCounter cases come from the database); product logos load once and are cached.
 const DATA = JSON.parse(document.getElementById("site-data").textContent);
-DATA.logos = await fetch("/assets/logos.json").then((r) => r.json()).catch(() => ({}));
+[DATA.logos, DATA.services] = await Promise.all([
+  fetch("/assets/logos.json").then((r) => r.json()).catch(() => ({})),
+  fetch("/assets/services.json?v=2").then((r) => r.json()).catch(() => []),
+]);
+const FLAGS = DATA.flags || {};
 const CFG = DATA.config || {};
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -14,6 +18,10 @@ const C = Object.fromEntries(DATA.clusters.map((c) => [c.id, c]));
 const G = Object.fromEntries(DATA.groups.map((g) => [g.id, g]));
 const A = Object.fromEntries(DATA.articles.map((a) => [a.id, a]));
 const T = Object.fromEntries(DATA.tools.map((t) => [t.id, t]));
+const SV = Object.fromEntries((DATA.services || []).map((x) => [x.slug, x]));
+const svcOf = (cid) => (DATA.services || []).filter((x) => x.cluster === cid);
+const svcAt = (cid, i) => svcOf(cid)[i];
+const SOLUTIONS_LINE = "Thought, Designed and Developed in India for the World";
 let _lgu = 0;
 const LG = (id, v) => (DATA.logos[id]?.[v] || `<span class="lgo-fallback">${esc(T[id]?.name || id)}</span>`).replaceAll("__U__", "u" + (++_lgu));
 const pmark = (t, big = false) => `<span class="pmark${big ? " big" : ""}" style="--c:${t.color}"><span class="pm">${LG(t.id, "mark")}</span>${esc(t.name)}</span>`;
@@ -25,7 +33,7 @@ function toolCard(t) {
   return `<a class="tcard" href="#${t.id}">${top}
   <div class="body">${pmark(t)}<p>${esc(t.line)}</p><div class="mods">${realMods(t).map((m) => `<span>${esc(m[1])}</span>`).join("")}${extra ? `<span>+${extra} more</span>` : ""}</div><span class="textlink">Explore ${esc(t.name)} ${arrow}</span>${t.site ? `<small class="tsite">${esc(t.site.replace("www.", ""))}${t.soon ? ` · ${esc(t.soon)} coming soon` : ""}</small>` : ""}</div></a>`;
 }
-const moreTools = `<div class="tcard more"><div class="body">${ic("plus", "ico big")}<h3>More Kayak tools</h3><p>Further tools are in development across our six clusters. Tell us the problem you would like a tool to solve.</p><a class="textlink" href="#contact" data-cluster="technology-ai">Talk to the Technology &amp; AI team ${arrow}</a></div></div>`;
+const moreTools = `<div class="tcard more"><div class="body">${ic("plus", "ico big")}<h3>More Kayak Solutions</h3><p>Further tools are in development across our six clusters. Tell us the problem you would like a tool to solve.</p><a class="textlink" href="#contact" data-cluster="technology-ai">Talk to the Technology &amp; AI team ${arrow}</a></div></div>`;
 const toolsGrid = (list = DATA.tools, more = true) => `<div class="tgrid">${list.map(toolCard).join("")}${more ? moreTools : ""}</div>`;
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -57,26 +65,77 @@ const subscribeForm = (id) => `<form class="subscribe js-form" id="${id}" novali
   <input id="${id}-email" name="email" type="email" placeholder="Your work email" required autocomplete="email">
   <button class="btn btn-saffron" type="submit">Subscribe ${arrow}</button></form>`;
 
+
+/* ---------- Premium hero: four scenes that turn slowly ---------- */
+const HERO = [
+  { img: "kayak", pos: "78% 45%", eyebrow: "Kayak Strategic Advisors", h: "Clear advice for <em>consequential</em> decisions", p: "Strategy, deals, regulation and resilience for India's boards, promoters and investors. Independent, senior-led and built to be carried out.", cta: ["Explore our services", "services"], alt: ["Talk to us", "contact"] },
+  { img: "boardroom", pos: "62% 50%", eyebrow: "For boards and promoters", h: "The questions that keep a board <em>awake</em>, answered plainly", p: "One lead partner, every discipline at one table: growth and protection decided together, never in separate rooms.", cta: ["How we work", "about"], alt: ["Start a confidential conversation", "contact"] },
+  { img: "confluence", pos: "68% 50%", eyebrow: "Confluence · Issue 01", h: "Growth and risk are <em>one</em> decision", p: "Our monthly on strategy, risk and the decisions between them. The cover story: why the companies that move well through rough water treat them as one conversation.", cta: ["Read the cover story", "insight-growth-and-risk"], alt: ["All of Confluence", "insights"] },
+  { img: "mumbai", pos: "80% 50%", eyebrow: "Mumbai · Thane · the world", h: "Rooted in India. <em>Ready</em> for the world.", p: "Wide industry and sector exposure at home, an International Desk for cross-border work, and solutions thought, designed and developed in India for the world.", cta: ["Kayak Solutions", "tools"], alt: ["International Desk", "international-desk"] },
+];
+const heroCarousel = () => `
+<section class="hx" aria-roledescription="carousel" aria-label="Kayak at a glance">
+  ${HERO.map((x, i) => `<div class="hx-slide${i ? "" : " on"}" role="group" aria-roledescription="slide" aria-label="${i + 1} of ${HERO.length}" ${i ? 'aria-hidden="true"' : ""}>
+    <picture class="hx-bg"><source media="(max-width: 760px)" srcset="/assets/hero/${x.img}-960.webp"><img src="/assets/hero/${x.img}-1536.webp" style="object-position:${x.pos}" alt="" ${i ? 'loading="lazy"' : 'fetchpriority="high"'} decoding="async"></picture>
+    <div class="hx-tint" aria-hidden="true"></div>
+    <div class="wrap hx-in"><div class="hx-copy">
+      <span class="eyebrow">${x.eyebrow}</span>
+      <${i ? "h2" : "h1"} class="hx-h">${x.h}</${i ? "h2" : "h1"}>
+      <p class="lead">${esc(x.p)}</p>
+      <div class="ctas"><a class="btn btn-saffron" href="#${x.cta[1]}" ${i ? 'tabindex="-1"' : ""}>${esc(x.cta[0])} ${arrow}</a><a class="btn btn-ghost light" href="#${x.alt[1]}" ${i ? 'tabindex="-1"' : ""}>${esc(x.alt[0])}</a></div>
+    </div></div>
+  </div>`).join("")}
+  <svg class="hx-mark" viewBox="-4 -4 100 108" aria-hidden="true"><path fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path fill="#F3F7F6" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/></svg>
+  <div class="wrap hx-nav"><div class="hx-dots" role="tablist" aria-label="Choose a scene">${HERO.map((x, i) => `<button role="tab" aria-selected="${i ? "false" : "true"}" aria-label="${esc(x.eyebrow)}" data-hx="${i}"><span>${String(i + 1).padStart(2, "0")}</span><i><b></b></i><em>${esc(x.eyebrow)}</em></button>`).join("")}</div>
+  <button class="hx-pause" type="button" aria-label="Pause the slideshow" data-hxp="1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2.4"/></svg></button></div>
+</section>`;
+let hxTimer = null, hxPaused = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function armHero() {
+  const root = $("#main .hx"); clearInterval(hxTimer);
+  if (!root) return;
+  let cur = 0;
+  const show = (n) => {
+    cur = (n + HERO.length) % HERO.length;
+    $$(".hx-slide", root).forEach((el, i) => { el.classList.toggle("on", i === cur); el.setAttribute("aria-hidden", String(i !== cur)); $$("a", el).forEach((a) => (i === cur ? a.removeAttribute("tabindex") : a.setAttribute("tabindex", "-1"))); });
+    $$(".hx-dots button", root).forEach((b, i) => { b.setAttribute("aria-selected", String(i === cur)); b.classList.remove("run"); if (i === cur && !hxPaused) { void b.offsetWidth; b.classList.add("run"); } });
+  };
+  const start = () => { clearInterval(hxTimer); if (!hxPaused) hxTimer = setInterval(() => show(cur + 1), 7000); show(cur); };
+  $$(".hx-dots button", root).forEach((b) => b.addEventListener("click", () => { cur = Number(b.dataset.hx); start(); }));
+  const pb = $(".hx-pause", root);
+  const paint = () => { pb.innerHTML = hxPaused ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7Z" fill="currentColor"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2.4"/></svg>'; pb.setAttribute("aria-label", hxPaused ? "Play the slideshow" : "Pause the slideshow"); root.classList.toggle("paused", hxPaused); };
+  pb.addEventListener("click", () => { hxPaused = !hxPaused; paint(); start(); });
+  root.addEventListener("mouseenter", () => clearInterval(hxTimer));
+  root.addEventListener("mouseleave", () => start());
+  root.addEventListener("focusin", () => clearInterval(hxTimer));
+  let x0 = null; root.addEventListener("touchstart", (e) => (x0 = e.touches[0].clientX), { passive: true });
+  root.addEventListener("touchend", (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) { cur += dx < 0 ? 1 : -1; start(); } x0 = null; });
+  paint(); start();
+}
+
+/* ---------- Confluence cover: full-bleed photograph with Kayak tints ---------- */
+const magCover = (big = false) => `
+<a class="mcover${big ? " big" : ""}" href="#insight-growth-and-risk" aria-label="Confluence, Issue 01, November 2026: Growth and risk are one decision">
+  <img src="/assets/hero/cover-01-${big ? "1024" : "640"}.webp" alt="" loading="lazy" decoding="async">
+  <span class="mc-tint" aria-hidden="true"></span>
+  <span class="mc-top"><svg class="mc-wm" viewBox="0 0 416 100" aria-hidden="true"><use href="#logo-wm"/></svg><span class="mc-by">A Kayak Strategic Advisors publication</span></span>
+  <span class="mc-mast">CONFLUENCE</span>
+  <span class="mc-issue"><span>Issue 01</span><span>November 2026</span><span>Mumbai</span></span>
+  <span class="mc-lines">
+    <span class="mc-kicker">Cover story</span>
+    <span class="mc-head">Growth and risk are one decision</span>
+    <span class="mc-dek">Why the companies that move well through rough water treat them as one conversation</span>
+    <span class="mc-more"><span>Diligence is the decision now</span><span>Data protection is a board question</span><span>Counterfeits at marketplace speed</span></span>
+  </span>
+  <svg class="mc-mark" viewBox="-4 -4 100 108" aria-hidden="true"><path fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path fill="#F3F7F6" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/></svg>
+</a>`;
+
 /* ---------- Pages ---------- */
 const P = {};
 
 P.home = () => {
   const feat = ["growth-and-risk", "data-protection-board", "counterfeits-marketplace-speed"].map((id) => A[id]);
   return `
-<section class="deep hero">
-  <div class="wrap">
-    <div>
-      <span class="eyebrow">Kayak Strategic Advisors</span>
-      <h1>Clear advice for <em>consequential</em> decisions</h1>
-      <p class="lead">Strategy, deals, regulation and resilience for India's boards, promoters and investors. Independent, senior-led and built to be carried out.</p>
-      <div class="ctas"><a class="btn btn-saffron" href="#services">Explore our services ${arrow}</a><a class="btn btn-ghost" href="#insights">Read Confluence</a></div>
-    </div>
-    <figure class="hero-mark" style="margin:0">
-      <svg viewBox="-4 -4 100 108" aria-hidden="true"><path class="b1" fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path class="b2" fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path class="st" fill="#F3F7F6" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/></svg>
-      <figcaption>Two blades, one course: the client and Kayak, converging on one decision.</figcaption>
-    </figure>
-  </div>
-</section>
+${heroCarousel()}
 <section class="featured"><div class="wrap"><div class="grid">
   ${feat.map((a) => `<a class="feat" href="#insight-${a.id}">${cover(a.cluster, "Confluence · " + a.section, artIcon(a))}<div class="body"><div class="meta"><b>${esc(a.section)}</b><span>${a.mins} min read</span></div><h3>${esc(a.title)}</h3><p>${esc(a.dek)}</p></div></a>`).join("")}
 </div></div></section>
@@ -92,13 +151,13 @@ P.home = () => {
 </div></section>
 
 <section class="sec"><div class="wrap">
-  <div class="sec-head"><div><span class="eyebrow">Kayak tools</span><h2>Bespoke platforms, built by our Technology &amp; AI team</h2><p class="lead">Our advisers use these tools on client work, and clients can run them as their own, with our team on hand when they need it.</p></div><a class="textlink" href="#technology-ai">Technology &amp; AI ${arrow}</a></div>
+  <div class="sec-head"><div><span class="eyebrow">Kayak Solutions</span><h2>${SOLUTIONS_LINE}</h2><p class="lead">Platforms born of our advisory work, built by Kayak Technology Solutions. Our advisers use them on client engagements, and clients run them as their own, with our team on hand when they need it.</p></div><a class="textlink" href="#technology-ai">Technology &amp; AI ${arrow}</a></div>
   ${toolsGrid()}
 </div></section>
 
 <section class="sec alt"><div class="wrap ind-band">
-  <div><span class="eyebrow">Industries</span><span class="big">45</span><h2>sectors, one consistent way of reading them</h2><p class="lead">Our sector framework covers every industry tracked by IBEF. For each we map the value chain, the regulators and the questions boards ask most.</p><p style="margin-top:24px"><a class="btn btn-ghost" href="#industries">Explore industries ${arrow}</a></p></div>
-  <div class="groups-grid">${DATA.groups.map((g) => `<a class="gchip" href="#industries" data-scroll="g-${g.id}">${ii(g.icon)}<span>${esc(g.name)}</span><small>${g.members.length}</small></a>`).join("")}</div>
+  <div><span class="eyebrow">Industries</span><h2>Wide industry and sector exposure, one consistent way of reading it</h2><p class="lead">From financial services and healthcare to manufacturing, infrastructure, consumer and technology, we read every sector the same way: its value chain, its regulators and the questions its boards ask most.</p><p style="margin-top:24px"><a class="btn btn-ghost" href="#industries">Explore industries ${arrow}</a></p></div>
+  <div class="groups-grid">${DATA.groups.map((g) => `<a class="gchip" href="#industries" data-scroll="g-${g.id}">${ii(g.icon)}<span>${esc(g.name)}</span></a>`).join("")}</div>
 </div></section>
 
 <section class="sec"><div class="wrap">
@@ -107,7 +166,7 @@ P.home = () => {
 </div></section>
 
 <section class="band-deep sec"><div class="wrap mag">
-  <div class="mag-cover" aria-label="Confluence, issue 01 cover"><div class="in"><div class="mh">CONFLUENCE</div><div class="is"><span>Issue 01</span><span>November 2026</span></div><div class="cl">Growth and risk are one decision<small>The Kayak monthly on strategy, risk and the decisions between them</small></div></div></div>
+  ${magCover()}
   <div><span class="eyebrow">Our monthly magazine</span><h2>Confluence: where strategy and risk meet</h2>
     <p class="lead">Named after the meeting of two streams in our identifier. Each issue brings one cover story and a monthly read across all six clusters, free to clients and subscribers on the first Tuesday of every month.</p>
     <ul class="sections-list">${DATA.sections.slice(2, 8).map((s) => `<li>${esc(s[0])}</li>`).join("")}</ul>
@@ -136,7 +195,7 @@ ${DATA.clusters.map((c) => `<div class="svc-row" style="--c:${c.color}">
   <a class="btn btn-ghost" href="#${c.id}">Explore ${arrow}</a></div>`).join("")}
 </div></div></section>
 <section class="sec alt"><div class="wrap">
-  <div class="sec-head"><div><span class="eyebrow">Kayak tools</span><h2>Bespoke platforms</h2><p class="lead">Built and supported by our Technology &amp; AI cluster, and used across our services.</p></div></div>
+  <div class="sec-head"><div><span class="eyebrow">Kayak Solutions</span><h2>Bespoke platforms</h2><p class="lead">Built and supported by our Technology &amp; AI cluster, and used across our services.</p></div></div>
   ${toolsGrid()}
 </div></section>
 <section class="sec"><div class="wrap">
@@ -146,6 +205,42 @@ ${DATA.clusters.map((c) => `<div class="svc-row" style="--c:${c.color}">
 <section class="sec alt"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Our approach</span><h2>Four strokes, from first look to lasting result</h2></div></div>${strokes()}
 </div></section>`;
+
+P.service = (x) => {
+  const c = C[x.cluster];
+  const sibs = svcOf(c.id).filter((o) => o.slug !== x.slug);
+  const idx = c.services.findIndex((s, i) => svcAt(c.id, i)?.slug === x.slug);
+  const icon = c.services[idx]?.[0] || c.icon;
+  return `
+<section class="phero colored svc-hero" style="--c:${c.color};--p:var(--pc-${c.id});--ps:var(--ps-${c.id})"><div class="wrap">
+  ${crumbs([["Services", "services"], [c.name, c.id], [x.name]])}
+  <div style="margin-top:22px" class="hico">${ic(icon)}</div>
+  <span class="eyebrow" style="color:var(--on-deep-muted);margin-top:14px;display:block">${esc(c.name)}</span>
+  <h1>${esc(x.name)}</h1><p class="lead">${esc(x.summary)}</p>
+  <div class="ctas" style="margin-top:26px"><a class="btn btn-saffron" href="#contact" data-cluster="${c.id}">Start a confidential conversation ${arrow}</a></div>
+</div></section>
+<section class="sec"><div class="wrap intro-grid" style="--c:${c.color}">
+  <div class="svc-overview">${x.overview.map((p, i) => `<p class="${i ? "" : "serif"}">${esc(p)}</p>`).join("")}</div>
+  <div class="aside"><h3>When to call us</h3><ul class="ticks">${x.when.map((w) => `<li>${esc(w)}</li>`).join("")}</ul><a class="textlink" href="#contact" data-cluster="${c.id}">Talk to the ${esc(c.short)} team ${arrow}</a></div>
+</div></section>
+<section class="sec alt" style="--c:${c.color}"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">What we do</span><h2>The work, in detail</h2></div></div>
+  <ol class="svc-what">${x.what.map((w, i) => `<li><span class="n">${String(i + 1).padStart(2, "0")}</span><p>${esc(w)}</p></li>`).join("")}</ol>
+</div></section>
+<section class="sec"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">How we work</span><h2>Four strokes, start to finish</h2><p class="lead">The same senior team leads every stroke, and stays until the result is in place.</p></div></div>
+  ${strokes(x.approach.map((a, i) => [["Diagnose", "Decide", "Deliver", "Sustain"][i], a[0], a[1]]))}
+</div></section>
+<section class="band-deep sec"><div class="wrap svc-out">
+  <div><span class="eyebrow">What you receive</span><ul class="ticks light">${x.deliverables.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></div>
+  <div><span class="eyebrow">What changes</span><ul class="outcomes">${x.outcomes.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>
+</div></section>
+<section class="sec tight"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Also in ${esc(c.name)}</span></div><a class="textlink" href="#${c.id}">All ${esc(c.short)} services ${arrow}</a></div>
+  <div class="svc-related">${sibs.map((o) => `<a href="#svc-${o.slug}" style="--c:${c.color}"><b>${esc(o.name)}</b><span>${esc(o.summary)}</span></a>`).join("")}</div>
+</div></section>
+${ctaBand(`Begin a conversation: ${x.name}`, c.id)}`;
+};
 
 P.cluster = (c) => {
   const groups = DATA.groups.filter((g) => g.clusters.includes(c.id));
@@ -164,10 +259,10 @@ P.cluster = (c) => {
 </div></section>
 <section class="sec alt" style="--c:${c.color}"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">What we do</span><h2>${esc(c.short)} services</h2></div></div>
-  <div class="svc-grid">${c.services.map((s) => `<article class="svc-card">${ic(s[0])}<h3>${esc(s[1])}</h3><p>${esc(s[2])}</p></article>`).join("")}</div>
+  <div class="svc-grid">${c.services.map((s, i) => { const x = svcAt(c.id, i); return x ? `<a class="svc-card link" href="#svc-${x.slug}">${ic(s[0])}<h3>${esc(s[1])}</h3><p>${esc(s[2])}</p><span class="textlink">Explore ${arrow}</span></a>` : `<article class="svc-card">${ic(s[0])}<h3>${esc(s[1])}</h3><p>${esc(s[2])}</p></article>`; }).join("")}</div>
 </div></section>
 ${tools.length ? `<section class="sec"><div class="wrap">
-  <div class="sec-head"><div><span class="eyebrow">Kayak tools</span><h2>${c.id === "technology-ai" ? "Bespoke platforms we build and run" : "Tools behind this work"}</h2>${c.id === "technology-ai" ? `<p class="lead">Alongside advisory work, our Technology &amp; AI team builds and supports Kayak's own platforms.</p>` : ""}</div></div>
+  <div class="sec-head"><div><span class="eyebrow">Kayak Solutions</span><h2>${c.id === "technology-ai" ? "Bespoke platforms we build and run" : "Tools behind this work"}</h2>${c.id === "technology-ai" ? `<p class="lead">Alongside advisory work, our Technology &amp; AI team builds and supports Kayak's own platforms.</p>` : ""}</div></div>
   ${toolsGrid(tools, c.id === "technology-ai")}</div></section>` : ""}
 <section class="sec${tools.length ? " alt" : ""}" style="--c:${c.color}"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Questions we help boards answer</span></div></div>
@@ -192,7 +287,7 @@ P.tool = (t) => {
   const other = DATA.tools.filter((x) => x.id !== t.id);
   return `
 <section class="phero colored" style="--c:${t.color};--p:var(--pc-${t.id});--ps:var(--ps-${t.id})"><div class="wrap">
-  ${crumbs([["Services", "services"], ["Technology & AI", "technology-ai"], [t.name]])}
+  ${crumbs([["Kayak Solutions", "tools"], [t.name]])}
   <div class="thead"><div>
   <div style="margin-top:22px" class="hico">${ic(t.icon)}</div>
   <span class="eyebrow">${esc(t.kind)}</span>
@@ -221,8 +316,9 @@ ${ctaBand(`See ${t.name} in action`, t.id, "Request a demo")}`;
 
 P.tools = () => `
 <section class="phero colored" style="--c:${C["technology-ai"].color};--p:var(--pc-technology-ai);--ps:var(--ps-technology-ai)"><div class="wrap">
-  ${crumbs([["Services", "services"], ["Technology & AI", "technology-ai"], ["Kayak tools"]])}
-  <h1>Kayak tools</h1><p class="lead">Bespoke platforms built from our advisory practice, for ethics and compliance, counterfeiting case intelligence, third-party risk and e-signatures.</p>
+  ${crumbs([["Kayak Solutions"]])}
+  <span class="eyebrow" style="color:#F5C46D;display:block;margin-top:18px">${SOLUTIONS_LINE}</span>
+  <h1>Kayak Solutions</h1><p class="lead">Platforms born of our advisory practice, for ethics and compliance, counterfeiting case intelligence, third-party risk and e-signatures.</p>
 </div></section>
 <section class="sec"><div class="wrap">${toolsGrid()}</div></section>
 <section class="sec alt"><div class="wrap">
@@ -232,7 +328,7 @@ P.tools = () => `
 ${ctaBand("Find the right tool for your programme", "technology-ai")}`;
 
 P.industries = () => `
-<section class="phero"><div class="wrap">${crumbs([["Industries"]])}<h1>Industries</h1><p class="lead">Our framework covers all 45 industries tracked by IBEF, grouped into ten sector families. For each, we map the value chain, the regulators and the questions boards ask most.</p></div></section>
+<section class="phero"><div class="wrap">${crumbs([["Industries"]])}<h1>Industries</h1><p class="lead">Wide industry and sector exposure, organised into sector families. For each, we map the value chain, the regulators and the questions boards ask most.</p></div></section>
 <section class="sec"><div class="wrap">
   <div class="filter">${ic("search")}<label class="sr" for="indq">Filter industries</label><input id="indq" type="search" placeholder="Filter by industry, for example steel or insurance" autocomplete="off"></div>
   <div id="groups">${DATA.groups.map((g) => `<section class="group" id="g-${g.id}" data-g="${g.id}">
@@ -254,7 +350,7 @@ P.insights = () => {
     <div class="masthead" style="margin-top:22px">CONFLUENCE</div>
     <p class="masthead-sub">The Kayak monthly on strategy, risk and the decisions between them.</p>
     <div class="issue-meta"><span>Issue 01</span><span>November 2026</span><span>First Tuesday, monthly</span></div></div>
-  <div><p style="color:var(--on-deep-muted);margin-bottom:14px">Free to clients and subscribers.</p>${subscribeForm("sub-ins")}</div>
+  <div class="ih-right">${magCover(true)}<p style="color:var(--on-deep-muted);margin:22px 0 12px">Free to clients and subscribers, on the first Tuesday of every month.</p>${subscribeForm("sub-ins")}</div>
 </div></section>
 <section class="sec"><div class="wrap">
   <a class="cover-story" href="#insight-${cs.id}">${PH("insights") ? `<div class="cover photo" style="background-image:url('${PH("insights")}')" aria-hidden="true"><span class="ct">Cover story · Issue 01</span></div>` : cover(null, "Cover story · Issue 01", "navigation")}<div class="body"><div class="meta"><b>Cover Story</b><span>${cs.mins} min read</span></div><h2>${esc(cs.title)}</h2><p>${esc(cs.dek)}</p><span class="textlink">Read the cover story ${arrow}</span></div></a>
@@ -314,10 +410,10 @@ P.about = () => `
   <div class="standards">${DATA.standards.map((s) => `<article>${ic(s[0])}<h3>${esc(s[1])}</h3><p>${esc(s[2])}</p></article>`).join("")}</div>
 </div></section>
 <section class="sec"><div class="wrap"><div class="sec-head"><div><span class="eyebrow">Our approach</span><h2>Four strokes, from first look to lasting result</h2></div></div>${strokes()}</div></section>
-<section class="sec alt" id="leadership"><div class="wrap">
+${FLAGS.leadership ? `<section class="sec alt" id="leadership"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Leadership</span><h2>The people you will work with</h2><p class="lead">Every engagement is led by a partner who stays with it from scoping to result.</p></div></div>
   <div class="people">${(DATA.people || []).map((x) => `<div class="person"><div class="ph">${esc(x.initials)}</div><h3>${esc(x.name)}</h3><p>${esc(x.role)}</p><p>${esc(x.line)}</p>${x.tag ? `<span class="tag">${esc(x.tag)}</span>` : ""}</div>`).join("")}</div>
-</div></section>
+</div></section>` : ""}
 ${ctaBand("Make the crossing with us")}`;
 
 P.careers = () => `
@@ -389,24 +485,24 @@ P.notfound = () => `<section class="phero"><div class="wrap"><h1>Page not found<
 /* ---------- Menus ---------- */
 function buildMenus() {
   $("#m-services").innerHTML = `<div class="wrap"><div class="mega-intro"><span class="eyebrow">Services</span><h3>Six clusters, one table</h3><p>Strategy, deals, regulation, risk, technology and cross-border work, led by one partner.</p><a class="btn btn-primary" href="#services">All services ${arrow}</a>
-    <div class="mega-tools"><span class="eyebrow">Kayak tools</span>${DATA.tools.map((t) => `<a href="#${t.id}">${pmark(t)}<small>${esc(t.kind)}</small></a>`).join("")}<a class="textlink" href="#tools">All tools ${arrow}</a></div></div>
-    <div class="mega-cols">${DATA.clusters.map((c) => `<div class="mega-col"><h4><span class="swatch" style="background:${c.color}">${ic(c.icon)}</span><a href="#${c.id}">${esc(c.name)}</a></h4><ul>${c.services.map((s) => `<li><a href="#${c.id}">${esc(s[1])}</a></li>`).join("")}</ul></div>`).join("")}</div></div>`;
-  $("#m-industries").innerHTML = `<div class="wrap"><div class="mega-intro"><span class="eyebrow">Industries</span><h3>45 sectors, ten families</h3><p>Every industry tracked by IBEF, read the same way: value chain, regulators and the questions boards ask.</p><a class="btn btn-primary" href="#industries">All industries ${arrow}</a></div>
-    <div class="mega-cols">${DATA.groups.map((g) => `<div class="mega-col"><h4><a href="#industries" data-scroll="g-${g.id}">${esc(g.name)}</a></h4><ul>${g.members.slice(0, 4).map((m) => `<li><a href="#industries" data-scroll="g-${g.id}">${esc(m.name)}</a></li>`).join("")}${g.members.length > 4 ? `<li><a href="#industries" data-scroll="g-${g.id}">+${g.members.length - 4} more</a></li>` : ""}</ul></div>`).join("")}</div></div>`;
+    <div class="mega-tools"><span class="eyebrow">Kayak Solutions</span>${DATA.tools.map((t) => `<a href="#${t.id}">${pmark(t)}<small>${esc(t.kind)}</small></a>`).join("")}<a class="textlink" href="#tools">All solutions ${arrow}</a></div></div>
+    <div class="mega-cols">${DATA.clusters.map((c) => `<div class="mega-col"><h4><span class="swatch" style="background:${c.color}">${ic(c.icon)}</span><a href="#${c.id}">${esc(c.name)}</a></h4><ul>${c.services.map((s) => `<li><a href="#${svcAt(c.id, c.services.indexOf(s)) ? "svc-" + svcAt(c.id, c.services.indexOf(s)).slug : c.id}">${esc(s[1])}</a></li>`).join("")}</ul></div>`).join("")}</div></div>`;
+  $("#m-industries").innerHTML = `<div class="wrap"><div class="mega-intro"><span class="eyebrow">Industries</span><h3>Wide sector exposure</h3><p>Every sector read the same way: value chain, regulators and the questions boards ask.</p><a class="btn btn-primary" href="#industries">All industries ${arrow}</a></div>
+    <div class="mega-cols">${DATA.groups.map((g) => `<div class="mega-col"><h4><a href="#industries" data-scroll="g-${g.id}">${esc(g.name)}</a></h4><ul>${g.members.slice(0, 4).map((m) => `<li><a href="#industries" data-scroll="g-${g.id}">${esc(m.name)}</a></li>`).join("")}${g.members.length > 4 ? `<li><a href="#industries" data-scroll="g-${g.id}">and more</a></li>` : ""}</ul></div>`).join("")}</div></div>`;
   $("#m-insights").innerHTML = `<div class="wrap"><div class="mega-intro"><span class="eyebrow">Insights</span><h3>Confluence</h3><p>The Kayak monthly on strategy, risk and the decisions between them. Issue 01 is out now.</p><a class="btn btn-primary" href="#insights">Read Confluence ${arrow}</a></div>
     <div class="mega-cols"><div class="mega-col"><h4><a href="#insight-growth-and-risk">Cover story</a></h4><ul><li><a href="#insight-growth-and-risk">Growth and risk are one decision</a></li><li><a href="#insight-why-confluence">Why Confluence</a></li></ul></div>
     <div class="mega-col"><h4><a href="#insights">In this issue</a></h4><ul>${DATA.articles.filter((a) => a.cluster).slice(0, 6).map((a) => `<li><a href="#insight-${a.id}">${esc(a.section)}: ${esc(a.title)}</a></li>`).join("")}</ul></div>
     <div class="mega-col"><h4><a href="#insights">Subscribe</a></h4><ul><li><a href="#insights">Free to clients and subscribers</a></li><li><a href="#insights">First Tuesday of every month</a></li></ul></div></div></div>`;
   $("#m-about").innerHTML = `<div class="wrap"><div class="mega-intro"><span class="eyebrow">About us</span><h3>Two paddlers. One course.</h3><p>Independent, senior-led advice, working beside our clients like two kayakers moving as one.</p><a class="btn btn-primary" href="#about">About Kayak ${arrow}</a></div>
     <div class="mega-cols"><div class="mega-col"><h4><a href="#about">Who we are</a></h4><ul><li><a href="#about">Our story and name</a></li><li><a href="#about" data-scroll="values">Values</a></li><li><a href="#about" data-scroll="standards">Standards</a></li></ul></div>
-    <div class="mega-col"><h4><a href="#about" data-scroll="leadership">Leadership</a></h4><ul><li><a href="#about" data-scroll="leadership">The people you will work with</a></li></ul></div>
+    ${FLAGS.leadership ? `<div class="mega-col"><h4><a href="#about" data-scroll="leadership">Leadership</a></h4><ul><li><a href="#about" data-scroll="leadership">The people you will work with</a></li></ul></div>` : `<div class="mega-col"><h4><a href="#about" data-scroll="standards">How we work</a></h4><ul><li><a href="#about" data-scroll="standards">Our standards</a></li><li><a href="#services">Our services</a></li></ul></div>`}
     <div class="mega-col"><h4><a href="#careers">Careers</a></h4><ul><li><a href="#careers">Why join Kayak</a></li><li><a href="#careers" data-scroll="apply">Founding team</a></li><li><a href="#contact">Contact us</a></li></ul></div></div></div>`;
   $("#f-services").innerHTML = DATA.clusters.map((c) => `<li><a href="#${c.id}">${esc(c.name)}</a></li>`).join("");
   $("#drawer").innerHTML = `<div class="wrap"><div class="drawer-top"><a class="brand" href="#home"><svg viewBox="0 0 416 100" style="height:24px;width:auto"><use href="#logo-wm"/></svg></a><button class="iconbtn" type="button" id="closeMenu" aria-label="Close menu">${ic("close")}</button></div>
     <details><summary>Services ${ic("plus")}</summary><ul><li><a href="#services">All services</a></li>${DATA.clusters.map((c) => `<li><a href="#${c.id}">${esc(c.name)}</a></li>`).join("")}</ul></details>
     <details><summary>Industries ${ic("plus")}</summary><ul><li><a href="#industries">All industries</a></li>${DATA.groups.map((g) => `<li><a href="#industries" data-scroll="g-${g.id}">${esc(g.name)}</a></li>`).join("")}</ul></details>
     <details><summary>Insights ${ic("plus")}</summary><ul><li><a href="#insights">Confluence</a></li>${DATA.articles.map((a) => `<li><a href="#insight-${a.id}">${esc(a.title)}</a></li>`).join("")}</ul></details>
-    <details><summary>About us ${ic("plus")}</summary><ul><li><a href="#about">Who we are</a></li><li><a href="#about" data-scroll="values">Values</a></li><li><a href="#about" data-scroll="standards">Standards</a></li><li><a href="#about" data-scroll="leadership">Leadership</a></li></ul></details>
+    <details><summary>About us ${ic("plus")}</summary><ul><li><a href="#about">Who we are</a></li><li><a href="#about" data-scroll="values">Values</a></li><li><a href="#about" data-scroll="standards">Standards</a></li>${FLAGS.leadership ? `<li><a href="#about" data-scroll="leadership">Leadership</a></li>` : ""}</ul></details>
     <a class="solo" href="#careers">Careers</a><a class="solo" href="#contact">Contact us</a>
     <p style="margin-top:24px"><a class="btn btn-primary" href="#contact">Talk to us ${arrow}</a></p></div>`;
 }
@@ -425,12 +521,14 @@ function openMega(btn) {
 let pendingScroll = null, pendingCluster = null;
 const ROUTE_SKIP = ["cluster", "article", "notfound", "tool"];
 function isRouteKey(k) {
-  return k === "home" || k === "top" || !!T[k] || !!C[k] || (k.startsWith("insight-") && !!A[k.slice(8)]) || (!!P[k] && !ROUTE_SKIP.includes(k));
+  return k === "home" || k === "top" || !!T[k] || !!C[k] || (k.startsWith("insight-") && !!A[k.slice(8)]) || (k.startsWith("svc-") && !!SV[k.slice(4)]) || (!!P[k] && !ROUTE_SKIP.includes(k));
 }
 function keyToPath(k) {
   if (!k || k === "home" || k === "top") return "/";
   if (k.startsWith("insight-")) return `/insights/${k.slice(8)}`;
-  if (T[k]) return `/tools/${k}`;
+  if (k.startsWith("svc-")) { const x = SV[k.slice(4)]; return `/services/${x.cluster}/${x.slug}`; }
+  if (k === "tools") return "/solutions";
+  if (T[k]) return `/solutions/${k}`;
   if (C[k]) return `/services/${k}`;
   return `/${k}`;
 }
@@ -439,7 +537,9 @@ function pathToKey(p) {
   if (p === "/") return "home";
   let m;
   if ((m = p.match(/^\/insights\/([\w-]+)$/))) return "insight-" + m[1];
-  if ((m = p.match(/^\/(?:tools|services)\/([\w-]+)$/))) return m[1];
+  if ((m = p.match(/^\/services\/[\w-]+\/([\w-]+)$/))) return "svc-" + m[1];
+  if (p === "/solutions" || p === "/tools") return "tools";
+  if ((m = p.match(/^\/(?:tools|solutions|services)\/([\w-]+)$/))) return m[1];
   return p.slice(1);
 }
 /** Turns the templates' #key links into real, crawlable paths. */
@@ -460,8 +560,9 @@ function route() {
   if (key === "home" || key === "top") { html = P.home(); title = "Kayak Strategic Advisors"; sec = ""; }
   else if (T[key]) { html = P.tool(T[key]); title = `${T[key].name}: ${T[key].kind}`; sec = "services"; }
   else if (C[key]) { html = P.cluster(C[key]); title = C[key].name; sec = "services"; }
+  else if (key.startsWith("svc-") && SV[key.slice(4)]) { const x = SV[key.slice(4)]; html = P.service(x); title = x.name; sec = "services"; }
   else if (key.startsWith("insight-") && A[key.slice(8)]) { const a = A[key.slice(8)]; html = P.article(a); title = a.title; sec = "insights"; }
-  else if (P[key] && !["cluster", "article", "notfound", "tool"].includes(key)) { html = P[key](); title = { services: "Services", industries: "Industries", insights: "Confluence insights", about: "About us", careers: "Careers", contact: "Contact us", legal: "Privacy and terms", tools: "Kayak tools" }[key]; if (key === "tools") sec = "services"; }
+  else if (P[key] && !["cluster", "article", "notfound", "tool", "service"].includes(key)) { html = P[key](); title = { services: "Services", industries: "Industries", insights: "Confluence insights", about: "About us", careers: "Careers", contact: "Contact us", legal: "Privacy and terms", tools: "Kayak Solutions" }[key]; if (key === "tools") sec = "services"; }
   else if (key === "main") { $("#main").focus(); return; }
   else { html = P.notfound(); title = "Page not found"; sec = ""; }
   const main = $("#main");
@@ -470,6 +571,7 @@ function route() {
   $$(".mainnav [data-sec]").forEach((b) => b.classList.toggle("is-current", b.dataset.sec === sec));
   closeMegas(); $("#drawer").hidden = true; document.body.style.overflow = "";
   linkify(main);
+  armHero();
   bindPage();
   applyPhotos(key);
   armLogos();
@@ -576,10 +678,11 @@ function bindForm(f) {
 
 /* ---------- Search ---------- */
 const INDEX = [
-  ...[["Services", "services", "Six clusters, one lead partner"], ["Industries", "industries", "All 45 IBEF industries"], ["Confluence", "insights", "Our monthly magazine"], ["About us", "about", "Who we are, values and standards"], ["Careers", "careers", "Join the founding team"], ["Kayak tools", "tools", "SayUsNow, SeeCounter and NexaPair"], ["Contact us", "contact", "Start a confidential conversation"], ["Kayak tools", "technology-ai", "SayUsNow, SeeCounter and NexaPair"]].map((p) => ({ t: p[0], s: p[2], h: p[1], g: "Pages", i: "website" })),
+  ...[["Services", "services", "Six clusters, one lead partner"], ["Industries", "industries", "Wide industry and sector exposure"], ["Confluence", "insights", "Our monthly magazine"], ["About us", "about", "Who we are, values and standards"], ["Careers", "careers", "Join the founding team"], ["Kayak Solutions", "tools", "SayUsNow, SeeCounter, NexaPair and DocuVow"], ["Contact us", "contact", "Start a confidential conversation"], ["Kayak tools", "technology-ai", "SayUsNow, SeeCounter and NexaPair"]].map((p) => ({ t: p[0], s: p[2], h: p[1], g: "Pages", i: "website" })),
   ...DATA.clusters.map((c) => ({ t: c.name, s: c.line, h: c.id, g: "Services", i: c.icon })),
   ...DATA.clusters.flatMap((c) => c.services.map((s) => ({ t: s[1], s: c.name, h: c.id, g: "Services", i: s[0], k: s[2] }))),
-  ...DATA.tools.map((t) => ({ t: t.name, s: t.kind, h: t.id, g: "Kayak tools", i: t.icon, k: t.line + " " + t.modules.map((m) => m[1]).join(" ") })),
+  ...(DATA.services || []).map((x) => ({ t: x.name, s: C[x.cluster]?.name || "", h: "svc-" + x.slug, g: "Services", i: "target", k: x.summary + " " + x.what.join(" ") })),
+  ...DATA.tools.map((t) => ({ t: t.name, s: t.kind, h: t.id, g: "Kayak Solutions", i: t.icon, k: t.line + " " + t.modules.map((m) => m[1]).join(" ") })),
   ...DATA.tools.flatMap((t) => realMods(t).map((m) => ({ t: `${t.name} ${m[1]}`, s: m[2], h: t.id, sc: "modules", g: "Kayak tools", i: m[0] }))),
   ...DATA.groups.flatMap((g) => g.members.map((m) => ({ t: m.name, s: g.name, h: "industries", sc: "g-" + g.id, g: "Industries", ind: m.slug }))),
   ...DATA.articles.map((a) => ({ t: a.title, s: `${a.section} · Confluence`, h: "insight-" + a.id, g: "Insights", i: "report", k: a.dek })),

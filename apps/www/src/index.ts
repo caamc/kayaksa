@@ -7,6 +7,7 @@ import { randomToken, sha256hex } from "../../../packages/core/src/crypto";
 import { mailEnabled, mailHtml, sendMail } from "../../../packages/core/src/mail";
 import BODY from "./body.html";
 import STATIC_DATA from "./site-data.json";
+import SERVICES from "../public/assets/services.json";
 import { kayApi, redact } from "./kay";
 import { syncMemory, weeklyDrafts, dailyCleanup, seedMemory } from "./learning";
 import type { Env } from "./env";
@@ -23,6 +24,8 @@ app.onError((e: any, c) => {
   return c.json({ error: status >= 500 ? "Something went wrong on our side. Please try again, or email enquiries@kayaksa.com." : e.message }, status);
 });
 
+const LEADERSHIP_LIVE = Date.parse("2027-01-15T00:00:00+05:30");
+const SV: any[] = SERVICES as any;
 const site = (c: any) => (c.env.SITE_URL || "https://www.kayaksa.com").replace(/\/$/, "");
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
 
@@ -46,7 +49,10 @@ async function siteData(c: any) {
   } catch (e: any) {
     console.error("articles unavailable", e?.message);
   }
-  data.people = [{ initials: "AC", name: "Anuj Matushankar Choudhary", role: "Founder and Director", line: "Leads Kayak Strategic Advisors, Kayak Innovations and Kayak Technology Solutions.", tag: "" }];
+  // The leadership section goes live on 15 January 2027 (IST). Until then nothing about it is sent to browsers.
+  const leadership = Date.now() >= LEADERSHIP_LIVE;
+  data.flags = { leadership };
+  data.people = leadership ? [{ initials: "AC", name: "Anuj Matushankar Choudhary", role: "Founder and Director", line: "Leads Kayak Strategic Advisors, Kayak Innovations and Kayak Technology Solutions.", tag: "" }] : [];
   data.config = { phone: c.env.CONTACT_PHONE || "", address: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road, Mumbai 400013" };
   return data;
 }
@@ -55,13 +61,13 @@ async function siteData(c: any) {
 interface PageMeta { status: number; title: string; desc: string; ssr: string; ld?: object; type?: string }
 const STATIC_PAGES: Record<string, [string, string]> = {
   services: ["Services", "Six service clusters led by one partner: strategy and deals, tax and regulation, crisis and resilience, technology and AI, managed services and the International Desk."],
-  industries: ["Industries", "Kayak serves all 45 IBEF industries, from banking and pharmaceuticals to steel, retail and renewable energy."],
+  industries: ["Industries", "Wide industry and sector exposure, from financial services and healthcare to manufacturing, infrastructure, consumer and technology."],
   insights: ["Confluence insights", "Confluence, the Kayak monthly on strategy, risk and the decisions between them."],
   about: ["About us", "Kayak Strategic Advisors: independent, senior-led advisory from Mumbai and Thane. Our values, promises and standards."],
   careers: ["Careers", "Join the founding team at Kayak Strategic Advisors."],
   contact: ["Contact us", "Start a confidential conversation with Kayak Strategic Advisors. A senior member of the team replies within one working day."],
   legal: ["Privacy and terms", "How Kayak Strategic Advisors handles personal data, measures this site without cookies, and the terms of use."],
-  tools: ["Kayak tools", "SayUsNow, SeeCounter, NexaPair and DocuVow: platforms built from Kayak's advisory practice."],
+  solutions: ["Kayak Solutions", "Thought, Designed and Developed in India for the World: SayUsNow, SeeCounter, NexaPair and DocuVow, platforms born of Kayak's advisory practice."],
 };
 
 function render(path: string, data: any): PageMeta {
@@ -73,16 +79,24 @@ function render(path: string, data: any): PageMeta {
   if (p === "/") {
     return {
       status: 200, title: "Kayak Strategic Advisors", desc: "Clear, evidence-led advice on strategy, deals, regulation, risk and technology for India's boards, promoters and investors. Mumbai and Thane.",
-      ssr: `<h1>Kayak Strategic Advisors</h1><p>Clear, evidence-led advice on strategy, deals, regulation, risk and technology for India's boards, promoters and investors.</p><h2>Services</h2><ul>${data.clusters.map((c: any) => `<li><a href="/services/${c.id}">${esc(c.name)}</a></li>`).join("")}</ul><h2>Kayak tools</h2><ul>${data.tools.map((t: any) => `<li><a href="/tools/${t.id}">${esc(t.name)}</a>: ${esc(t.kind)}</li>`).join("")}</ul><h2>Confluence</h2><ul>${data.articles.slice(0, 8).map((a: any) => `<li><a href="/insights/${a.id}">${esc(a.title)}</a></li>`).join("")}</ul><p><a href="/contact">Contact us</a></p>`,
-      ld: { "@context": "https://schema.org", "@type": "ProfessionalService", name: "Kayak Strategic Advisors Private Limited", url: "https://www.kayaksa.com/", email: "enquiries@kayaksa.com", logo: "https://www.kayaksa.com/assets/kayak-logo.svg", address: { "@type": "PostalAddress", streetAddress: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road", addressLocality: "Mumbai", postalCode: "400013", addressRegion: "Maharashtra", addressCountry: "IN" }, areaServed: "IN", founder: { "@type": "Person", name: "Anuj Matushankar Choudhary" }, knowsAbout: data.clusters.map((c: any) => c.name), sameAs: [] },
+      ssr: `<h1>Kayak Strategic Advisors</h1><p>Clear, evidence-led advice on strategy, deals, regulation, risk and technology for India's boards, promoters and investors.</p><h2>Services</h2><ul>${data.clusters.map((c: any) => `<li><a href="/services/${c.id}">${esc(c.name)}</a></li>`).join("")}</ul><h2>Kayak Solutions</h2><p>Thought, Designed and Developed in India for the World.</p><ul>${data.tools.map((t: any) => `<li><a href="/solutions/${t.id}">${esc(t.name)}</a>: ${esc(t.kind)}</li>`).join("")}</ul><h2>Confluence</h2><ul>${data.articles.slice(0, 8).map((a: any) => `<li><a href="/insights/${a.id}">${esc(a.title)}</a></li>`).join("")}</ul><p><a href="/contact">Contact us</a></p>`,
+      ld: { "@context": "https://schema.org", "@type": "ProfessionalService", name: "Kayak Strategic Advisors Private Limited", url: "https://www.kayaksa.com/", email: "enquiries@kayaksa.com", logo: "https://www.kayaksa.com/assets/kayak-logo.svg", address: { "@type": "PostalAddress", streetAddress: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road", addressLocality: "Mumbai", postalCode: "400013", addressRegion: "Maharashtra", addressCountry: "IN" }, areaServed: "IN", ...(data.flags?.leadership ? { founder: { "@type": "Person", name: "Anuj Matushankar Choudhary" } } : {}), slogan: "Clear advice for consequential decisions", knowsAbout: data.clusters.map((c: any) => c.name), sameAs: [] },
     };
   }
   if ((m = p.match(/^\/services\/([\w-]+)$/)) && C(m[1])) {
     const c = C(m[1]);
-    return { status: 200, title: c.name, desc: (c.line || c.intro || "").slice(0, 300), ssr: `<h1>${esc(c.name)}</h1><p>${esc(c.intro || c.line || "")}</p><h2>Services</h2><ul>${(c.services || []).map((s: any) => `<li>${esc(Array.isArray(s) ? s[0] : s)}</li>`).join("")}</ul><p><a href="/contact">Talk to us about ${esc(c.name)}</a></p>`,
+    return { status: 200, title: c.name, desc: (c.line || c.intro || "").slice(0, 300), ssr: `<h1>${esc(c.name)}</h1><p>${esc(c.intro || c.line || "")}</p><h2>Services</h2><ul>${SV.filter((v) => v.cluster === c.id).map((v) => `<li><a href="/services/${c.id}/${v.slug}">${esc(v.name)}</a>: ${esc(v.summary)}</li>`).join("")}</ul><p><a href="/contact">Talk to us about ${esc(c.name)}</a></p>`,
       ld: { "@context": "https://schema.org", "@type": "Service", name: c.name, provider: { "@type": "Organization", name: "Kayak Strategic Advisors" }, areaServed: "IN", description: c.intro || c.line } };
   }
-  if ((m = p.match(/^\/tools\/([\w-]+)$/)) && T(m[1])) {
+  if ((m = p.match(/^\/services\/([\w-]+)\/([\w-]+)$/))) {
+    const x = SV.find((v) => v.cluster === m![1] && v.slug === m![2]);
+    if (x) {
+      const cl = C(x.cluster);
+      return { status: 200, title: `${x.name} | ${cl.name}`, desc: x.summary, ssr: `<p><a href="/services/${cl.id}">${esc(cl.name)}</a></p><h1>${esc(x.name)}</h1><p><b>${esc(x.summary)}</b></p>${x.overview.map((o: string) => `<p>${esc(o)}</p>`).join("")}<h2>When to call us</h2><ul>${x.when.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>What we do</h2><ul>${x.what.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>How we work</h2><ol>${x.approach.map((a: string[]) => `<li><b>${esc(a[0])}</b>: ${esc(a[1])}</li>`).join("")}</ol><h2>What you receive</h2><ul>${x.deliverables.map((d: string) => `<li>${esc(d)}</li>`).join("")}</ul><p><a href="/contact">Start a confidential conversation</a></p>`,
+        ld: { "@context": "https://schema.org", "@type": "Service", name: x.name, serviceType: cl.name, description: x.summary, provider: { "@type": "ProfessionalService", name: "Kayak Strategic Advisors Private Limited", url: "https://www.kayaksa.com/" }, areaServed: ["IN", "Worldwide"] } };
+    }
+  }
+  if ((m = p.match(/^\/solutions\/([\w-]+)$/)) && T(m[1])) {
     const t = T(m[1]);
     return { status: 200, title: `${t.name}: ${t.kind}`, desc: (t.line || "").slice(0, 300), ssr: `<h1>${esc(t.name)}</h1><p><b>${esc(t.kind)}.</b> ${esc(t.intro || t.line)}</p><ul>${(t.modules || []).map((x: any) => `<li><b>${esc(x[1])}</b>: ${esc(String(x[2]).replace(/^\[Planned\]\s*/, "Planned: "))}</li>`).join("")}</ul>`,
       ld: { "@context": "https://schema.org", "@type": "SoftwareApplication", name: t.name, applicationCategory: "BusinessApplication", description: t.line, publisher: { "@type": "Organization", name: "Kayak Technology Solutions Private Limited" } } };
@@ -99,8 +113,9 @@ function render(path: string, data: any): PageMeta {
     let extra = "";
     if (key === "services") extra = `<ul>${data.clusters.map((c: any) => `<li><a href="/services/${c.id}">${esc(c.name)}</a>: ${esc(c.line || "")}</li>`).join("")}</ul>`;
     if (key === "insights") extra = `<ul>${data.articles.map((a: any) => `<li><a href="/insights/${a.id}">${esc(a.title)}</a>: ${esc(a.dek || "")}</li>`).join("")}</ul>`;
-    if (key === "tools") extra = `<ul>${data.tools.map((t: any) => `<li><a href="/tools/${t.id}">${esc(t.name)}</a>: ${esc(t.line)}</li>`).join("")}</ul>`;
+    if (key === "solutions") extra = `<ul>${data.tools.map((t: any) => `<li><a href="/solutions/${t.id}">${esc(t.name)}</a>: ${esc(t.line)}</li>`).join("")}</ul>`;
     if (key === "industries") extra = data.groups.map((g: any) => `<h2>${esc(g.name)}</h2><p>${g.members.map((x: any) => esc(x.name)).join(", ")}</p>`).join("");
+    if (key === "services") extra += SV.map((v) => `<p><a href="/services/${v.cluster}/${v.slug}">${esc(v.name)}</a></p>`).join("");
     if (key === "about") extra = `<h2>Values</h2><ul>${data.values.map((v: any) => `<li><b>${esc(v[1])}</b>: ${esc(v[2])}</li>`).join("")}</ul><h2>Promises</h2><ul>${data.promises.map((v: any) => `<li><b>${esc(v[0])}</b>: ${esc(v[1])}</li>`).join("")}</ul>`;
     return { status: 200, title, desc, ssr: `<h1>${esc(title)}</h1><p>${esc(desc)}</p>${extra}` };
   }
@@ -117,7 +132,7 @@ function page(c: any, meta: PageMeta, data: any, path: string) {
 <meta property="og:site_name" content="Kayak Strategic Advisors"><meta property="og:title" content="${esc(meta.title)}"><meta property="og:description" content="${esc(meta.desc)}"><meta property="og:url" content="${esc(canonical)}"><meta property="og:type" content="${meta.type || "website"}"><meta property="og:image" content="${base}/assets/og.png"><meta property="og:locale" content="en_IN"><meta name="twitter:card" content="summary_large_image">
 ${meta.status === 404 ? '<meta name="robots" content="noindex">' : ""}<meta name="theme-color" content="#0E2F3C">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
-<link rel="preload" href="/_shared/fonts/Archivo.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/assets/logos.json" as="fetch" crossorigin>
+<link rel="preload" href="/_shared/fonts/Archivo.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/assets/logos.json" as="fetch" crossorigin><link rel="preload" href="/assets/services.json?v=2" as="fetch" crossorigin>${path === "/" ? '<link rel="preload" href="/assets/hero/kayak-1536.webp" as="image" media="(min-width: 761px)"><link rel="preload" href="/assets/hero/kayak-960.webp" as="image" media="(max-width: 760px)">' : ""}
 <link rel="stylesheet" href="/assets/site.css?v=${VERSION}">
 ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replace(/</g, "\\u003c")}</script>` : ""}
 <script type="application/json" id="site-data">${json}</script>
@@ -128,7 +143,7 @@ ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replac
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=120, must-revalidate" },
   });
 }
-const VERSION = "2026-11-11c";
+const VERSION = "2026-11-11d";
 
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);
@@ -254,21 +269,25 @@ app.route("/api/kay", kayApi(siteData));
 app.get("/api/health", (c) => c.json({ ok: true, site: "www", kay: !!(c.env.ANTHROPIC_API_KEY || c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY || c.env.XAI_API_KEY), voice: !!(c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY) }));
 app.all("/api/*", (c) => c.json({ error: "Not found." }, 404));
 
+app.get("/tools", (c) => c.redirect("/solutions", 301));
+app.get("/tools/:id", (c) => c.redirect(`/solutions/${c.req.param("id")}`, 301));
+
 // ------------------------------------------------------------------ SEO and AI discoverability
 app.get("/robots.txt", (c) => c.text(`User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${site(c)}/sitemap.xml\n`));
 app.get("/sitemap.xml", async (c) => {
   const data = await siteData(c);
   const base = site(c);
-  const paths = ["/", ...Object.keys(STATIC_PAGES).map((k) => `/${k}`), ...data.clusters.map((x: any) => `/services/${x.id}`), ...data.tools.map((x: any) => `/tools/${x.id}`), ...data.articles.map((x: any) => `/insights/${x.id}`)];
+  const paths = ["/", ...Object.keys(STATIC_PAGES).map((k) => `/${k}`), ...data.clusters.map((x: any) => `/services/${x.id}`), ...SV.map((x) => `/services/${x.cluster}/${x.slug}`), ...data.tools.map((x: any) => `/solutions/${x.id}`), ...data.articles.map((x: any) => `/insights/${x.id}`)];
   return c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((p) => `<url><loc>${base}${p}</loc></url>`).join("")}</urlset>`, 200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" });
 });
 // A plain-text summary for AI assistants (https://llmstxt.org), kept in step with the site.
 app.get("/llms.txt", async (c) => {
   const d = await siteData(c);
   const base = site(c);
-  const t = [`# Kayak Strategic Advisors`, ``, `> Kayak Strategic Advisors Private Limited is an independent, senior-led Indian advisory firm in Mumbai and Thane. It advises boards, promoters and investors on strategy and deals, tax and regulation, crisis and resilience, technology and AI, managed services and cross-border work. Founder and director: Anuj Matushankar Choudhary. Contact: enquiries@kayaksa.com.`, ``,
+  const t = [`# Kayak Strategic Advisors`, ``, `> Kayak Strategic Advisors Private Limited is an independent, senior-led Indian advisory firm in Mumbai and Thane. It advises boards, promoters and investors on strategy and deals, tax and regulation, crisis and resilience, technology and AI, managed services and cross-border work. Contact: enquiries@kayaksa.com.`, ``,
     `## Services`, ...d.clusters.map((x: any) => `- [${x.name}](${base}/services/${x.id}): ${x.line || ""}`), ``,
-    `## Kayak tools`, ...d.tools.map((x: any) => `- [${x.name}](${base}/tools/${x.id}): ${x.kind}. ${x.line}`), ``,
+    `## Services in detail`, ...SV.map((x) => `- [${x.name}](${base}/services/${x.cluster}/${x.slug}): ${x.summary}`), ``,
+    `## Kayak Solutions (Thought, Designed and Developed in India for the World)`, ...d.tools.map((x: any) => `- [${x.name}](${base}/solutions/${x.id}): ${x.kind}. ${x.line}`), ``,
     `## Confluence (monthly insights)`, ...d.articles.map((x: any) => `- [${x.title}](${base}/insights/${x.id}): ${x.dek || ""}`), ``,
     `## About`, `- [About us](${base}/about)`, `- [Contact](${base}/contact)`, `- [Kayak Learn: free courses with certificates](https://learn.kayaksa.com)`, `- Group companies: Kayak Innovations (OPC) Private Limited; Kayak Technology Solutions Private Limited.`];
   return c.text(t.join("\n"), 200, { "Cache-Control": "public, max-age=3600" });
