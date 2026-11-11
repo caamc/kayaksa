@@ -77,8 +77,8 @@ export function magazinePage(E: Edition, origin: string, opts: { preview?: boole
   add("nums", `
     <span class="kick">The month in numbers</span>
     <h2 class="h">${esc(E.periodShort)}</h2>
-    <div class="ngrid">${E.numbers.map(([n, t]) => `<div><b>${esc(n)}</b><span>${esc(t)}</span></div>`).join("")}</div>
-    <p class="small">Figures as reported in the sources cited on each story's page.</p>`, { label: "The month in numbers" });
+    <div class="ngrid">${E.numbers.map(([n, t, ic, cmp]) => `<div>${ic && /^[a-z-]+$/.test(ic) ? `<img class="nic" src="${A}/assets/icons/ksa/ksa-icon-${ic}.svg" alt="">` : ""}<b>${esc(n)}</b><span>${esc(t)}</span>${cmp ? `<p class="cmp ${cmp.dir || ""}">${cmp.was ? `<s>${esc(cmp.was)}</s><i aria-hidden="true"></i><em>${esc(n)}</em><br>` : cmp.dir ? `<i aria-hidden="true"></i>` : ""}${esc(cmp.note)}</p>` : ""}</div>`).join("")}</div>
+    <p class="fn">Figures and comparisons as reported in the sources cited on each story's page.</p>`, { label: "The month in numbers" });
 
   // 5 Relativity Index
   add("cast", `
@@ -107,35 +107,45 @@ export function magazinePage(E: Edition, origin: string, opts: { preview?: boole
       ${s.scenario.map((p) => `<p class="scn">${esc(p)}</p>`).join("")}
       <h3 class="lbl">Our perspective</h3>
       ${s.perspective.map((p) => `<p>${esc(p)}</p>`).join("")}
-      <div class="qs"><b>Questions a board might ask</b><ul>${s.questions.map((q) => `<li>${esc(q)}</li>`).join("")}</ul></div>
+      <div class="qs"><span class="tab"><b>?</b>Questions a board might ask</span><ol>${s.questions.map((q, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span>${esc(q)}</span></li>`).join("")}</ol></div>
       ${s.postscript ? `<p class="ps"><b>Postscript.</b> ${esc(s.postscript)}</p>` : ""}
       <aside class="caveat"><p>${esc(NOTICE.short)}</p></aside>
-      <p class="src"><b>Sources:</b> ${s.sources.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`).join("; ")}</p>`, { label: `${s.title}: Kayak's perspective`, style: `--c:${c}` });
+      <p class="src fn"><b>Sources</b> ${s.sources.map(([t, u], i) => `<span><sup>${i + 1}</sup> <a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a></span>`).join(" ")}</p>`, { label: `${s.title}: Kayak's perspective`, style: `--c:${c}` });
   }
 
-  // Spotlight on a Kayak solution: a spread every month
+  // Spotlight on a Kayak solution: one composition across both pages. The photograph runs across the
+  // gutter (each page shows its half), the saffron rule continues from page to page, and the reading
+  // order flows left to right: why it matters, then what it does and what it looks like in practice.
   if (E.spotlight) {
     const S = E.spotlight;
-    add("spot-l", `
-      <span class="kick" style="color:#9C630E">${esc(S.kicker)}</span>
-      <h2 class="h spot-h">${esc(S.title)}</h2>
-      <p class="st-dek" style="--c:#EE9B1E">${esc(S.dek)}</p>
-      <h3 class="lbl" style="--c:#9C630E">Why it is necessary</h3>
-      ${S.why.map((p) => `<p>${esc(p)}</p>`).join("")}
-      <h3 class="lbl" style="--c:#9C630E">The rules behind it</h3>
-      <ul class="facts" style="--c:#9C630E">${S.regulation.map((f) => `<li><time>${esc(f.date)}</time><span>${esc(f.text)}</span></li>`).join("")}</ul>
-      <h3 class="lbl" style="--c:#9C630E">What it does</h3>
-      <ul class="mods">${S.modules.map(([n, st, t]) => `<li><b>${esc(n)}</b><em class="${st === "Live" ? "live" : "soon"}">${esc(st)}</em><span>${esc(t)}</span></li>`).join("")}</ul>`, { label: `Spotlight: ${S.tool}`, style: "--c:#EE9B1E" });
-    add("spot-r", `
-      <span class="kick" style="color:#9C630E">How it helps</span>
-      <div class="mini" style="--c:#9C630E">${S.numbers.slice(0, 3).map(([n, t]) => `<div><b>${esc(n)}</b><span>${esc(t)}</span></div>`).join("")}</div>
-      <dl class="teams">${S.helps.map(([t, h]) => `<div><dt>${esc(t)}</dt><dd>${esc(h)}</dd></div>`).join("")}</dl>
-      <div class="ri"><b>Relativity Index</b>${S.cast.map(([n, r]) => `<span><em>${esc(n)}</em> ${esc(r)}</span>`).join("")}</div>
-      ${S.scenario.map((p) => `<p class="scn">${esc(p)}</p>`).join("")}
-      ${S.howItHelps.map((p) => `<p>${esc(p)}</p>`).join("")}
-      <p class="spot-cta">${esc(S.cta)}</p>
-      <aside class="caveat"><p>${esc(S.disclosure)}</p></aside>
-      <p class="src"><b>Sources:</b> ${S.sources.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`).join("; ")}</p>`, { label: `Spotlight: ${S.tool}: how it helps`, style: "--c:#EE9B1E" });
+    const [name, ...rest] = S.title.split(":");
+    const sub = rest.join(":").trim().replace(/^./, (ch) => ch.toUpperCase());
+    const img = `${A}/assets/hero/${esc(S.image || "mumbai-1536.webp")}`;
+    const slug = (["nexapair", "sayusnow", "docuvow"] as const).find((k) => S.tool.toLowerCase().replace(/\s+/g, "").startsWith(k));
+    const logo = S.logo || (slug ? `${slug}-horizontal.svg` : "");
+    const icon = slug && slug !== "docuvow" ? `${A}/assets/logos/${slug}-icon.svg` : "";
+    const plate = logo ? `<span class="sp-logo"><img src="${A}/assets/logos/${esc(logo)}" alt="${esc(S.tool.split(" ")[0])} logo"></span>` : "";
+    const photo = (side: "l" | "r", inner: string) => `<div class="sp-photo ${side}" style="background-image:url('${img}')"><span class="sp-shade ${side}"></span>${inner}</div><span class="sp-rule"></span>`;
+    add("spot spot-l", `
+      ${photo("l", `${plate}<div class="sp-head"><span class="sp-kick">${esc(S.kicker)}</span><h2 class="sp-name">${esc(name.trim())}</h2>${sub ? `<p class="sp-sub">${esc(sub)}</p>` : ""}</div>`)}
+      <div class="sp-body">
+        <p class="sp-dek">${esc(S.dek)}</p>
+        <h3 class="sp-lbl">Why now</h3>
+        <ol class="sp-time">${S.regulation.slice(0, 3).map((r) => `<li><b>${esc(r.date)}</b><span>${esc(r.text)}</span></li>`).join("")}</ol>
+        <h3 class="sp-lbl">Why it is necessary</h3>
+        ${S.why.slice(0, 2).map((p) => `<p>${esc(p)}</p>`).join("")}
+        ${S.helps.length ? `<div class="sp-teams"><b>Built for</b>${S.helps.map(([t]) => `<span>${esc(t)}</span>`).join("")}</div>` : ""}
+      </div>`, { label: `Spotlight: ${S.tool}` });
+    add("spot spot-r", `
+      ${photo("r", `<div class="sp-stats">${S.numbers.slice(0, 4).map(([n, t]) => `<div><b>${esc(n)}</b><span>${esc(t)}</span></div>`).join("")}</div>`)}
+      <div class="sp-body">
+        <h3 class="sp-lbl">What it does</h3>
+        <ul class="sp-mods">${S.modules.slice(0, 6).map(([n, st, t]) => `<li><div><b>${esc(n)}</b><em class="${st === "Live" ? "live" : "soon"}">${esc(st)}</em></div><span>${esc(t)}</span></li>`).join("")}</ul>
+        <div class="sp-case"><span class="sp-ri">Relativity Index · ${S.cast.map(([n]) => esc(n)).join(" and ")}</span>
+          <p>${esc(S.scenario[0] || "")}</p><p><b>${esc(S.howItHelps[0] || "")}</b></p></div>
+        <p class="sp-cta">${icon ? `<img class="sp-ico" src="${icon}" alt="">` : ""}<span>${esc(S.cta)}</span><a href="${esc(S.url)}" target="_blank" rel="noopener">${esc(S.url.replace(/^https?:\/\//, ""))} →</a></p>
+        <p class="sp-fine">${esc(S.disclosure)} Sources: ${S.sources.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`).join("; ")}.</p>
+      </div>`, { label: `Spotlight: ${S.tool}: what it does` });
   }
 
   // Agenda

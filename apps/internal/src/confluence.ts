@@ -11,6 +11,9 @@ import { mailEnabled, mailHtml, sendMail } from "../../../packages/core/src/mail
 import { modelFor } from "../../../packages/core/src/ai";
 import { Env, User, atLeast, superadmins } from "./env";
 
+// The KSA icon library (Brand Manual, 48 icons); "The month in numbers" uses the subject icons.
+const ICONS = ["strategy", "transactions", "risk", "investigations", "brand-protection", "intellectual-property", "technology", "data", "human-resources", "compliance", "tax", "finance", "due-diligence", "governance", "regulatory", "cybersecurity", "esg", "analytics", "growth", "target", "navigation", "partnership", "network", "globe", "report", "contract", "calendar", "timeline", "mail", "mobile", "location", "website", "chat", "user", "presentation", "briefcase"];
+
 type V = { Bindings: Env; Variables: { user: User } };
 export const confluence = new Hono<V>();
 
@@ -134,7 +137,7 @@ Return JSON: {"items":[{"headline":"...","why":"one sentence on why it matters t
 PUBLIC PRODUCT INFORMATION:
 ${text}
 Return JSON matching: {"tool":"${pick.tool}","url":"${pick.url || pick.page}","kicker":"Kayak Solutions spotlight","title":"...","dek":"...","why":["...","..."],"regulation":[{"date":"...","text":"..."}],"modules":[["Name","Live|Coming soon","what it does"]],"helps":[["Team","how it helps"]],"numbers":[["value","label"]],"cast":[["Name","role"]],"scenario":["...","..."],"howItHelps":["In this scenario, a platform like ${pick.tool} would…","..."],"disclosure":"...","cta":"...","sources":[["Title","https://..."]]}
-Keep it to two magazine pages: why 2 short paragraphs, regulation up to 3 items, modules up to 6, helps up to 5, numbers 3.`, { search: 5, maxTokens: 3500 });
+Keep it to two magazine pages laid out as one spread: title in the form "${pick.tool}: a short subtitle of six words or fewer"; why 2 short paragraphs; regulation exactly 3 dated items (a timeline); modules up to 6; helps up to 5 (team names of one word); numbers exactly 4, each value at most 7 characters and each label at most 5 words; one scenario paragraph and one howItHelps paragraph of about 50 words each.`, { search: 5, maxTokens: 3500 });
     out.tool = pick.tool;
     pipe.spotlight = out;
   } else if (kind === "write") {
@@ -153,13 +156,13 @@ Length: facts 3-5 items, each under 60 words; perspective 3 paragraphs under 90 
     const stories = pipe.stories.slice(0, 8);
     const out = await claude(env, RULES, `These are the stories for Confluence, ${P.month}, covering ${P.period}:
 ${JSON.stringify(stories.map((s) => ({ section: s.section, title: s.title, dek: s.dek, numbers: s.numbers })))}
-Write the issue's front matter. Return JSON: {"coverTitle":"one or two words","coverDek":"one sentence","coverLines":["four short lines naming stories"],"editorsTitle":"...","editorsNote":["3 paragraphs; the third explains the Relativity Index scenario method"],"numbers":[["value","label"] x8 from the stories' facts only],"agenda":["six questions for boards this month"]}`, { maxTokens: 2500 });
+Write the issue's front matter. Return JSON: {"coverTitle":"one or two words","coverDek":"one sentence","coverLines":["four short lines naming stories"],"editorsTitle":"...","editorsNote":["3 paragraphs; the third explains the Relativity Index scenario method"],"numbers":[["value","label of at most 8 words","icon",{"was":"earlier value, only if the source states it","note":"one comparison from the same source, at most 10 words","dir":"up|down, only for a change"}] x8 from the stories' facts only; icon is one of ${ICONS.join(", ")}],"agenda":["six questions for boards this month"]}`, { maxTokens: 2500 });
     const issueNo = 1 + ((await D.prepare("SELECT COUNT(*) n FROM editions WHERE status = 'released'").first<any>())?.n || 0) + 1; // Issue 01 was built in
     const edition = {
       id: row.id, issue: `Issue ${String(issueNo).padStart(2, "0")}`, month: P.month, period: P.period, periodShort: P.periodShort,
       published: new Date().toISOString().slice(0, 10),
       editorsTitle: out.editorsTitle, coverTitle: out.coverTitle, coverDek: out.coverDek, coverLines: (out.coverLines || []).slice(0, 4),
-      editorsNote: out.editorsNote || [], numbers: (out.numbers || []).slice(0, 8),
+      editorsNote: out.editorsNote || [], numbers: (out.numbers || []).slice(0, 8).map((f: any) => [String(f[0] || ""), String(f[1] || ""), ICONS.includes(f[2]) ? f[2] : "report", f[3] && f[3].note ? { note: String(f[3].note).slice(0, 120), ...(f[3].was ? { was: String(f[3].was).slice(0, 20) } : {}), ...(["up", "down"].includes(f[3].dir) ? { dir: f[3].dir } : {}) } : undefined]),
       cast: CAST, stories: stories.map(normaliseStory), spotlight: pipe.spotlight, agenda: (out.agenda || []).slice(0, 6),
     };
     const problems = check(edition);

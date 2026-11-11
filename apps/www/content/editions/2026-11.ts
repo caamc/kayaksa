@@ -24,13 +24,20 @@ export interface Story {
 export interface Edition {
   id: string; issue: string; month: string; period: string; periodShort: string; published: string;
   editorsTitle: string; coverTitle: string; coverDek: string; coverLines: string[]; coverImage?: string;
-  editorsNote: string[]; numbers: [string, string][]; cast: [string, string][];
+  editorsNote: string[]; numbers: Fact[]; cast: [string, string][];
   stories: Story[]; spotlight?: Spotlight; agenda: string[];
 }
+
+/** A fact for "The month in numbers": value, label, a KSA icon name, and a comparison taken from the same source. */
+export type Fact = [string, string, string?, Compare?];
+export interface Compare { was?: string; note: string; dir?: "up" | "down" }
+export const ICONS = ["strategy", "transactions", "risk", "investigations", "brand-protection", "intellectual-property", "technology", "data", "human-resources", "compliance", "tax", "finance", "due-diligence", "governance", "regulatory", "cybersecurity", "esg", "analytics", "growth", "target", "navigation", "partnership", "network", "globe", "report", "contract", "calendar", "timeline", "mail", "mobile", "location", "website", "chat", "user", "presentation", "briefcase"];
 
 export interface Spotlight {
   tool: string;
   url: string;
+  image?: string; // a panoramic photograph in /assets/hero, shown across both pages
+  logo?: string; // the tool's full-colour horizontal logo in /assets/logos; found from the tool name when absent
   kicker: string;
   title: string;
   dek: string;
@@ -64,14 +71,14 @@ export const EDITION: Edition = {
     "This issue sets out what happened, plainly and with sources, and then offers Kayak's perspective. Our perspectives are built around scenarios with fictional people, Ram, Shyam, Sita, Geeta, John, Johnny and Janardan, and fictional companies A, B, C, P, Q and R. We call this the Relativity Index: a way to see an idea at work in a situation you can relate to, without pretending that one situation fits all.",
   ],
   numbers: [
-    ["5.50%", "RBI repo rate after a 25 bps increase on 7 October"],
-    ["₹5 crore", "Proposed GST prosecution threshold, up from ₹1 crore"],
-    ["₹30,213 cr", "Jio Platforms IPO size, open 21–23 October"],
-    ["255", "M&A deals in July–September 2026, worth $13.2 billion"],
-    ["60", "IPOs in July–September, raising a record $9 billion"],
-    ["$3 bn+", "TCS's annualised AI revenue, reported 8 October"],
-    ["10,000", "AI compute units sought for the IndiaAI Mission"],
-    ["13 Nov", "Consent Manager registration opens under the DPDP Rules"],
+    ["5.50%", "RBI repo rate, raised on 7 October", "governance", { was: "5.25%", note: "+25 bps; stance now calibrated tightening", dir: "up" }],
+    ["₹5 crore", "Proposed GST prosecution threshold", "tax", { was: "₹1 crore", note: "Five times higher, on the GST Council's recommendation", dir: "up" }],
+    ["₹30,213 cr", "Jio Platforms IPO, open 21–23 October", "growth", { note: "India's largest public offer", dir: "up" }],
+    ["255", "M&A deals in July–September 2026", "transactions", { note: "Highest volume of 2026; value down 53% on April–June", dir: "up" }],
+    ["60", "IPOs in July–September, raising $9 billion", "finance", { note: "A record amount for any quarter", dir: "up" }],
+    ["$3 bn+", "TCS's annualised AI revenue, reported 8 October", "technology", { note: "More than a tenth of TCS's revenue" }],
+    ["10,000", "AI compute units sought for the IndiaAI Mission", "data", { note: "A first tender for 5,000" }],
+    ["13 Nov", "Consent Manager registration opens, DPDP Rules", "calendar", { note: "Core duties follow on 13 May 2027" }],
   ],
   cast: [
     ["Ram", "Promoter and managing director of A Ltd, a listed mid-sized manufacturer that imports raw material"],
@@ -337,6 +344,7 @@ export const EDITION: Edition = {
   spotlight: {
     tool: "NexaPair UAE",
     url: "https://www.nexapair.ae",
+    image: "spot-nexapair-uae-1536.webp",
     kicker: "Kayak Solutions spotlight",
     title: "NexaPair UAE: third-party risk, built around UAE regulation",
     dek: "Every vendor is a door into the organisation. In the UAE, the Central Bank's new operational risk rules, in force since 14 September 2026, expect regulated firms to know exactly who is behind each one.",
@@ -364,7 +372,7 @@ export const EDITION: Edition = {
       ["Risk", "One explainable score with factor weights, fourth-party mapping and concentration checks."],
       ["Board", "A board pack and a readiness view for each regulator."],
     ],
-    numbers: [["7", "Regulatory regimes covered: CBUAE, DFSA, FSRA, CMA, VARA, government and federal law"], ["192", "Requirements mapped from 48 instruments"], ["Every hour", "Sanctions lists re-checked"], ["~6 weeks", "Typical plan from kickoff to first vendors live"]],
+    numbers: [["7", "Regulatory regimes mapped"], ["192", "Requirements from 48 instruments"], ["Hourly", "Sanctions re-screening"], ["~6 wks", "Typical plan to go live"]],
     cast: [["Geeta", "Chief risk officer of P Bank, a mid-sized bank in Dubai"], ["Johnny", "Runs Q Pay, a cloud payments provider P Bank wants to onboard"]],
     scenario: [
       "P Bank wants to move card payments to Johnny's company, Q Pay, a Dubai cloud payments provider. Payments are a Critical Operation, so the change needs the Central Bank's no-objection, an external expert's report and evidence of due diligence.",

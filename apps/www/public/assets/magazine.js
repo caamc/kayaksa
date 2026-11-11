@@ -18,7 +18,7 @@
   const isPhone = () => innerWidth <= 820;
 
   function build() {
-    const page = currentPage();
+    const page = currentPage() || startPage(); // read the deep link (#p7) before anything rewrites the address
     single = isPhone() || pref === "single";
     document.body.classList.toggle("single", single);
     modeBtn.setAttribute("aria-pressed", String(single));
@@ -45,7 +45,7 @@
     book.append(stage);
     nav.hidden = false;
     layout();
-    goPage(page || startPage(), true);
+    goPage(page, true);
   }
 
   function layout() {
@@ -68,8 +68,7 @@
       const pi = pg.querySelector(".pi");
       pg.style.removeProperty("--u");
       pi.classList.remove("more");
-      if (single && isPhone()) continue;
-      let k = 1;
+      let k = single && isPhone() ? 0 : 1; // phones keep comfortable type and scroll within the page
       while (pi.scrollHeight > pi.clientHeight + 2 && k > 0.8) { k -= 0.02; pg.style.setProperty("--u", `${k.toFixed(2)}cqw`); }
       pi.classList.toggle("more", pi.scrollHeight > pi.clientHeight + 2);
       pi.onscroll = () => pi.classList.toggle("more", pi.scrollTop + pi.clientHeight < pi.scrollHeight - 4);

@@ -164,7 +164,7 @@ ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replac
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=120, must-revalidate" },
   });
 }
-const VERSION = "2026-11-11h";
+const VERSION = "2026-11-11i";
 
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);
