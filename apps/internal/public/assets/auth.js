@@ -8,6 +8,19 @@ const next = (() => {
   return n.startsWith("/app") ? n : "/app";
 })();
 
+// The "Why Kayak" film plays once, muted, and holds on the logo. People who prefer reduced motion
+// see the still; anyone can pause it (WCAG 2.2.2).
+(() => {
+  const fig = document.getElementById("film"), v = fig?.querySelector("video"), btn = document.getElementById("filmBtn");
+  if (!v || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  fig.hidden = false; fig.closest(".auth-art").classList.add("film-on");
+  v.play().catch(() => {});
+  btn.onclick = () => { if (v.paused) { if (v.ended) v.currentTime = 0; v.play(); } else v.pause(); };
+  v.onplay = () => { btn.textContent = "Pause"; btn.setAttribute("aria-label", "Pause the film"); };
+  v.onpause = v.onended = () => { btn.textContent = "Play"; btn.setAttribute("aria-label", "Play the film"); };
+  v.onerror = () => { fig.hidden = true; fig.closest(".auth-art").classList.remove("film-on"); };
+  fig.querySelector("source:last-of-type").onerror = v.onerror;
+})();
 $("#art-logo").innerHTML = `<div style="color:#fff">${wordmark(30).html.replace(/var\(--logo-ink\)/g, "#FFFFFF").replace(/var\(--logo-left\)/g, "#5DB2AB")}</div>`;
 
 const head = (step, total, title, sub) => html`

@@ -7,13 +7,27 @@
 <title>Sign in · Kayak Internal</title>
 <link rel="icon" href="/_shared/logos/KSA_Identifier_FullColour.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/_shared/css/kayak.css">
+<style>
+.auth-film{position:relative;z-index:1;margin:28px 0;display:grid;gap:10px}
+.auth-film video{display:block;width:100%;aspect-ratio:16/9;background:#06171E;object-fit:cover}
+.auth-film figcaption{display:flex;gap:12px;align-items:center;font-size:.78rem;color:#A9C0C6}
+.film-btn{background:none;border:1px solid #3E5563;color:#F3F7F6;font:inherit;padding:4px 10px;cursor:pointer}
+.film-btn:focus-visible{outline:2px solid #EE9B1E;outline-offset:2px}
+.auth-art.film-on .art-copy h1,.auth-art.film-on .art-copy p{display:none}
+@media (max-width:959px){.auth-art.film-on{display:block;padding:16px}.auth-art.film-on>*:not(.auth-film){display:none}.auth-art.film-on .auth-film{margin:0}}
+</style>
 <script type="module" src="/assets/auth.js"></script>
 </head>
 <body>
 <div class="auth">
   <aside class="auth-art" aria-hidden="true">
     <div id="art-logo"></div>
-    <div class="stack" style="max-width:440px;position:relative;z-index:1">
+    <figure class="auth-film" id="film" hidden>
+      <video muted playsinline preload="auto" poster="/assets/film/why-kayak-poster.jpg" aria-label="Why Kayak Strategic Advisors: a short film. AI-generated imagery.">
+        <source src="/assets/film/why-kayak.webm" type="video/webm"><source src="/assets/film/why-kayak.mp4" type="video/mp4"></video>
+      <figcaption><button type="button" class="film-btn" id="filmBtn" aria-label="Pause the film">Pause</button><span>Why Kayak Strategic Advisors · Generated with Kayak AI</span></figcaption>
+    </figure>
+    <div class="stack art-copy" style="max-width:440px;position:relative;z-index:1">
       <span class="eyebrow" style="color:#F5C46D">Kayak Internal</span>
       <h1>Two paddlers.<br>One course.</h1>
       <p class="serif" style="font-size:1.15rem;color:#CDE8E3">The brand library, our tools, the partner network, Kayak AI, the brand studio and training, in one secure place for the Kayak team.</p>

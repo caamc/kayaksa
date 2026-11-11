@@ -1,0 +1,158 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Why Kayak Strategic Advisors</title><style>
+/* "Why Kayak" film. Every frame is a pure function of time (window.seek(ms)), so the renderer can
+   step through it deterministically. Brand: Deep Current, Open Water, Saffron; Archivo and Source
+   Serif 4; the two blades and stem from the identifier; 62-degree wake lines. */
+@font-face{font-family:Archivo;src:url(../../brand-assets/04_Fonts/Archivo/Static/Archivo-SemiBold.ttf);font-weight:600}
+@font-face{font-family:Archivo;src:url(../../brand-assets/04_Fonts/Archivo/Static/Archivo-ExtraBold.ttf);font-weight:800}
+@font-face{font-family:SS4;src:url(../../brand-assets/04_Fonts/Source_Serif_4/Static/SourceSerif4-Italic.ttf);font-style:italic}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#06171E}
+.scene{position:absolute;inset:0;overflow:hidden;opacity:0}
+.scene img{position:absolute;inset:-4%;width:108%;height:108%;object-fit:cover}
+.scrim{position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,47,60,.82) 0,rgba(14,47,60,.45) 42%,rgba(14,47,60,0) 70%),linear-gradient(0deg,rgba(6,23,30,.55),transparent 40%)}
+.scrim.r{background:linear-gradient(270deg,rgba(14,47,60,.82) 0,rgba(14,47,60,.45) 42%,rgba(14,47,60,0) 70%),linear-gradient(0deg,rgba(6,23,30,.55),transparent 40%)}
+.mist{position:absolute;inset:-20%;background:radial-gradient(40% 30% at 30% 60%,rgba(220,235,238,.18),transparent 70%),radial-gradient(35% 25% at 70% 70%,rgba(220,235,238,.12),transparent 70%);mix-blend-mode:screen}
+.sweep{position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,214,150,.16) 50%,transparent 65%);mix-blend-mode:screen}
+.copy{position:absolute;left:150px;bottom:210px;width:1150px;color:#fff;font-family:Archivo,Arial,sans-serif}
+.copy.r{left:auto;right:150px;text-align:right}
+.copy .eyebrow{font:600 20px Archivo;letter-spacing:8px;color:#F5C46D;text-transform:uppercase;margin-bottom:22px}
+.copy .l{display:block;overflow:hidden;font-weight:800;font-size:76px;line-height:1.08;letter-spacing:-.5px}
+.copy .l span{display:inline-block}
+.copy .sub{margin-top:26px;font:italic 36px/1.4 SS4,Georgia,serif;color:#DCEAE7}
+.copy .rule{width:120px;height:6px;background:#EE9B1E;margin-top:30px;transform-origin:left}
+.copy.r .rule{margin-left:auto;transform-origin:right}
+.bar{position:absolute;left:0;right:0;height:0;background:#000;z-index:20}.bar.t{top:0}.bar.b{bottom:0}
+.wake{position:absolute;inset:-30% -60%;z-index:15;pointer-events:none;opacity:0;
+  background:repeating-linear-gradient(118deg,transparent 0 34px,rgba(255,255,255,.3) 34px 36px,transparent 36px 70px,rgba(255,255,255,.3) 70px 72px,transparent 72px 106px,rgba(255,255,255,.3) 106px 108px,transparent 108px 142px,rgba(255,255,255,.3) 142px 144px,transparent 144px 178px,rgba(255,255,255,.3) 178px 180px,transparent 180px 214px,rgba(255,255,255,.6) 214px 216px)}
+#grain{position:absolute;inset:0;z-index:18;opacity:.07;background-repeat:repeat}
+#drops{position:absolute;inset:0;z-index:5}
+.mark{position:absolute;right:56px;bottom:46px;z-index:30;display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.78);font:600 15px Archivo;letter-spacing:3px;text-transform:uppercase}
+.mark svg{width:26px;height:auto}
+.mark small{display:block;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.55);margin-top:2px}
+/* blades scene */
+.blades{position:absolute;inset:0;background:radial-gradient(60% 70% at 50% 45%,#12404F 0,#0E2F3C 55%,#06171E 100%)}
+.blades svg{position:absolute;left:50%;top:44%;width:520px;transform:translate(-50%,-50%);overflow:visible}
+.blabel{position:absolute;font:600 22px Archivo;letter-spacing:7px;color:#fff;text-transform:uppercase}
+.blabel small{display:block;font:italic 26px SS4;letter-spacing:0;text-transform:none;color:#CDE8E3;margin-top:6px}
+/* end card */
+.end{position:absolute;inset:0;background:radial-gradient(70% 70% at 50% 45%,#12404F 0,#0E2F3C 60%,#06171E 100%)}
+.end svg.logo{position:absolute;left:50%;top:42%;width:900px;transform:translate(-50%,-50%);overflow:visible}
+.end .tag{position:absolute;left:0;right:0;top:66%;text-align:center;font:italic 40px SS4,Georgia,serif;color:#DCEAE7}
+.end .url{position:absolute;left:0;right:0;top:74%;text-align:center;font:600 20px Archivo;letter-spacing:8px;color:#F5C46D}
+.end .erule{position:absolute;left:50%;top:62.5%;width:140px;height:6px;margin-left:-70px;background:#EE9B1E;transform-origin:center}
+</style></head><body>
+<div id="stage"></div>
+<canvas id="drops" width="1920" height="1080"></canvas>
+<div id="grain"></div>
+<div class="wake" id="wake"></div>
+<div class="bar t" id="bt"></div><div class="bar b" id="bb"></div>
+<div class="mark" id="mark"><svg viewBox="0 0 92 100"><path fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path fill="#fff" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/></svg><div>Generated with Kayak AI<small>AI-generated imagery · people depicted are not real</small></div></div>
+<script>
+const Q = new URLSearchParams(location.search);
+const IMG = (n) => (Q.get("dir") || "hero") + "/" + n;
+// Scene list. `img` falls back to the existing hero imagery until the people shots are available.
+const SCENES = JSON.parse(Q.get("scenes") || "null") || [
+  { kind: "photo", img: "mumbai-1536.webp", dur: 6200, move: [1.06, 1.16, -1, 0], eyebrow: "Mumbai", lines: ["Every consequential decision", "is a crossing."] },
+  { kind: "photo", img: "confluence-1536.webp", dur: 6200, move: [1.14, 1.04, 1, -1], side: "r", lines: ["The water keeps changing."], sub: "Markets, regulation, technology, risk." },
+  { kind: "photo", img: "kayak-1536.webp", dur: 7000, move: [1.05, 1.2, 0, 1], drops: 1, lines: ["A kayak is a disciplined,", "agile craft."], sub: "It crosses through balance, direction and steady navigation." },
+  { kind: "blades", dur: 6600 },
+  { kind: "photo", img: "boardroom-1536.webp", dur: 6600, move: [1.12, 1.03, -1, 0], side: "r", lines: ["Two paddlers.", "One course."], sub: "Independent, structured advice, with hands-on support beside you." },
+  { kind: "end", dur: 7400 },
+];
+const X = 900; // crossfade, ms
+let t0 = 0; SCENES.forEach((s) => { s.t = t0; t0 += s.dur - X; });
+const TOTAL = t0 + X;
+window.DURATION = TOTAL;
+const ease = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3));
+const io = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const span = (t, a, d) => ease((t - a) / d);
+const K = "M0 0 H28 V38.7 L52 0 H82 L50.1 51.5 L84 100 H54 L36 74.2 L28 87.1 V100 H0 Z", A = "M0 100 L31 0 L59 0 L90 100 L61 100 L45 44 L29 100 Z";
+const B1 = "M0 0 L30 0 L44 26.25 L44 59.3 Z", B2 = "M92 0 L62 0 L48 26.25 L48 59.3 Z", STEM = "M32 51 L46 70 L60 51 L60 100 L32 100 Z";
+const stage = document.getElementById("stage");
+for (const s of SCENES) {
+  const el = document.createElement("div"); el.className = "scene"; s.el = el;
+  if (s.kind === "photo") {
+    el.innerHTML = `<img src="${IMG(s.img)}" alt=""><div class="mist"></div><div class="sweep"></div><div class="scrim ${s.side || ""}"></div>
+      <div class="copy ${s.side || ""}">${s.eyebrow ? `<div class="eyebrow">${s.eyebrow}</div>` : ""}${s.lines.map((l) => `<span class="l"><span>${l}</span></span>`).join("")}${s.sub ? `<div class="sub">${s.sub}</div>` : ""}<div class="rule"></div></div>`;
+  } else if (s.kind === "blades") {
+    el.innerHTML = `<div class="blades"><svg viewBox="-10 -10 112 120"><path class="b1" fill="#17807E" d="${B1}"/><path class="b2" fill="#EE9B1E" d="${B2}"/><path class="st" fill="#fff" d="${STEM}"/></svg>
+      <div class="blabel" id="bl1" style="left:340px;top:300px">The client<small>the first blade</small></div>
+      <div class="blabel" id="bl2" style="right:340px;top:300px;text-align:right">Kayak<small>the second blade</small></div>
+      <div class="blabel" id="bl3" style="left:0;right:0;top:820px;text-align:center">One decision<small>carried through, together</small></div></div>`;
+  } else {
+    el.innerHTML = `<div class="end"><svg class="logo" viewBox="-10 -10 436 160"><defs><clipPath id="ec"><rect x="-10" y="0" width="436" height="101"/></clipPath></defs>
+      <g clip-path="url(#ec)" fill="#fff"><path class="el" data-d="-1" d="${K}"/><g transform="translate(92 0)"><path class="el" data-d="-1" d="${A}"/></g><g transform="translate(232 0)"><path class="el" data-d="1" d="${A}"/></g><g transform="translate(332 0)"><path class="el" data-d="1" d="${K}"/></g></g>
+      <g transform="translate(161 0)"><path class="est" fill="#fff" d="${STEM}"/><path class="eb1" fill="#17807E" d="${B1}"/><path class="eb2" fill="#EE9B1E" d="${B2}"/></g>
+      <text class="edesc" x="208" y="136" text-anchor="middle" fill="#CDE8E3" font-family="Archivo" font-weight="600" font-size="15" letter-spacing="9">STRATEGIC ADVISORS</text></svg>
+      <div class="erule"></div><div class="tag">Clear advice for consequential decisions.</div><div class="url">KAYAKSA.COM</div></div>`;
+  }
+  stage.append(el);
+}
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const ctx = document.getElementById("drops").getContext("2d");
+{ // a 256px film-grain tile, made once
+  const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d"), im = g.createImageData(256, 256);
+  for (let i = 0; i < im.data.length; i += 4) { const v = Math.random() * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+  g.putImageData(im, 0, 0); document.getElementById("grain").style.backgroundImage = `url(${c.toDataURL()})`;
+}
+function rnd(i) { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); }
+function drops(t, on) {
+  ctx.clearRect(0, 0, 1920, 1080); if (!on) return;
+  for (let i = 0; i < 70; i++) {
+    const life = 1600 + rnd(i) * 1800, ph = ((t + rnd(i + 7) * 5000) % life) / life;
+    const x = 1120 + rnd(i + 1) * 700, y0 = 420 + rnd(i + 2) * 420, y = y0 - Math.sin(ph * Math.PI) * (60 + rnd(i + 3) * 120);
+    const a = Math.sin(ph * Math.PI) * on * .65, r = 1 + rnd(i + 4) * 2.6;
+    ctx.fillStyle = `rgba(255,236,200,${a})`; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+  }
+}
+window.seek = (T) => {
+  // letterbox in, then out for the end card
+  const lb = 132 * span(T, 0, 1400) * (1 - span(T, TOTAL - 7400, 1200));
+  $("#bt").style.height = $("#bb").style.height = lb + "px";
+  const g = Math.floor(T / 33.3); $("#grain").style.backgroundPosition = `${(g * 73) % 256}px ${(g * 131) % 256}px`;
+  $("#mark").style.opacity = String(span(T, 900, 900));
+  let dropOn = 0, wake = 0;
+  for (let i = 0; i < SCENES.length; i++) {
+    const s = SCENES[i], lt = T - s.t, el = s.el;
+    const vis = lt < 0 ? 0 : lt < X ? (i === 0 ? 1 : io(lt / X)) : lt > s.dur - X && i < SCENES.length - 1 ? 1 : lt > s.dur ? 0 : 1;
+    el.style.opacity = String(vis); el.style.zIndex = String(i + 1); el.style.display = vis > 0 ? "" : "none";
+    if (lt > -X && lt < X) wake = Math.max(wake, i ? 1 - Math.abs(lt) / X : 0);
+    if (vis <= 0) continue;
+    const p = Math.min(1, Math.max(0, lt / s.dur));
+    if (s.kind === "photo") {
+      const [z0, z1, dx, dy] = s.move, z = z0 + (z1 - z0) * p;
+      $("img", el).style.transform = `translate(${dx * p * 30}px,${dy * p * 18}px) scale(${z})`;
+      $(".mist", el).style.transform = `translateX(${(p - .5) * 160}px)`;
+      $(".sweep", el).style.transform = `translateX(${(p * 2 - 1) * 1400}px)`;
+      $$(".copy .l span", el).forEach((sp, j) => { const k = span(lt, 700 + j * 260, 900); sp.style.transform = `translateY(${(1 - k) * 105}%)`; });
+      const out = 1 - span(lt, s.dur - X - 500, 600);
+      $(".copy", el).style.opacity = String(out);
+      const sub = $(".sub", el); if (sub) { const k = span(lt, 1500 + s.lines.length * 260, 900); sub.style.opacity = String(k); sub.style.transform = `translateY(${(1 - k) * 16}px)`; }
+      $(".rule", el).style.transform = `scaleX(${span(lt, 1300, 700)})`;
+      if (s.drops) dropOn = Math.max(dropOn, vis);
+    } else if (s.kind === "blades") {
+      const b1 = span(lt, 300, 1500), b2 = span(lt, 900, 1500), st = span(lt, 2500, 900);
+      $(".b1", el).style.transform = `translate(${(1 - b1) * -160}px,${(1 - b1) * -90}px) rotate(${(1 - b1) * -40}deg)`; $(".b1", el).style.opacity = String(b1);
+      $(".b2", el).style.transform = `translate(${(1 - b2) * 160}px,${(1 - b2) * -90}px) rotate(${(1 - b2) * 40}deg)`; $(".b2", el).style.opacity = String(b2);
+      $(".st", el).style.transform = `translateY(${(1 - st) * 40}px)`; $(".st", el).style.opacity = String(st);
+      for (const b of ["b1", "b2", "st"]) { $("." + b, el).style.transformBox = "fill-box"; $("." + b, el).style.transformOrigin = "50% 100%"; }
+      $("#bl1").style.opacity = String(span(lt, 900, 700) * (1 - span(lt, s.dur - X - 300, 500)));
+      $("#bl2").style.opacity = String(span(lt, 1500, 700) * (1 - span(lt, s.dur - X - 300, 500)));
+      $("#bl3").style.opacity = String(span(lt, 3200, 800) * (1 - span(lt, s.dur - X - 300, 500)));
+      $(".blades svg", el).style.transform = `translate(-50%,-50%) scale(${1 + p * .08})`;
+    } else {
+      const bl1 = span(lt, 200, 1100), bl2 = span(lt, 320, 1100), st = span(lt, 1100, 650);
+      for (const [c, k, d] of [[".eb1", bl1, -1], [".eb2", bl2, 1]]) { const e = $(c, el); e.style.transformBox = "fill-box"; e.style.transformOrigin = "50% 100%"; e.style.opacity = String(k); e.style.transform = `translate(${(1 - k) * d * 260}px,${(1 - k) * -150}px) rotate(${(1 - k) * d * 38}deg)`; }
+      const se = $(".est", el); se.style.transformBox = "fill-box"; se.style.transformOrigin = "50% 100%"; se.style.opacity = String(st); se.style.transform = `translateY(${(1 - st) * 60}px) scaleY(${.2 + .8 * st})`;
+      $$(".el", el).forEach((e, j) => { const k = span(lt, 1350 + Math.abs(j - 1.5) * 120, 750); e.style.opacity = String(k); e.style.transform = `translate(${-e.dataset.d * 18 * (1 - k)}px,${112 * (1 - k)}px)`; });
+      const dk = span(lt, 2150, 900); $(".edesc", el).style.opacity = String(dk); $(".edesc", el).setAttribute("letter-spacing", String(26 - 17 * dk));
+      $(".erule", el).style.transform = `scaleX(${span(lt, 2600, 600)})`;
+      $(".tag", el).style.opacity = String(span(lt, 2900, 700)); $(".tag", el).style.transform = `translateY(${(1 - span(lt, 2900, 700)) * 18}px)`;
+      $(".url", el).style.opacity = String(span(lt, 3400, 700));
+    }
+  }
+  $("#wake").style.opacity = String(wake * .9); $("#wake").style.transform = `translateX(${(wake ? 1 : 0) * (T % 2000) / 2000 * 216}px)`;
+  drops(T, dropOn);
+};
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((i) => i.decode().catch(() => {}))]);
+seek(0);
+</script></body></html>
