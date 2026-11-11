@@ -4,7 +4,7 @@
 // improvement log approved by administrators. No meeting vendor is involved.
 import { Hono } from "hono";
 import { securityHeaders, sameOrigin, str, rateLimit } from "../../../packages/core/src/http";
-import { shield, auditFull, pruneSecurity } from "../../../packages/core/src/shield";
+import { shield, auditFull } from "../../../packages/core/src/shield";
 import { verifyMeet, type MeetClaims } from "../../../packages/core/src/meettoken";
 import { Room } from "./room";
 export { Room };
@@ -90,8 +90,18 @@ app.post("/api/transcribe/:room", needRoom, async (c) => {
   let bin = "";
   for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000));
   try {
-    const r: any = await c.env.AI.run("@cf/openai/whisper-large-v3-turbo" as any, { audio: btoa(bin), task: "transcribe", vad_filter: true } as any);
-    return c.json({ text: clean(r?.text) });
+    const r: any = await c.env.AI.run("@cf/openai/whisper-large-v3-turbo" as any, { audio: btoa(bin), task: "transcribe", vad_filter: true, condition_on_previous_text: false } as any);
+    const text = clean(r?.text);
+    if (!text) return c.json({ text: "" });
+    const lang = String(r?.transcription_info?.language || "").toLowerCase().slice(0, 8) || (/^[\x00-\x7F]*$/.test(text) ? "en" : "");
+    if (lang === "en") return c.json({ text, lang, en: null });
+    // Live translation to English: text first (fast), then the audio itself if that fails.
+    let en = await toEnglish(c.env.AI, text, lang);
+    if (!en) {
+      const t: any = await c.env.AI.run("@cf/openai/whisper-large-v3-turbo" as any, { audio: btoa(bin), task: "translate", vad_filter: true } as any).catch(() => null);
+      en = clean(t?.text);
+    }
+    return c.json({ text, lang: lang || null, en: en && en.toLowerCase() !== text.toLowerCase() ? en : null });
   } catch {
     try {
       const r: any = await c.env.AI.run("@cf/openai/whisper" as any, { audio: [...b] } as any);
@@ -101,6 +111,32 @@ app.post("/api/transcribe/:room", needRoom, async (c) => {
     }
   }
 });
+
+/** Translates to English on Workers AI. m2m100 when the language is known, otherwise an LLM. */
+async function toEnglish(ai: Ai, text: string, lang?: string): Promise<string> {
+  if (lang && lang !== "en") {
+    const r: any = await ai.run("@cf/meta/m2m100-1.2b" as any, { text, source_lang: lang, target_lang: "en" } as any).catch(() => null);
+    const t = String(r?.translated_text || "").trim();
+    if (t) return t.slice(0, 2000);
+  }
+  const r: any = await ai.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast" as any, {
+    messages: [{ role: "system", content: "Translate the user's message into natural English. Reply with the translation only, nothing else. If it is already English, reply with it unchanged." }, { role: "user", content: text }],
+    max_tokens: 600,
+  } as any).catch(() => null);
+  return String(r?.response || "").trim().slice(0, 2000);
+}
+
+// Chat and anything else on demand: translate a short text to English.
+app.post("/api/translate/:room", needRoom, async (c) => {
+  if (!c.env.AI) return c.json({ error: "Translation is not available yet." }, 503);
+  const cl = c.get("claims");
+  if (!(await rateLimit(c.env.DB, `tr:${cl.r}:${c.req.header("CF-Connecting-IP")}`, 60, 60))) return c.json({ error: "Too many translations. Wait a moment." }, 429);
+  const b = await c.req.json<any>().catch(() => ({}));
+  const text = str(b.text, 2000);
+  if (!text) return c.json({ en: "" });
+  return c.json({ en: await toEnglish(c.env.AI, text) });
+});
+
 // Whisper sometimes "hears" stock phrases in silence; drop them.
 const HALLUCINATIONS = /^(thank you\.?|thanks for watching\.?|you|bye\.?|\.|subtitles by.*|please subscribe.*)$/i;
 const clean = (t: unknown) => { const s = String(t || "").replace(/\s+/g, " ").trim(); return HALLUCINATIONS.test(s) ? "" : s.slice(0, 1000); };
@@ -148,12 +184,12 @@ app.post("/api/minutes/:room", needRoom, hostOnly, async (c) => {
   return c.json(out);
 });
 
-export async function makeMinutes(env: { DB: D1Database; AI?: Ai }, id: string) {
+async function makeMinutes(env: { DB: D1Database; AI?: Ai }, id: string) {
   if (!env.AI) return { error: "Minutes need Workers AI." };
-  const { results } = await env.DB.prepare("SELECT speaker, text FROM transcript WHERE meeting_id = ? ORDER BY id").bind(id).all<any>();
+  const { results } = await env.DB.prepare("SELECT speaker, text, text_en FROM transcript WHERE meeting_id = ? ORDER BY id").bind(id).all<any>();
   if (!results.length) return { error: "There is no transcript. Turn on captions during the meeting to get minutes." };
   const m = await env.DB.prepare("SELECT title FROM meetings WHERE id = ?").bind(id).first<any>();
-  const text = results.map((r: any) => `${r.speaker}: ${r.text}`).join("\n").slice(-60_000);
+  const text = results.map((r: any) => `${r.speaker}: ${r.text_en || r.text}`).join("\n").slice(-60_000);
   const r: any = await env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast" as any, {
     messages: [
       { role: "system", content: "You write crisp meeting minutes for Kayak Strategic Advisors, an Indian advisory firm. Use British English. Output Markdown with these sections: Summary (3-5 sentences), Decisions, Action items (owner, action, due date if stated), Open questions. Only use what is in the transcript; never invent names, numbers or dates. If the transcript is thin, say so." },
@@ -184,12 +220,4 @@ app.get("/", (c) => page(c, "/index.html"));
 app.get("/:room", (c) => (ROOM_RE.test(c.req.param("room")) ? page(c, "/room.html") : c.env.ASSETS.fetch(c.req.raw)));
 app.all("*", (c) => c.env.ASSETS.fetch(c.req.raw));
 
-export default {
-  fetch: app.fetch,
-  async scheduled(_e: ScheduledEvent, env: Env) {
-    await pruneSecurity(env.DB);
-    await env.DB.prepare("DELETE FROM rate_limits").run();
-    // Meetings left "live" by a crash are closed after 12 hours.
-    await env.DB.prepare("UPDATE meetings SET status = 'ended', ended_at = COALESCE(ended_at, ?) WHERE status = 'live' AND started_at < ?").bind(new Date().toISOString(), new Date(Date.now() - 12 * 3_600_000).toISOString()).run();
-  },
-};
+export default app;

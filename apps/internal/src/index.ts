@@ -126,5 +126,11 @@ export default {
   async scheduled(_e: ScheduledEvent, env: Env) {
     await pruneSecurity(env.DB);
     if (env.WWW_DB) await pruneSecurity(env.WWW_DB).catch(() => {});
+    // Kayak Meet housekeeping (meet.kayaksa.com has no cron of its own; the account allows five).
+    if (env.MEET_DB) {
+      await pruneSecurity(env.MEET_DB).catch(() => {});
+      await env.MEET_DB.prepare("DELETE FROM rate_limits").run().catch(() => {});
+      await env.MEET_DB.prepare("UPDATE meetings SET status = 'ended', ended_at = COALESCE(ended_at, ?) WHERE status = 'live' AND started_at < ?").bind(new Date().toISOString(), new Date(Date.now() - 12 * 3_600_000).toISOString()).run().catch(() => {});
+    }
   },
 };

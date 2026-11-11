@@ -131,8 +131,10 @@ export class Room {
         if (!this.room!.captions) break;
         const text = String(m.text || "").trim().slice(0, 1000);
         if (!text) break;
-        this.broadcast({ t: "caption", from: me.id, name: me.name, text, at: Date.now() });
-        await this.env.DB.prepare("INSERT INTO transcript (meeting_id, at, speaker, text) VALUES (?,?,?,?)").bind(this.meetingId, new Date().toISOString(), me.name, text).run();
+        const en = m.en ? String(m.en).trim().slice(0, 2000) : null;
+        const lang = m.lang ? String(m.lang).slice(0, 8) : null;
+        this.broadcast({ t: "caption", from: me.id, name: me.name, text, en, lang, at: Date.now() });
+        await this.env.DB.prepare("INSERT INTO transcript (meeting_id, at, speaker, text, text_en, lang) VALUES (?,?,?,?,?,?)").bind(this.meetingId, new Date().toISOString(), me.name, text, en, lang).run();
         break;
       }
       case "admit": case "deny": {

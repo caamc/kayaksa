@@ -67,7 +67,7 @@ meet.get("/:id", async (c) => {
   if (!m) return c.json({ error: "Meeting not found." }, 404);
   const [att, tr, mi, rec, fb] = await D.batch([
     D.prepare("SELECT name, email, role, joined_at, left_at FROM attendance WHERE meeting_id = ? ORDER BY id").bind(id),
-    D.prepare("SELECT at, speaker, text FROM transcript WHERE meeting_id = ? ORDER BY id LIMIT 5000").bind(id),
+    D.prepare("SELECT at, speaker, text, text_en, lang FROM transcript WHERE meeting_id = ? ORDER BY id LIMIT 5000").bind(id),
     D.prepare("SELECT summary, created_at FROM minutes WHERE meeting_id = ?").bind(id),
     D.prepare("SELECT id, size, by_name, started_at, ended_at, status FROM recordings WHERE meeting_id = ? ORDER BY started_at").bind(id),
     D.prepare("SELECT name, role, overall, audio, video, ease, issues, comment, at FROM feedback WHERE meeting_id = ? ORDER BY id").bind(id),

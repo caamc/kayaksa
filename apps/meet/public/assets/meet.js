@@ -25,6 +25,7 @@ const P = {
   send: '<path d="M4 12l16-8-6 16-2-6z"/>',
   layout: '<rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M10 10v10"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   copy: '<rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/>',
 };
 const ic = (n) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
@@ -41,6 +42,7 @@ const S = {
   peers: new Map(), // id -> { info, pc, polite, makingOffer, ignoreOffer, streams:{cam,screen}, screenId, tile, screenTile, quality }
   room: {}, panel: null, unread: 0, lobby: [], chat: [], captions: [], transcript: [],
   layout: "auto", rec: null, cap: null, ended: false, leaving: false, stats: { rtt: [], loss: [] }, joinedAt: 0, retries: 0,
+  english: (() => { try { return localStorage.getItem("km:en") !== "0"; } catch { return true; } })(),
   devices: { mic: localStorage.getItem("km:mic") || "", cam: localStorage.getItem("km:cam") || "" },
 };
 
@@ -184,7 +186,7 @@ function onMsg(m) {
     case "leave": dropPeer(m.id); render(); return;
     case "peer": { const x = S.peers.get(m.peer.id); if (x) { const wasHand = x.info.hand; x.info = m.peer; if (m.peer.hand && !wasHand) toast(`${m.peer.name} raised a hand ✋`); } render(); renderPanel(); return; }
     case "signal": return onSignal(m.from, m.data);
-    case "chat": S.chat.push(m); if (S.panel !== "chat" && m.from !== S.me?.id) { S.unread++; toast(`${m.name}: ${m.text.slice(0, 80)}`, "", 4000); } renderPanel(); badge(); return;
+    case "chat": S.chat.push(m); if (S.english && m.from !== S.me?.id && !looksEnglish(m.text)) api(`/api/translate/${room}`, { method: "POST", body: JSON.stringify({ text: m.text }) }).then((r) => { m.en = r.en; renderPanel(); }).catch(() => {}); if (S.panel !== "chat" && m.from !== S.me?.id) { S.unread++; toast(`${m.name}: ${m.text.slice(0, 80)}`, "", 4000); } renderPanel(); badge(); return;
     case "react": return floatReact(m.e);
     case "caption": S.captions.push(m); S.transcript.push(m); S.captions = S.captions.slice(-3); drawCaptions(); if (S.panel === "transcript") renderPanel(); setTimeout(() => { S.captions = S.captions.filter((x) => x !== m); drawCaptions(); }, 7000); return;
     case "lobby": { const n = m.list.length > S.lobby.length; S.lobby = m.list; if (n) { chime(); toast(`${m.list[m.list.length - 1].name} is waiting to join.`, "warn", 8000); } renderPanel(); badge(); return; }
@@ -375,6 +377,7 @@ function bar() {
   $("#bmore").onclick = (e) => menu(e.currentTarget, [
     [`${ic("layout")} ${S.layout === "speaker" ? "Grid view" : "Speaker view"}`, () => { S.layout = S.layout === "speaker" ? "auto" : "speaker"; render(); }],
     [`${ic("cc")} Transcript`, () => panel("transcript")],
+    [`${ic("globe")} ${S.english ? "Turn off live translation" : "Translate to English live"}`, () => setEnglish(!S.english)],
     [`${ic("screen")} ${S.screen ? "Stop sharing" : "Share screen"}`, toggleScreen],
     ...(isHost() ? [
       [`${ic("micOff")} Mute everyone`, () => send({ t: "muteAll" })],
@@ -408,7 +411,7 @@ function refreshRoom(before = {}, by) {
   $("#cappill") && ($("#cappill").hidden = !S.room.captions);
   if (S.room.recording && !before.recording) toast(`${S.room.recording} started recording this meeting. Everyone can see this notice.`, "warn", 8000);
   if (!S.room.recording && before.recording) toast("Recording stopped.");
-  if (S.room.captions && !before.captions) { toast("Captions are on. Speech is transcribed on Kayak's own servers and kept as the meeting transcript.", "", 8000); startCaptions(); }
+  if (S.room.captions && !before.captions) { toast(`Captions are on. Speech is transcribed on Kayak's own servers and kept as the meeting transcript.${S.english ? " Anything not in English is translated to English live." : ""}`, "", 8000); startCaptions(); }
   if (!S.room.captions && before.captions) { toast("Captions are off."); stopCaptions(); }
   if (S.room.locked !== before.locked && by) toast(S.room.locked ? `${by} locked the meeting. New guests wait to be admitted.` : `${by} unlocked the meeting.`);
   bar();
@@ -510,7 +513,7 @@ function floatReact(e) {
 }
 function drawCaptions() {
   const c = $("#caps"); if (!c) return;
-  c.innerHTML = S.captions.map((m) => `<p><b>${esc(m.name)}</b>${esc(m.text)}</p>`).join("");
+  c.innerHTML = S.captions.map((m) => S.english && m.en ? `<p><b>${esc(m.name)}</b>${esc(m.en)}<br><small style="opacity:.7">${esc(m.text)} · ${esc(langName(m.lang))}</small></p>` : `<p><b>${esc(m.name)}</b>${esc(m.text)}</p>`).join("");
 }
 let lastChime = 0;
 function chime() {
@@ -529,9 +532,10 @@ function renderPanel() {
   const s = $("#side"); if (!s || !S.panel) return;
   const head = (t) => `<header><h2>${t}</h2><button class="kb sm" id="pclose" aria-label="Close">${ic("x")}</button></header>`;
   if (S.panel === "chat") {
-    s.innerHTML = head("Chat") + `<div class="body" id="cb">${S.chat.length ? S.chat.map((m) => `<div class="msg"><b>${esc(m.from === S.me.id ? "You" : m.name)}<time>${new Date(m.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></b><p>${linkify(esc(m.text))}</p></div>`).join("") : `<p class="km-muted">Messages are seen by everyone in the meeting and are not saved after it ends.</p>`}</div>
+    s.innerHTML = head("Chat") + `<div class="body" id="cb">${S.chat.length ? S.chat.map((m) => `<div class="msg"><b>${esc(m.from === S.me.id ? "You" : m.name)}<time>${new Date(m.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time></b><p>${linkify(esc(m.text))}</p>${m.en ? `<p class="km-muted" style="font-size:.9rem">${ic("globe")} ${esc(m.en)}</p>` : m.from !== S.me.id && !looksEnglish(m.text) ? `<button class="kb sm" data-tr="${S.chat.indexOf(m)}" style="justify-self:start">Translate to English</button>` : ""}</div>`).join("") : `<p class="km-muted">Messages are seen by everyone in the meeting and are not saved after it ends.</p>`}</div>
       <form id="cf"><input class="input" id="ci" maxlength="2000" placeholder="Message everyone" autocomplete="off" aria-label="Message"><button class="kb primary sm" aria-label="Send">${ic("send")}</button></form>`;
     const b = $("#cb"); b.scrollTop = b.scrollHeight;
+    $$("[data-tr]", s).forEach((x) => (x.onclick = async () => { x.disabled = true; x.textContent = "Translating…"; const m = S.chat[+x.dataset.tr]; try { m.en = (await api(`/api/translate/${room}`, { method: "POST", body: JSON.stringify({ text: m.text }) })).en || "(no translation)"; } catch (e) { m.en = e.message; } renderPanel(); }));
     $("#cf").onsubmit = (e) => { e.preventDefault(); const v = $("#ci").value.trim(); if (v) { send({ t: "chat", text: v }); $("#ci").value = ""; } };
     $("#ci").focus();
   } else if (S.panel === "people") {
@@ -548,11 +552,16 @@ function renderPanel() {
     $$("[data-pm]", s).forEach((b) => (b.onclick = () => { const p = S.peers.get(b.dataset.pm)?.info; menu(b, [["Ask to unmute / mute", () => send({ t: "mute", id: p.id })], ...(p.role === "member" ? [["Make co-host", () => send({ t: "host", id: p.id })]] : []), ["Remove from meeting", () => send({ t: "remove", id: p.id })]]); }));
     $("#invite").onclick = () => { navigator.clipboard.writeText(location.origin + location.pathname).then(() => toast("Meeting address copied. Invited people still need their own invitation link from the Kayak portal.")).catch(() => toast(location.origin + location.pathname)); };
   } else if (S.panel === "transcript") {
-    s.innerHTML = head("Transcript") + `<div class="body" id="tb">${S.transcript.length ? S.transcript.map((m) => `<p class="tline"><b>${esc(m.name)}</b> ${esc(m.text)}</p>`).join("") : `<p class="km-muted">${S.room.captions ? "Waiting for someone to speak…" : isHost() ? "Turn on captions to transcribe the meeting. Everyone will see a notice." : "Captions are off. The host can turn them on."}</p>`}</div>`;
+    s.innerHTML = head("Transcript") + `<div class="body" id="tb"><label class="row" style="display:flex;gap:8px;align-items:center;font-size:.9rem"><input type="checkbox" id="ten" ${S.english ? "checked" : ""}> Translate to English live</label>${S.transcript.length ? S.transcript.map((m) => `<p class="tline"><b>${esc(m.name)}</b> ${esc(S.english && m.en ? m.en : m.text)}${S.english && m.en ? `<br><small class="km-muted">${esc(m.text)} · ${esc(langName(m.lang))}</small>` : ""}</p>`).join("") : `<p class="km-muted">${S.room.captions ? "Waiting for someone to speak…" : isHost() ? "Turn on captions to transcribe the meeting. Everyone will see a notice." : "Captions are off. The host can turn them on."}</p>`}</div>`;
     const b = $("#tb"); b.scrollTop = b.scrollHeight;
+    $("#ten").onchange = (e) => setEnglish(e.target.checked);
   }
   $("#pclose").onclick = () => panel(S.panel);
 }
+const LANGS = { hi: "Hindi", mr: "Marathi", gu: "Gujarati", ta: "Tamil", te: "Telugu", kn: "Kannada", ml: "Malayalam", bn: "Bengali", pa: "Punjabi", ur: "Urdu", ar: "Arabic", fr: "French", de: "German", es: "Spanish", it: "Italian", pt: "Portuguese", ja: "Japanese", zh: "Chinese", ko: "Korean", ru: "Russian", tr: "Turkish", fa: "Persian", id: "Indonesian", ms: "Malay", th: "Thai", vi: "Vietnamese", nl: "Dutch", sw: "Swahili" };
+const langName = (l) => LANGS[l] || (l ? l.toUpperCase() : "translated");
+const looksEnglish = (t) => /^[\x00-\x7F\u2018-\u201D\u2026\u20B9]*$/.test(t) && !/\b(hai|nahi|kya|aap|merci|bonjour|gracias|danke)\b/i.test(t);
+function setEnglish(on) { S.english = on; try { localStorage.setItem("km:en", on ? "1" : "0"); } catch {} drawCaptions(); renderPanel(); toast(on ? "Live translation to English is on. Captions and transcript show English, with the original underneath." : "Live translation is off. Captions show what was said."); }
 const linkify = (h) => h.replace(/(https:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 
 // ---------------------------------------------------------------- captions: my own voice, transcribed on Kayak's servers
@@ -590,7 +599,7 @@ async function flushCaption(cap) {
   d.setUint32(24, 16000, true); d.setUint32(28, 32000, true); d.setUint16(32, 2, true); d.setUint16(34, 16, true); str(36, "data"); d.setUint32(40, pcm.byteLength, true);
   new Int16Array(wav, 44).set(pcm);
   cap.busy++;
-  try { const r = await api(`/api/transcribe/${room}`, { method: "POST", body: new Blob([wav], { type: "audio/wav" }) }); if (r.text) send({ t: "caption", text: r.text }); }
+  try { const r = await api(`/api/transcribe/${room}`, { method: "POST", body: new Blob([wav], { type: "audio/wav" }) }); if (r.text) send({ t: "caption", text: r.text, en: r.en || null, lang: r.lang || null }); }
   catch {} finally { cap.busy--; }
 }
 function stopCaptions() { if (!S.cap) return; try { S.cap.node.disconnect(); S.cap.ac.close(); } catch {} S.cap = null; }
@@ -620,7 +629,7 @@ async function startRecording() {
       };
       if (spot && ts.length) { place(ts[0], 0, 0, W, H - 150); ts.slice(1, 6).forEach((t, i) => place(t, 8 + i * 254, H - 142, 246, 138)); }
       else { const n = Math.max(1, ts.length), cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols), w = W / cols, h = H / rows; ts.forEach((t, i) => place(t, (i % cols) * w + 3, Math.floor(i / cols) * h + 3, w - 6, h - 6)); }
-      if (S.captions.length) { const c = S.captions[S.captions.length - 1]; g.font = "22px Archivo, Arial"; const line = `${c.name}: ${c.text}`.slice(0, 110); const tw = g.measureText(line).width; g.fillStyle = "#000000cc"; g.fillRect((W - tw) / 2 - 12, H - 60, tw + 24, 36); g.fillStyle = "#fff"; g.textAlign = "center"; g.fillText(line, W / 2, H - 42); }
+      if (S.captions.length) { const c = S.captions[S.captions.length - 1]; g.font = "22px Archivo, Arial"; const line = `${c.name}: ${(S.english && c.en) || c.text}`.slice(0, 110); const tw = g.measureText(line).width; g.fillStyle = "#000000cc"; g.fillRect((W - tw) / 2 - 12, H - 60, tw + 24, 36); g.fillStyle = "#fff"; g.textAlign = "center"; g.fillText(line, W / 2, H - 42); }
       if (logo.complete) g.drawImage(logo, W - 170, 12, 156, 42);
     };
     rec.timer = setInterval(draw, 1000 / 20);
