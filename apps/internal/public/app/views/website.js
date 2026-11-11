@@ -1,6 +1,7 @@
 import { $, $$, api, esc, html, raw, ico, toast, dialog, fmtDateTime, fmtDate } from "/_shared/js/ui.js";
+import { bars } from "/app/charts.js";
 
-const TABS = [["overview", "Overview"], ["enquiries", "Enquiries"], ["kay", "Kay's answers"], ["articles", "Confluence"], ["cases", "SeeCounter cases"]];
+const TABS = [["overview", "Overview"], ["sections", "Sections and consent"], ["competitors", "Competitor watch"], ["enquiries", "Enquiries"], ["kay", "Kay's answers"], ["articles", "Confluence"], ["cases", "SeeCounter cases"]];
 const ST = { new: ["New", "accent"], in_progress: ["In progress", "warn"], closed: ["Closed", "ok"], spam: ["Spam", ""] };
 
 export async function render(main, ctx) {
@@ -11,7 +12,7 @@ export async function render(main, ctx) {
     <nav class="chips" aria-label="Website sections">${TABS.map(([id, l]) => raw(`<a class="chip${id === tab ? " on" : ""}" href="#/website/${id}">${esc(l)}</a>`))}</nav>
     <div id="wb"><div class="row muted"><span class="spinner"></span> Loading…</div></div></div>`);
   const box = $("#wb");
-  try { await ({ overview, enquiries, kay, articles, cases })[tab](box, ctx.me); }
+  try { await ({ overview, sections, competitors, enquiries, kay, articles, cases })[tab](box, ctx.me); }
   catch (e) { box.innerHTML = String(html`<div class="note danger">${e.message}</div>`); }
 }
 
@@ -50,9 +51,16 @@ async function enquiries(box, me) {
     <div class="row between"><div><b>${esc(e.name)}</b>${e.organisation ? ` · ${esc(e.organisation)}` : ""} <span class="badge ${k}">${l}</span> ${e.source === "kay" ? `<span class="badge">Via Kay</span>` : ""} ${e.kind === "career" ? `<span class="badge">Careers</span>` : ""}</div><span class="small muted">${fmtDateTime(e.created_at)}</span></div>
     <div class="small"><a href="mailto:${esc(e.email)}">${esc(e.email)}</a>${e.phone ? ` · ${esc(e.phone)}` : ""}${e.area ? ` · ${esc(e.area)}` : ""}${e.link ? ` · <a href="${esc(e.link)}" target="_blank" rel="noopener">link</a>` : ""}</div>
     <p style="white-space:pre-wrap;margin:0">${esc(e.message)}</p>
+    ${e.summary ? `<div class="note small" style="white-space:pre-wrap"><b>Kay's triage</b><br>${esc(e.summary)}</div>` : ""}
+    <div class="small muted">Consent ${fmtDateTime(e.consent_at)}${e.notice_version ? ` · notice ${esc(e.notice_version)}` : ""}${e.purpose ? ` · purpose: ${esc(e.purpose)}` : ""}${e.owner ? ` · <b>owner: ${esc(e.owner)}</b>` : ""}</div>
     ${e.transcript ? `<details><summary class="small">Conversation with Kay</summary><pre class="small" style="white-space:pre-wrap">${esc(e.transcript)}</pre></details>` : ""}
     <div class="row"><select class="select" data-st aria-label="Status">${Object.entries(ST).map(([v, [lab]]) => `<option value="${v}"${v === e.status ? " selected" : ""}>${lab}</option>`).join("")}</select>
-      <input class="input" data-notes value="${esc(e.notes)}" placeholder="Internal notes" style="flex:1 1 260px"><button class="btn btn-ghost btn-sm" data-save>Save</button></div></article>`; }).join("")}</div>`;
+      <input class="input" data-notes value="${esc(e.notes)}" placeholder="Internal notes" style="flex:1 1 260px"><button class="btn btn-ghost btn-sm" data-save>Save</button></div>
+      <div class="row"><button class="btn btn-quiet btn-sm" data-triage>${ico("spark")} Triage with Kayak AI</button><button class="btn btn-quiet btn-sm" data-mine>${ico("users")} I'll take it</button>${me.can.edit && e.kind === "contact" ? `<button class="btn btn-quiet btn-sm" data-net>${ico("network")} Add to Kayak Network</button>` : ""}</div></article>`; }).join("")}</div>`;
+  const act = (sel, fn) => $$(sel, box).forEach((b) => (b.onclick = async () => { const card = b.closest("[data-id]"); b.disabled = true; try { await fn(card.dataset.id, card); } catch (e) { toast(e.message, "err"); } b.disabled = false; }));
+  act("[data-triage]", async (id) => { await api(`/api/grow/website/enquiries/${id}/triage`, { body: {} }); toast("Triaged."); enquiries(box, me); });
+  act("[data-mine]", async (id) => { await api(`/api/grow/website/enquiries/${id}/owner`, { body: { owner: me.name || me.email } }); toast("Assigned to you."); enquiries(box, me); });
+  act("[data-net]", async (id) => { await api(`/api/grow/website/enquiries/${id}/to-network`, { body: {} }); toast("Added to the Kayak Network as a prospective client."); });
   $$("[data-save]", box).forEach((b) => (b.onclick = async () => {
     const card = b.closest("[data-id]");
     try { await api(`/api/website/enquiries/${card.dataset.id}`, { body: { status: $("[data-st]", card).value, notes: $("[data-notes]", card).value } }); toast("Saved."); } catch (e) { toast(e.message, "err"); }
@@ -114,4 +122,33 @@ async function cases(box, me) {
     actions: [{ id: "x", label: "Cancel" }, { id: "s", label: "Save", kind: "primary", handler: async (d) => { await api("/api/website/cases", { body: { id: x.id, title: $("#ct", d).value, summary: $("#cs", d).value, brand: $("#cb", d).value, category: $("#cc", d).value, action: $("#ca", d).value, jurisdiction: $("#cj", d).value, authority: $("#cau", d).value, action_date: $("#cd", d).value, source_url: $("#cu", d).value, status: $("#co", d).checked ? "closed" : "ongoing", published: $("#cp", d).checked } }); toast("Saved."); cases(box, me); } }] });
   $("#addc")?.addEventListener("click", () => ed());
   $$("[data-ed]", box).forEach((b) => (b.onclick = () => ed(list.find((x) => x.id === b.dataset.ed))));
+}
+
+const TRIG = { "reading-pattern": "Read several pieces on one topic", "returning-reader": "Came back to read again", "long-read": "Long read of insights", "service-dwell": "Spent time on a service page", "contact-page": "Visited Contact without writing", "privacy-choices": "Changed it in Privacy choices" };
+const PURP = { personalise: "Remember my topics", updates: "Confluence by email", followup: "Follow-up from the team" };
+async function sections(box) {
+  const o = await api("/api/grow/website/sections");
+  box.innerHTML = `<div class="stack">
+    <div class="card stack-sm"><h3>Sections, last 30 days</h3><div class="table-wrap"><table class="table"><thead><tr><th>Section</th><th class="num">Views</th><th class="num">vs previous 30 days</th><th class="num">Enquiries</th><th class="num">Enquiries per 100 views</th></tr></thead><tbody>
+      ${o.sections.map((x) => `<tr><td>${esc(x.section)}</td><td class="num">${x.views.toLocaleString("en-IN")}</td><td class="num">${x.change == null ? "new" : `<span style="color:${x.change >= 0 ? "var(--ok,#4B7A4E)" : "var(--danger,#B4472F)"}">${x.change >= 0 ? "▲" : "▼"} ${Math.abs(x.change)}%</span>`}</td><td class="num">${x.enquiries}</td><td class="num">${x.conv}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">No visits recorded yet.</td></tr>`}</tbody></table></div>
+      <p class="small muted">${o.kayEnquiries} enquir${o.kayEnquiries === 1 ? "y" : "ies"} came through Kay this month.</p></div>
+    <div class="grid wide"><div class="card stack-sm"><h3>Share of views</h3>${bars(o.sections.slice(0, 8).map((x) => [x.section, x.views]))}</div>
+    <div class="card stack-sm"><h3>Kay's consent questions, last 30 days</h3>${o.consent.length ? `<table class="table"><thead><tr><th>Purpose</th><th>What prompted it</th><th class="num">Asked</th><th class="num">Agreed</th></tr></thead><tbody>${o.consent.map((r) => `<tr><td>${esc(PURP[r.purpose] || r.purpose)}</td><td class="small">${esc(TRIG[r.trigger] || r.trigger)}</td><td class="num">${r.n}</td><td class="num">${r.yes} (${Math.round((r.yes / r.n) * 100)}%)</td></tr>`).join("")}</tbody></table>` : `<p class="muted small">No decisions yet. Kay asks one question per visit, only when it becomes useful, and never asks browsers that send Global Privacy Control or Do Not Track about personalisation or emails.</p>`}
+      <p class="small muted">Decisions are stored against a random browser code, never with a name, email or IP address, and kept for seven years as proof of consent.</p></div></div>
+  </div>`;
+}
+
+async function competitors(box, me) {
+  const o = await api("/api/grow/competitors");
+  const byFirm = Object.fromEntries(o.competitors.map((c) => [c.id, o.items.filter((i) => i.competitor_id === c.id)]));
+  box.innerHTML = `<div class="stack">
+    <div class="note">Once a day Kayak Internal reads the public insights pages of the firms below and keeps only headlines and links, never article text. It identifies itself and skips any page whose robots.txt asks automated readers to stay away. Use it to see what the market is talking about, then let Kayak AI suggest how Kayak can capitalise.</div>
+    <div class="row">${me.can.edit ? `<button class="btn btn-ghost" id="chk">${ico("refresh")} Check now</button>` : ""}${o.ai ? `<button class="btn btn-primary" id="brf">${ico("spark")} How can Kayak capitalise?</button>` : ""}</div>
+    ${o.brief ? `<div class="card stack-sm"><div class="row between"><h3>Kayak AI brief</h3><span class="small muted">${fmtDateTime(o.brief.created_at)}${o.brief.by_name ? ` · ${esc(o.brief.by_name)}` : ""}</span></div><div class="md" style="white-space:pre-wrap">${esc(o.brief.body)}</div></div>` : ""}
+    <div class="grid wide">${o.competitors.map((c) => `<div class="card stack-sm"><div class="row between"><h3>${esc(c.name)}</h3><span class="badge">${c.items} headlines</span></div>
+      <p class="small muted" style="margin:0">${c.last_checked ? `Checked ${fmtDateTime(c.last_checked)}: ${esc(c.last_status)}` : "Not checked yet."} <a href="${esc(c.url)}" target="_blank" rel="noopener">Page</a>${me.can.admin ? ` · <a href="#" data-url="${esc(c.id)}">Change address</a>` : ""}</p>
+      <ul class="plain small">${(byFirm[c.id] || []).slice(0, 6).map((i) => `<li><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a> <span class="faint">${fmtDate(i.first_seen)}</span></li>`).join("") || "<li class='muted'>Nothing yet.</li>"}</ul></div>`).join("")}</div></div>`;
+  $("#chk", box)?.addEventListener("click", async (e) => { e.target.disabled = true; e.target.textContent = "Checking eight sites…"; try { await api("/api/grow/competitors/check", { body: {} }); toast("Checked."); } catch (x) { toast(x.message, "err"); } competitors(box, me); });
+  $("#brf", box)?.addEventListener("click", async (e) => { e.target.disabled = true; e.target.textContent = "Kayak AI is reading the headlines…"; try { await api("/api/grow/competitors/brief", { body: {} }); } catch (x) { toast(x.message, "err"); } competitors(box, me); });
+  $$("[data-url]", box).forEach((a) => (a.onclick = (e) => { e.preventDefault(); const c = o.competitors.find((x) => x.id === a.dataset.url); dialog({ title: `${c.name}: insights page`, body: `<div class="field"><label>Address</label><input class="input" id="cu" value="${esc(c.url)}"></div>`, actions: [{ id: "c", label: "Cancel" }, { id: "s", label: "Save", kind: "primary", handler: async (d) => { await api("/api/grow/competitors", { body: { id: c.id, name: c.name, url: d.querySelector("#cu").value } }); toast("Saved."); competitors(box, me); } }] }); }));
 }

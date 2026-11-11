@@ -562,8 +562,12 @@ P.legal = () => `
   <h2 id="privacy">Privacy notice</h2>
   <p>Kayak Strategic Advisors Private Limited ("Kayak"), Mumbai, processes personal data in line with the Digital Personal Data Protection Act, 2023. When you contact us, subscribe to Confluence or apply for a role, we use the details you give us only for that purpose.</p>
   <p>We keep personal data for as long as we need it for that purpose, protect it with reasonable security safeguards, and share it only with service providers who process it on our behalf. You can ask to access, correct or erase your personal data, or withdraw consent, by writing to enquiries@kayaksa.com with "Privacy" in the subject line. We respond within 30 days. If you are not satisfied, you may complain to the Data Protection Board of India.</p>
+  <p>This notice is available in English and, on request, in any language in the Eighth Schedule to the Constitution. Notice version KSA-PN-2026-11.</p>
+  <h2 id="choices">Your privacy choices</h2>
+  <p>Kay never shows a consent banner when you arrive. Instead, Kay asks once, at the moment something becomes useful, and only for that one purpose. Your answer is recorded with a random code kept in this browser, never with your name, email or network address. You can change any answer here at any time; withdrawing is as easy as agreeing, and does not affect anything already done.</p>
+  <div id="privacy-choices" class="pchoices"></div>
   <h2 id="cookies">Cookies and site statistics</h2>
-  <p>This site sets no cookies. To learn which pages are useful, it counts page views and loading speed without cookies and without identifying you: we record the page, the referring website, the country, the type of device and browser, and timing measures, and we never store your network address or build a profile of you.</p>
+  <p>This site sets no cookies. Your privacy choices and the topics Kay remembers (only if you agree) are kept in your browser's local storage, on your device. To learn which pages are useful, it counts page views and loading speed without cookies and without identifying you: we record the page, the referring website, the country, the type of device and browser, and timing measures, and we never store your network address or build a profile of you.</p>
   <h2 id="security">Security records</h2>
   <p>To protect this site and the people who use it, our firewall records the network (IP) address, browser details and a one-way device signature (a scrambled code, not your identity) when a request looks automated or malicious, and when you send us an enquiry, subscribe or apply. Automated scrapers and attack attempts are blocked for four hours. We use these records only to keep our services secure and to meet our legal duties, including the CERT-In Directions of 2022, which require security logs to be kept for 180 days. We delete them after that, and we never use them for marketing or profiling. Search engines and AI assistants that identify themselves honestly are welcome.</p>
   <h2 id="kay">Kay, our assistant</h2>
@@ -843,6 +847,8 @@ async function copy(text) {
 const fmtD = (iso) => (iso ? new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "");
 function afterRoute(key) {
   if (key === "seecounter") casesSection();
+  if (key === "legal") import("/assets/consent.js").then((m) => m.renderChoices($("#privacy-choices"))).catch(() => {});
+  dispatchEvent(new CustomEvent("kayak:route"));
 }
 async function casesSection() {
   const host = $("#main .page");
@@ -949,4 +955,5 @@ linkify(document);
 route();
 beacon();
 import("/assets/kay.js").then((m) => m.mountKay({ data: DATA })).catch((e) => console.warn("Kay could not start", e));
+import("/assets/consent.js").then((m) => m.mountConsent({ data: DATA })).catch(() => {});
 

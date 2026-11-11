@@ -11,7 +11,6 @@ export const NAV = [
     { id: "brand", label: "Brand Portal", icon: "brand" },
     { id: "tools", label: "Kayak Tools", icon: "tools" },
     { id: "clienttools", label: "Client Tools", icon: "grid" },
-    { id: "network", label: "Kayak Network", icon: "network" },
   ] },
   { group: "Studio", items: [
     { id: "studio", label: "Kayak Studio", icon: "sun" },
@@ -24,11 +23,12 @@ export const NAV = [
     { id: "store", label: "Kayakers Store", icon: "pin" },
   ] },
   { group: "Governance", items: [{ id: "launch", label: "Launch monitor", icon: "clock" }, { id: "certs", label: "Certifications", icon: "award" }] },
-  { group: "Grow", items: [{ id: "website", label: "Website", icon: "globe" }, { id: "learn", label: "Kayak Learn", icon: "learn" }] },
+  { group: "Grow & Connect", items: [{ id: "network", label: "Kayak Network", icon: "network" }, { id: "website", label: "Website & competitors", icon: "globe" }, { id: "learn", label: "Kayak Learn", icon: "learn" }] },
+  { group: "HR & Admin", items: [{ id: "roles", label: "Roles & responsibilities", icon: "briefcase" }, { id: "masters", label: "People Masters", icon: "lock" }] },
   { group: "Administration", admin: true, items: [{ id: "admin", label: "People & access", icon: "users" }, { id: "brain", label: "Kayak AI memory", icon: "key" }, { id: "sales", label: "Learn sales", icon: "briefcase" }, { id: "security", label: "Security", icon: "shield" }, { id: "audit", label: "Audit log", icon: "activity" }] },
 ];
 
-const VIEWS = { home: "home", digital: "digital", updates: "updates", meet: "meet", confluence: "confluence", brand: "brand", tools: "tools", clienttools: "clienttools", network: "network", studio: "studio", ai: "ai", board: "board", briefs: "briefs", cards: "cards", decks: "decks", store: "store", launch: "launch", certs: "certs", learn: "learn", website: "website", security: "security", sales: "sales", admin: "admin", brain: "brain", audit: "security", account: "account" };
+const VIEWS = { home: "home", digital: "digital", updates: "updates", meet: "meet", confluence: "confluence", brand: "brand", tools: "tools", clienttools: "clienttools", network: "network", studio: "studio", ai: "ai", board: "board", briefs: "briefs", cards: "cards", decks: "decks", store: "store", launch: "launch", certs: "certs", learn: "learn", website: "website", roles: "roles", masters: "masters", security: "security", sales: "sales", admin: "admin", brain: "brain", audit: "security", account: "account" };
 
 export const state = { me: null };
 

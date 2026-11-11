@@ -90,3 +90,14 @@
 @media print{#kay{display:none}}
 
 .kay-rate{display:flex;gap:4px;margin-top:6px;align-items:center;font-size:.74rem;color:var(--muted)}.kay-rate button{display:grid;place-items:center;width:26px;height:26px;border:1px solid transparent;background:none;color:var(--muted);cursor:pointer}.kay-rate button:hover{border-color:var(--line);color:var(--fg)}#kay .kay-rate svg{width:15px;height:15px}
+/* Kay asks: behaviour-based consent, one purpose at a time */
+.kay-ask{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(100px + env(safe-area-inset-bottom,0px));z-index:60;width:min(360px,calc(100vw - 32px));display:grid;grid-template-columns:40px 1fr;gap:12px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-top:3px solid var(--saffron,#EE9B1E);padding:16px;box-shadow:0 16px 40px rgba(14,47,60,.18);animation:kay-in .35s ease-out;font-size:.92rem;line-height:1.5}
+.kay-ask.out{opacity:0;transform:translateY(8px);transition:.3s}
+.kay-ask-av img{width:40px;height:40px;border-radius:50%;display:block}
+.kay-ask .kay-ask-h{display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.kay-ask p{margin:4px 0 0}
+.kay-ask .kay-ask-fine{font-size:.78rem;color:var(--muted);margin-top:8px}
+.kay-ask-row,.kay-ask-form{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.kay-ask-form input{flex:1 1 160px;min-width:0;padding:8px 10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit}
+.kay-ask-err{color:#B4472F;font-size:.82rem}
+@media (prefers-reduced-motion:reduce){.kay-ask{animation:none}}

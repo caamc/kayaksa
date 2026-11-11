@@ -12,7 +12,15 @@ export async function render(main, ctx) {
       <button class="btn btn-primary" id="inv">${ico("plus")} Invite someone</button></div>
     ${me.mail ? "" : html`<div class="note">Email sending is not set up, so invitation and reset links are shown here for you to send yourself (for example by email or Teams). Add RESEND_API_KEY to send them automatically.</div>`}
     <div class="table-wrap"><table class="table"><thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Two-factor</th><th>Last sign-in</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
-    <p class="small muted">${ROLE_HELP}</p></div>`);
+    <p class="small muted">${ROLE_HELP}</p>
+    <div class="grid wide">
+      <section class="card stack-sm"><div class="row between"><h3>Celebrations, next 45 days</h3><a class="small" href="#/masters/employee">Employee master</a></div><div id="celebs" class="small muted">Loading…</div></section>
+      <section class="card stack-sm"><h3>Full employee details</h3><p class="small muted" style="margin:0">Each colleague's employment, payroll and emergency details live in the Employees register of the People Masters, linked by work email. Sensitive fields are sealed and every view is logged.</p><div class="row"><a class="btn btn-ghost btn-sm" href="#/masters/employee">${ico("users")} Open Employees</a><a class="btn btn-ghost btn-sm" href="#/roles">${ico("briefcase")} Roles and responsibilities</a></div></section>
+    </div></div>`);
+  api("/api/people/celebrations").then(({ upcoming, mail }) => {
+    $("#celebs").innerHTML = (upcoming.length ? `<ul class="plain">${upcoming.slice(0, 12).map((x) => `<li><b>${esc(new Date(x.on + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" }))}</b> · ${esc(x.name)}: ${esc(x.kind)}${x.wishes ? "" : " <span class='faint'>(no wishes)</span>"}</li>`).join("")}</ul>` : "None in the next 45 days. Add dates of birth and joining in the Employees register.")
+      + `<p class="faint" style="margin:8px 0 0">Wishes go out at 07:00 IST${mail ? " by email" : " (email is not set up yet; Kayakers Update still posts them)"}, and to Kayakers Update. Only the day and month of a birthday are used.</p>`;
+  }).catch(() => ($("#celebs").textContent = "Celebrations are not available."));
 
   $("#rows").innerHTML = users.map((u) => `<tr><td><b>${esc(u.name || "—")}</b><br><span class="small muted">${esc(u.email)}</span>${u.title ? `<br><span class="small faint">${esc(u.title)}</span>` : ""}</td>
     <td>${esc(ROLES[u.role])}${u.protected ? ' <span class="badge accent">Founder</span>' : ""}</td>

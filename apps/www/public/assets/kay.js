@@ -53,6 +53,7 @@ function inline(s) {
     .replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, "$1<i>$2</i>")
     .replace(/\[([^\]]+)\]\(((?:https:\/\/|\/)[^\s)]+)\)/g, (m, txt, url) => `<a href="${url}"${url.startsWith("/") ? ' data-kaygo="1"' : ' target="_blank" rel="noopener"'}>${txt}</a>`);
 }
+const INTENT = /\b(proposal|engage (you|kayak)|work with (you|kayak)|hire (you|kayak)|your fees?|quote|call me|call back|meet (you|the team)|speak to (someone|a person|the team)|get in touch|contact (me|the team))\b/i;
 /** Kay can add [[go:/path|Label]] chips and [[handoff]]. */
 function parseTags(text) {
   const chips = [];
@@ -121,6 +122,8 @@ export async function mountKay() {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.open) closePanel(); });
   // Other parts of the site can open Kay with a link: <a href="#kay">.
   document.addEventListener("click", (e) => { const a = e.target.closest('a[href="#kay"],[data-open-kay]'); if (a) { e.preventDefault(); openPanel(); } });
+  // Kay's consent prompt ("Is there a question I can pass to the team?") opens the hand-off form.
+  document.addEventListener("kay:handoff", () => { openPanel(); setTimeout(handoffForm, 250); });
 
   function greet() {
     const h = Number(new Intl.DateTimeFormat("en-IN", { hour: "numeric", hour12: false, timeZone: "Asia/Kolkata" }).format(new Date()));
@@ -131,7 +134,8 @@ export async function mountKay() {
   function save() { store.set("kay-chat", state.msgs.slice(-40)); }
 
   function bubble(m, i) {
-    const { clean, chips, handoff } = m.role === "assistant" ? parseTags(m.content) : { clean: m.content, chips: [], handoff: false };
+    let { clean, chips, handoff } = m.role === "assistant" ? parseTags(m.content) : { clean: m.content, chips: [], handoff: false };
+    if (m.role === "assistant" && !handoff && i > 0 && INTENT.test(state.msgs[i - 1]?.content || "") && !(state.busy && i === state.msgs.length - 1)) handoff = true;
     return `<div class="kay-msg ${m.role}" data-i="${i}">${m.role === "assistant" ? `<span class="kay-av xs" aria-hidden="true">${AV}</span>` : ""}
       <div class="kay-b">${m.role === "assistant" ? md(clean) || '<span class="kay-typing"><i></i><i></i><i></i></span>' : `<p>${esc(clean).replace(/\n/g, "<br>")}</p>`}
       ${m.role === "assistant" && i > 0 && clean && !(state.busy && i === state.msgs.length - 1) ? `<div class="kay-rate" aria-label="Was this helpful?">${m.rated ? `<span>${m.rated > 0 ? "Thanks!" : "Thanks, I'll learn from that."}</span>` : `<button data-rate="1" data-i="${i}" title="Helpful" aria-label="Helpful">${ico.up}</button><button data-rate="-1" data-i="${i}" title="Not helpful" aria-label="Not helpful">${ico.down}</button>`}</div>` : ""}

@@ -21,6 +21,8 @@ import { ops } from "./ops";
 import { workspace } from "./workspace";
 import { briefs } from "./briefs";
 import { clientTools, runChecks } from "./clienttools";
+import { grow, checkCompetitors } from "./grow";
+import { people, runCelebrations } from "./people";
 
 type V = { Bindings: Env; Variables: { user: User } };
 const app = new Hono<V>();
@@ -75,7 +77,7 @@ app.use("/api/meet/*", guard);
 app.use("/api/meet", guard);
 app.use("/api/confluence/*", guard);
 app.use("/api/confluence", guard);
-for (const p of ["dash", "ops", "workspace", "briefs", "clienttools"]) { app.use(`/api/${p}`, guard); app.use(`/api/${p}/*`, guard); }
+for (const p of ["dash", "ops", "workspace", "briefs", "clienttools", "grow", "people"]) { app.use(`/api/${p}`, guard); app.use(`/api/${p}/*`, guard); }
 app.use("/files/*", guard);
 app.use("/app", guard);
 app.use("/app/*", guard);
@@ -99,6 +101,8 @@ app.route("/api/ops", ops);
 app.route("/api/workspace", workspace);
 app.route("/api/briefs", briefs);
 app.route("/api/clienttools", clientTools);
+app.route("/api/grow", grow);
+app.route("/api/people", people);
 app.route(
   "/api/learn",
   learnApi({
@@ -147,6 +151,8 @@ export default {
     if (env.WWW_DB) await pruneSecurity(env.WWW_DB).catch(() => {});
     // Confluence: after the 25th, Kayak AI drafts the next issue on its own. It is never released without approval.
     await scheduledConfluence(env).catch((e) => console.error("confluence", e?.message));
+    await runCelebrations(env).catch((e) => console.error("celebrations", e?.message));
+    await checkCompetitors(env).catch((e) => console.error("competitors", e?.message));
     // Kayak Meet housekeeping (meet.kayaksa.com has no cron of its own; the account allows five).
     if (env.MEET_DB) {
       await pruneSecurity(env.MEET_DB).catch(() => {});

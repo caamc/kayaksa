@@ -53,10 +53,11 @@ tools.delete("/:id", async (c) => {
 });
 
 // ---------- Network ----------
-const KINDS = ["Alliance partner", "Referral partner", "Technology partner", "Associate firm", "Subject expert", "Law firm", "Investigation partner", "Group company", "Other"];
+export const GROUPS = ["client", "bp_consulting", "bp_vendor", "senior_advisor", "affiliate"];
+const KINDS = ["Client", "Alliance partner", "Referral partner", "Technology partner", "Associate firm", "Subject expert", "Law firm", "Investigation partner", "Group company", "Other"];
 const parseList = (v: unknown) => (Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : []).map((x) => str(x, 60)).filter(Boolean).slice(0, 20);
 
-network.get("/meta", (c) => c.json({ kinds: KINDS }));
+network.get("/meta", (c) => c.json({ kinds: KINDS, groups: GROUPS }));
 
 network.get("/", async (c) => {
   const { results } = await c.env.DB.prepare("SELECT * FROM partners ORDER BY name COLLATE NOCASE").all<any>();
@@ -75,14 +76,14 @@ network.post("/", async (c) => {
   const id = b.id ? str(b.id, 60) : uid();
   const now = new Date().toISOString();
   await c.env.DB.prepare(
-    `INSERT INTO partners (id, name, kind, status, sectors, services, city, country, website, contact_name, contact_role, contact_email, contact_phone, since, nda_until, rating, notes, created_by, created_at, updated_at)
-     VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?19)
+    `INSERT INTO partners (id, name, kind, status, sectors, services, city, country, website, contact_name, contact_role, contact_email, contact_phone, since, nda_until, rating, notes, created_by, created_at, updated_at, grp, email_opt_out)
+     VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?19,?20,?21)
      ON CONFLICT(id) DO UPDATE SET name=?2, kind=?3, status=?4, sectors=?5, services=?6, city=?7, country=?8, website=?9, contact_name=?10, contact_role=?11,
-       contact_email=?12, contact_phone=?13, since=?14, nda_until=?15, rating=?16, notes=?17, updated_at=?19`,
+       contact_email=?12, contact_phone=?13, since=?14, nda_until=?15, rating=?16, notes=?17, updated_at=?19, grp=?20, email_opt_out=?21`,
   ).bind(
     id, name, kind, status, JSON.stringify(parseList(b.sectors)), JSON.stringify(parseList(b.services)), str(b.city, 80), str(b.country, 80) || "India",
     url(b.website), str(b.contact_name, 120), str(b.contact_role, 120), ce, str(b.contact_phone, 60), str(b.since, 10), str(b.nda_until, 10),
-    Math.max(0, Math.min(5, Number(b.rating) || 0)), str(b.notes, 4000), c.get("user").id, now,
+    Math.max(0, Math.min(5, Number(b.rating) || 0)), str(b.notes, 4000), c.get("user").id, now, GROUPS.includes(b.grp) ? b.grp : "bp_consulting", b.email_opt_out ? 1 : 0,
   ).run();
   await audit(c, c.env.DB, c.get("user").id, "network.saved", { id, name });
   return c.json({ id });
@@ -97,7 +98,7 @@ network.delete("/:id", async (c) => {
 
 network.get("/export.csv", async (c) => {
   const { results } = await c.env.DB.prepare("SELECT * FROM partners ORDER BY name COLLATE NOCASE").all<any>();
-  const cols = ["name", "kind", "status", "sectors", "services", "city", "country", "website", "contact_name", "contact_role", "contact_email", "contact_phone", "since", "nda_until", "rating", "notes"];
+  const cols = ["name", "grp", "kind", "status", "sectors", "services", "city", "country", "website", "contact_name", "contact_role", "contact_email", "contact_phone", "since", "nda_until", "rating", "notes"];
   // Prefix cells that a spreadsheet would treat as a formula.
   const cell = (v: unknown) => {
     let s = Array.isArray(v) ? v.join("; ") : String(v ?? "");

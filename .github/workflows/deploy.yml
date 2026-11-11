@@ -197,6 +197,10 @@ jobs:
             NEWBOOT=$(node -e 'console.log(require("crypto").randomBytes(18).toString("base64url"))')
             node -e 'const f="/tmp/s.json";const j=JSON.parse(require("fs").readFileSync(f));j.AUTH_ENCRYPTION_KEY=require("crypto").randomBytes(32).toString("base64url");j.BOOTSTRAP_TOKEN=process.argv[1];require("fs").writeFileSync(f,JSON.stringify(j))' "$NEWBOOT"
           fi
+          # People Masters: personal data is sealed with its own key, generated once and never shown.
+          if ! echo "$have" | grep -qx PII_ENCRYPTION_KEY; then
+            node -e 'const f="/tmp/s.json";const j=JSON.parse(require("fs").readFileSync(f));j.PII_ENCRYPTION_KEY=require("crypto").randomBytes(32).toString("base64url");require("fs").writeFileSync(f,JSON.stringify(j))'
+          fi
           npx wrangler secret bulk /tmp/s.json --name kayaksa-internal; rm -f /tmp/s.json
           echo "### internal.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
           if [ -n "$NEWBOOT" ]; then

@@ -338,3 +338,23 @@
 .fab-note{margin:0;padding:0 12px 10px;font-size:.7rem;color:var(--faint)}
 @media print{.fab{display:none}}
 .kpi2 .t{align-items:flex-start}.kpi2 .t .delta{text-transform:none;letter-spacing:0;white-space:nowrap;flex:none}
+/* Roles: organisation tree (brand: square nodes, Fog hairlines, saffron edge for statutory roles) */
+.org{overflow-x:auto;padding:24px}
+.org>.org-tree{width:max-content;min-width:100%;margin:0 auto}
+.org-tree,.org-tree ul{list-style:none;margin:0;padding:0;display:flex;justify-content:center;gap:18px;position:relative}
+.org-tree ul{padding-top:0;margin-top:22px}
+.org-tree ul::after{content:"";position:absolute;top:-22px;left:50%;height:22px;border-left:1px solid var(--line)}
+.org-tree li{display:flex;flex-direction:column;align-items:center;position:relative;padding-top:22px}
+.org-tree>li{padding-top:0}
+.org-tree ul>li::before{content:"";position:absolute;top:0;left:50%;height:22px;border-left:1px solid var(--line)}
+.org-tree ul::before{content:"";position:absolute;top:0;left:0;right:0;border-top:1px solid var(--line)}
+.org-tree ul>li:first-child::after,.org-tree ul>li:last-child::after{content:"";position:absolute;top:-1px;height:2px;background:var(--surface);width:50%}
+.org-tree ul>li:first-child::after{left:0}.org-tree ul>li:last-child::after{right:0}
+.org-tree ul>li:only-child::after{display:none}
+.org-node{display:grid;gap:2px;min-width:150px;max-width:190px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--accent,#17807E);text-align:left;font:inherit;color:inherit;cursor:pointer}
+.org-node.stat{border-top-color:#EE9B1E}
+.org-node b{font-size:.86rem;line-height:1.25}.org-node span{font-size:.76rem;color:var(--muted)}
+.org-node:hover{background:var(--alt,var(--bg))}
+.role-card{border-left:3px solid var(--accent,#17807E)}.role-card.stat{border-left-color:#EE9B1E}
+.dpdp{border-left:3px solid #3E5563}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em}

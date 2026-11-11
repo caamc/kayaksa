@@ -15,6 +15,7 @@ export interface Env extends AiEnv, MailEnv {
   AI?: Ai;
   ASSETS: Fetcher;
   AUTH_ENCRYPTION_KEY: string;
+  PII_ENCRYPTION_KEY?: string; // seals sensitive fields in the People Masters
   BOOTSTRAP_TOKEN?: string;
   SUPERADMIN_EMAILS: string; // comma-separated
   SITE_URL: string; // https://internal.kayaksa.com

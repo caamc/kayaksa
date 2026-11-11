@@ -75,7 +75,7 @@ check(fg1.ok() && fg2.ok() && (await fg1.json()).message === (await fg2.json()).
 const again = await page.request.post(`${BASE}/api/auth/setup`, { data: { email: EMAIL, token: vars.BOOTSTRAP_TOKEN, name: "X", password: PASSWORD + "x" }, headers: { Origin: BASE } });
 check(again.status() === 409 || again.status() === 403, "set-up refuses an already active SuperAdmin");
 
-for (const v of ["digital", "updates", "clienttools", "clienttools/monitoring", "studio", "board", "briefs", "store", "launch", "certs", "brain", "brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "confluence", "account"]) {
+for (const v of ["website/sections", "website/competitors", "roles", "masters/employee", "masters/partner", "masters/director", "masters/client", "masters/distributor", "digital", "updates", "clienttools", "clienttools/monitoring", "studio", "board", "briefs", "store", "launch", "certs", "brain", "brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "confluence", "account"]) {
   await page.goto(`${BASE}/app#/${v}`);
   await page.waitForFunction(() => !document.querySelector("#main .spinner") || document.querySelector("#main h1"), null, { timeout: 15000 });
   await page.waitForTimeout(600);
@@ -84,6 +84,34 @@ for (const v of ["digital", "updates", "clienttools", "clienttools/monitoring", 
   check(!!h1 && !err, `${v} renders (${(h1 || "").trim().slice(0, 40)})${err ? " — " + err : ""}`);
   await page.screenshot({ path: OUT + `internal-${v.replace("/", "-")}.png`, fullPage: v === "cards" });
 }
+
+// People Masters: sealed fields are masked, revealed only with a reason, and the reveal is audited
+const H = { Origin: BASE };
+const sv = await page.request.post(`${BASE}/api/people/masters/employee`, { headers: H, data: { name: "Test Employee", entity: "KSA", data: { code: "KSA-001", designation: "Analyst", joined_on: "2024-11-12", work_email: "test.employee@kayaksa.com", dob: "1995-11-12", pan: "ABCDE1234F", aadhaar_last4: "1234", bank_account: "123456789012" } } });
+const sid = (await sv.json()).id;
+check(sv.ok() && !!sid, "employee master saved");
+const badA = await page.request.post(`${BASE}/api/people/masters/employee`, { headers: H, data: { name: "X", data: { code: "1", designation: "A", joined_on: "2024-01-01", work_email: "x@kayaksa.com", aadhaar_last4: "123456789012" } } });
+check(badA.status() === 400, "full Aadhaar numbers are refused");
+const one = await (await page.request.get(`${BASE}/api/people/masters/employee/${sid}`)).json();
+check(one.masked?.pan && !one.masked.pan.includes("ABCDE") && one.masked.pan.endsWith("234F") && !JSON.stringify(one).includes("ABCDE1234F"), "PAN is sealed and masked");
+const nor = await page.request.post(`${BASE}/api/people/masters/employee/${sid}/reveal`, { headers: H, data: { field: "pan" } });
+check(nor.status() === 400, "reveal without a reason is refused");
+const rv = await (await page.request.post(`${BASE}/api/people/masters/employee/${sid}/reveal`, { headers: H, data: { field: "pan", reason: "Form 16 preparation" } })).json();
+check(rv.fields?.pan === "ABCDE1234F", "administrator can reveal with a reason");
+const keep = await page.request.post(`${BASE}/api/people/masters/employee`, { headers: H, data: { id: sid, name: "Test Employee", entity: "KSA", data: { code: "KSA-001", designation: "Senior Analyst", joined_on: "2024-11-12", work_email: "test.employee@kayaksa.com", dob: "__keep__", pan: "__keep__", bank_account: "__keep__" } } });
+const again2 = await (await page.request.post(`${BASE}/api/people/masters/employee/${sid}/reveal`, { headers: H, data: { reason: "Checking that edits keep sealed data" } })).json();
+check(keep.ok() && again2.fields?.pan === "ABCDE1234F" && again2.fields?.bank_account === "123456789012", "editing keeps sealed fields");
+const cel = await (await page.request.get(`${BASE}/api/people/celebrations`)).json();
+check(cel.upcoming.some((x) => x.kind === "Birthday") && cel.upcoming.some((x) => /year/.test(x.kind)), "celebrations list birthday and work anniversary");
+const roles = await (await page.request.get(`${BASE}/api/people/roles`)).json();
+check(roles.roles.some((r) => r.id === "dpo" && r.statutory), "roles seeded, including the Data Protection and Grievance Officer");
+const ref = await page.request.post(`${BASE}/api/grow/referrals`, { headers: H, data: { partner_id: "brand-defence-integrity", direction: "in", opportunity: "Brand protection programme", status: "won", value_inr: 500000, fee_pct: 10 } });
+const st = await (await page.request.get(`${BASE}/api/grow/network/stats`)).json();
+check(ref.ok() && st.totals.won === 1 && st.totals.feesDue === 50000, "referral recorded and counted in network statistics");
+await page.goto(`${BASE}/app#/masters/employee`); await page.waitForSelector("[data-open]"); await page.click("[data-open]"); await page.waitForSelector("[data-reveal]");
+await page.screenshot({ path: OUT + "internal-masters-open.png" });
+check(!(await page.content()).includes("ABCDE1234F"), "employee dialog shows PAN masked");
+await page.keyboard.press("Escape");
 
 // Invite a colleague and accept the invite in a fresh browser
 await page.goto(`${BASE}/app#/admin`);

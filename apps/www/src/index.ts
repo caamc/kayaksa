@@ -182,6 +182,23 @@ ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replac
 }
 const VERSION = "2026-11-12c";
 
+// ------------------------------------------------------------------ consent (DPDP Act, 2023)
+// Kay asks for consent at the moment a purpose becomes relevant, one purpose at a time. Each
+// decision is recorded against a random visitor id from the browser, with the notice version;
+// no name, email or IP address is stored with it. Withdrawing is as easy as agreeing (s.6(4)).
+const NOTICE_VERSION = "KSA-PN-2026-11";
+const PURPOSES = ["personalise", "kay_memory", "updates", "followup"];
+app.post("/api/consent", async (c) => {
+  const ip = clientIp(c);
+  if (!(await rateLimit(c.env.DB, `consent:${ip}`, 60, 3600))) return c.json({ error: "Too many requests." }, 429);
+  const b: any = await c.req.json().catch(() => ({}));
+  const vid = str(b.vid, 40);
+  if (!/^[a-z0-9-]{16,40}$/i.test(vid) || !PURPOSES.includes(b.purpose)) return c.json({ error: "Not understood." }, 400);
+  await c.env.DB.prepare("INSERT INTO consents (vid, purpose, granted, trigger, notice_version, page, at) VALUES (?,?,?,?,?,?,?)")
+    .bind(vid, b.purpose, b.granted ? 1 : 0, str(b.trigger, 40), NOTICE_VERSION, str(b.page, 200), new Date().toISOString()).run();
+  return c.json({ ok: true, notice: NOTICE_VERSION });
+});
+
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);
 app.post("/api/forms", async (c) => {
@@ -227,8 +244,9 @@ app.post("/api/forms", async (c) => {
     const link = str(f.link, 300);
     if (link && !/^https:\/\//i.test(link)) return c.json({ error: "Links must start with https://" }, 400);
     const id = crypto.randomUUID();
-    await c.env.DB.prepare("INSERT INTO enquiries (id, kind, source, name, email, organisation, phone, area, message, link, transcript, page, country, consent_at, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-      .bind(id, kind, b.source === "kay" ? "kay" : "form", name, e, str(f.org, 160), str(f.phone, 40), str(f.cluster, 120), msg, link, str(b.transcript, 12000), str(b.page, 200), country, now, now).run();
+    await c.env.DB.prepare("INSERT INTO enquiries (id, kind, source, name, email, organisation, phone, area, message, link, transcript, page, country, consent_at, created_at, notice_version, purpose) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .bind(id, kind, b.source === "kay" ? "kay" : "form", name, e, str(f.org, 160), str(f.phone, 40), str(f.cluster, 120), msg, link, str(b.transcript, 12000), str(b.page, 200), country, now, now,
+        NOTICE_VERSION, kind === "career" ? "Considering you for a role at Kayak" : "Replying to your enquiry").run();
     await auditFull(c, c.env.DB, null, `www.${kind}.submitted`, { id, via: b.source === "kay" ? "kay" : "form", page: str(b.page, 200) });
     if (mailEnabled(c.env) && c.env.ENQUIRY_TO) {
       const rows = [["Name", name], ["Email", e], ["Organisation", str(f.org, 160)], ["Phone", str(f.phone, 40)], ["Area", str(f.cluster, 120)], ["Link", link], ["Came via", b.source === "kay" ? "Kay" : "Website form"]].filter((r) => r[1]);
@@ -397,6 +415,7 @@ export default {
       env.DB.prepare("DELETE FROM stat_vitals WHERE day < ?").bind(cutoff),
       env.DB.prepare("DELETE FROM rate_limits"),
       env.DB.prepare("DELETE FROM enquiries WHERE created_at < ? AND status IN ('closed','spam')").bind(new Date(Date.now() - 3 * 365 * 86400_000).toISOString()),
+      env.DB.prepare("DELETE FROM consents WHERE at < ?").bind(new Date(Date.now() - 7 * 365 * 86400_000).toISOString()),
     ]);
     await dailyCleanup(env);
     await pruneSecurity(env.DB);
