@@ -119,3 +119,5 @@
 .side-backdrop{position:fixed;inset:64px 0 0 0;background:rgba(6,23,30,.4);z-index:24}
 @media print{.topbar,.side{display:none}.shell{display:block}}
 .page > a.small:first-child .ico:first-child{transform:rotate(180deg)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:140px}.bars span{flex:1;background:var(--accent);min-height:3px}.bars span:hover{background:var(--saffron)}.table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.chips a.chip{text-decoration:none}

@@ -50,8 +50,8 @@ jobs:
         id: apps
         run: |
           A="${{ github.event.inputs.apps }}"
-          # A push to main republishes the sites listed in the DEPLOY_APPS repository variable (default: www).
-          if [ -z "$A" ]; then A="${{ vars.DEPLOY_APPS || 'www' }}"; fi
+          # A push to main republishes the sites listed in the DEPLOY_APPS repository variable (default: all three).
+          if [ -z "$A" ]; then A="${{ vars.DEPLOY_APPS || 'www,learn,internal' }}"; fi
           if [ "$A" = "all" ]; then A="www,learn,internal"; fi
           echo "list=$A" >> "$GITHUB_OUTPUT"
           echo "Publishing: $A" >> "$GITHUB_STEP_SUMMARY"

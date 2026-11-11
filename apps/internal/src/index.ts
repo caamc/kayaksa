@@ -10,6 +10,7 @@ import { brand, brandFiles } from "./brand";
 import { tools, network } from "./directory";
 import { ai } from "./assistant";
 import { cards, decks } from "./studio";
+import { website } from "./website";
 
 type V = { Bindings: Env; Variables: { user: User } };
 const app = new Hono<V>();
@@ -55,6 +56,7 @@ app.use("/api/cards", guard);
 app.use("/api/decks/*", guard);
 app.use("/api/decks", guard);
 app.use("/api/learn/*", guard);
+app.use("/api/website/*", guard);
 app.use("/files/*", guard);
 app.use("/app", guard);
 app.use("/app/*", guard);
@@ -68,6 +70,7 @@ app.route("/api/network", network);
 app.route("/api/ai", ai);
 app.route("/api/cards", cards);
 app.route("/api/decks", decks);
+app.route("/api/website", website);
 app.route(
   "/api/learn",
   learnApi({
