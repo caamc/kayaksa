@@ -181,7 +181,7 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
           set -e
-          npx wrangler r2 bucket list | grep -q "kayaksa-brand" || npx wrangler r2 bucket create kayaksa-brand
+          if ! npx wrangler r2 bucket list | grep -q "kayaksa-brand"; then npx wrangler r2 bucket create kayaksa-brand; echo "NEW_BUCKET=1" >> "$GITHUB_ENV"; fi
           npx wrangler deploy -c apps/internal/wrangler.jsonc
           have=$(npx wrangler secret list --name kayaksa-internal --format json 2>/dev/null | jq -r '.[].name' || true)
           node scripts/secrets.mjs ANTHROPIC_API_KEY OPENAI_API_KEY XAI_API_KEY GEMINI_API_KEY RESEND_API_KEY > /tmp/s.json
@@ -197,7 +197,7 @@ jobs:
           fi
 
       - name: Upload the brand library
-        if: github.event.inputs.sync_brand == 'true'
+        if: github.event.inputs.sync_brand == 'true' || env.NEW_BUCKET == '1'
         run: node scripts/sync-brand.mjs
 
       - name: Smoke test
