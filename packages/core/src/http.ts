@@ -24,7 +24,7 @@ export function csp(opts: CspOptions = {}): string {
 }
 
 /** Adds the security headers every Kayak site sends. */
-export function securityHeaders(opts: CspOptions & { noindex?: boolean } = {}): MiddlewareHandler {
+export function securityHeaders(opts: CspOptions & { noindex?: boolean; permissions?: string } = {}): MiddlewareHandler {
   const policy = csp(opts);
   return async (c, next) => {
     await next();
@@ -36,7 +36,7 @@ export function securityHeaders(opts: CspOptions & { noindex?: boolean } = {}): 
     h.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
     h.set("X-Content-Type-Options", "nosniff");
     h.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    h.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+    h.set("Permissions-Policy", opts.permissions ?? "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
     h.set("Cross-Origin-Opener-Policy", "same-origin");
     h.set("X-Frame-Options", "DENY");
     if (opts.noindex) h.set("X-Robots-Tag", "noindex, nofollow");

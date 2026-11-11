@@ -1,0 +1,1331 @@
+{
+ "clusters": [
+  {
+   "id": "strategy-deals",
+   "name": "Strategy, Deal & Transactions",
+   "short": "Strategy & Deals",
+   "color": "#17807E",
+   "icon": "strategy",
+   "pattern": "confluence",
+   "line": "Where to grow, what to buy, and how to close well.",
+   "intro": "Growth decisions and deal decisions are the same decision seen at different speeds. We help boards, promoters and investors choose where to compete, test what they are buying, and carry a transaction through to a business that works.",
+   "services": [
+    [
+     "growth",
+     "Growth and market-entry strategy",
+     "Where to compete, how to enter and what it will take, built on market evidence rather than ambition."
+    ],
+    [
+     "transactions",
+     "M&A advisory, buy side and sell side",
+     "Target screening, approach, negotiation support and process management, alongside your bankers and counsel."
+    ],
+    [
+     "due-diligence",
+     "Commercial, financial and integrity due diligence",
+     "What the market, the numbers and the people behind a business really look like before you sign."
+    ],
+    [
+     "finance",
+     "Valuation support and deal structuring",
+     "Valuation analysis and structures that hold up with your board, your auditors and the authorities."
+    ],
+    [
+     "partnership",
+     "Post-deal integration and fundraising readiness",
+     "The first hundred days after closing, and the groundwork that makes a business ready for investors."
+    ]
+   ],
+   "questions": [
+    "Should we build, buy or partner to enter this market?",
+    "What are we really buying, and from whom?",
+    "Is the business ready for an investor's diligence?"
+   ]
+  },
+  {
+   "id": "tax-regulatory",
+   "name": "Tax & Regulatory",
+   "short": "Tax & Regulatory",
+   "color": "#9C630E",
+   "icon": "regulatory",
+   "pattern": "k-lattice",
+   "line": "Tax, compliance and reporting that keep pace with new rules.",
+   "intro": "Rules for Indian companies are changing faster and reaching higher, into the boardroom. We help you see what applies, put the controls in place and report with confidence, working alongside your auditors and counsel.",
+   "services": [
+    [
+     "tax",
+     "Direct tax, GST and transfer-pricing support",
+     "Planning, compliance reviews and documentation support across direct and indirect tax."
+    ],
+    [
+     "compliance",
+     "SEBI, RBI, FEMA and Companies Act compliance",
+     "Health checks, policies and remediation plans for listed, regulated and closely held companies."
+    ],
+    [
+     "governance",
+     "Data protection readiness under the DPDP Act",
+     "Data mapping, notices, consent and the governance the Digital Personal Data Protection Act, 2023 expects."
+    ],
+    [
+     "esg",
+     "ESG and BRSR reporting",
+     "Materiality, data collection and Business Responsibility and Sustainability Reporting that stands up to scrutiny."
+    ],
+    [
+     "report",
+     "Regulatory change monitoring and board briefings",
+     "A regular read of what has changed, what it means for you and what the board should decide."
+    ]
+   ],
+   "questions": [
+    "Which new rules apply to us, and by when?",
+    "Can we show the board how we know we comply?",
+    "Is our ESG data good enough to publish?"
+   ]
+  },
+  {
+   "id": "crisis-resilience",
+   "name": "Crisis & Resilience",
+   "short": "Crisis & Resilience",
+   "color": "#3E5563",
+   "icon": "risk",
+   "pattern": "chevron-wake",
+   "line": "Ex ante risk architecture, forensic adjudication and proprietary-rights stewardship across the disruption continuum.",
+   "intro": "Some risks build slowly; others arrive overnight. We help you see them early, investigate properly when they surface, and protect the brand and the people who depend on it.",
+   "services": [
+    [
+     "risk",
+     "Enterprise and third-party risk",
+     "Risk frameworks, vendor and partner due diligence, and monitoring that fits how you actually operate."
+    ],
+    [
+     "investigations",
+     "Malfeasance, defalcation and conduct forensics",
+     "Privileged, evidentiary-grade inquiries into defalcation, malfeasance and protected disclosures, under a forensically sound chain of custody."
+    ],
+    [
+     "brand-protection",
+     "Proprietary-mark sanctity and spurious-goods interdiction",
+     "Detection and interdiction of spurious, passing-off and parallel-import goods across digital and physical channels, through to enforcement."
+    ],
+    [
+     "intellectual-property",
+     "IP enforcement support with your counsel",
+     "Market surveys, test purchases and evidence that help your lawyers act."
+    ],
+    [
+     "governance",
+     "Expert Witness & Arbitration",
+     "Independent expert testimony, quantum and causation opinions, and forensic evidence before courts, arbitral tribunals and regulators."
+    ],
+    [
+     "navigation",
+     "Crisis management and business continuity",
+     "Playbooks, simulations and senior support on the day a crisis breaks."
+    ]
+   ],
+   "questions": [
+    "Can we trust the partners in our supply chain?",
+    "An allegation has been made. What do we do in the first 48 hours?",
+    "How much of what is sold under our name is genuine?"
+   ]
+  },
+  {
+   "id": "technology-ai",
+   "name": "Technology & AI",
+   "short": "Technology & AI",
+   "color": "#2D6A9F",
+   "icon": "technology",
+   "pattern": "paddle-rhythm",
+   "line": "Digital, data and AI that are useful, governed and secure.",
+   "intro": "Technology is now a board question: where to invest, what AI should and should not do, and how exposed the business is. We give clear answers and help you build what follows.",
+   "services": [
+    [
+     "data",
+     "Digital and data strategy",
+     "A technology and data roadmap tied to business outcomes, with costs and sequencing you can defend."
+    ],
+    [
+     "network",
+     "AI adoption, use cases and governance",
+     "Choosing AI use cases that pay back, and the policies and controls to run them responsibly."
+    ],
+    [
+     "analytics",
+     "Analytics, dashboards and data quality",
+     "Reporting that leaders trust, built on data that has been checked."
+    ],
+    [
+     "cybersecurity",
+     "Cyber-risk assessment",
+     "An independent view of your exposure, priorities for remediation and a plan the board can follow."
+    ],
+    [
+     "website",
+     "Technology due diligence for deals",
+     "Architecture, scalability, security and technical debt, assessed before the deal closes."
+    ],
+    [
+     "mobile",
+     "Kayak tools: SayUsNow, SeeCounter, NexaPair and DocuVow",
+     "Our own platforms for ethics and compliance, counterfeiting case intelligence, third-party risk and e-signatures, configured to your policies and workflows."
+    ]
+   ],
+   "questions": [
+    "Which AI use cases are worth funding this year?",
+    "How exposed are we to a cyber incident?",
+    "Can we trust the numbers on our dashboards?"
+   ]
+  },
+  {
+   "id": "managed-services",
+   "name": "Managed Services",
+   "short": "Managed Services",
+   "color": "#4B7A4E",
+   "icon": "briefcase",
+   "pattern": "wake-lines",
+   "line": "Ongoing compliance, finance and monitoring, run for you.",
+   "intro": "Some work does not end with a report. We run it for you on an agreed rhythm, with service levels, regular reporting and senior oversight, so your team can concentrate on the business.",
+   "services": [
+    [
+     "calendar",
+     "Outsourced compliance calendars and filings support",
+     "A tracked calendar of obligations, reminders and filings support, with a monthly status report."
+    ],
+    [
+     "finance",
+     "Virtual CFO and finance operations",
+     "Senior finance leadership and day-to-day finance operations for growing companies."
+    ],
+    [
+     "human-resources",
+     "HR and payroll compliance",
+     "Payroll support and labour-law compliance that keeps pace with change."
+    ],
+    [
+     "search",
+     "Always-on brand and marketplace monitoring",
+     "Continuous monitoring of marketplaces, social media and domains for misuse of your brand."
+    ],
+    [
+     "due-diligence",
+     "Third-party due diligence as a service",
+     "Standard checks on vendors, distributors and partners, delivered at the pace you onboard them."
+    ]
+   ],
+   "questions": [
+    "Who is tracking every filing we owe this quarter?",
+    "Do we need a full-time CFO yet?",
+    "Who checks a new vendor before we pay them?"
+   ]
+  },
+  {
+   "id": "international-desk",
+   "name": "International Desk",
+   "short": "International Desk",
+   "color": "#5E4B78",
+   "icon": "globe",
+   "pattern": "soundings",
+   "line": "Into India, out of India, and the deals that cross borders.",
+   "intro": "The International Desk is a single entry point for cross-border work in both directions: overseas companies coming to India, and Indian businesses expanding abroad.",
+   "services": [
+    [
+     "location",
+     "India entry for overseas companies",
+     "Market assessment, entry structure, partner checks and set-up support for companies coming to India."
+    ],
+    [
+     "target",
+     "Outbound expansion for Indian businesses",
+     "Market choice, entry plans and partner selection for Indian companies going overseas."
+    ],
+    [
+     "transactions",
+     "Cross-border deals and structuring",
+     "Support on inbound and outbound transactions, coordinated with advisers in each jurisdiction."
+    ],
+    [
+     "contract",
+     "FDI, ODI and FEMA support",
+     "Working within India's foreign and overseas investment rules, from approvals to reporting."
+    ],
+    [
+     "user",
+     "International due diligence and background checks",
+     "Checks on overseas counterparties, partners and executives, using sources in their own jurisdiction."
+    ]
+   ],
+   "questions": [
+    "Which entry route into India suits our business?",
+    "Who are we really partnering with abroad?",
+    "What approvals and filings does this cross-border deal need?"
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "id": "sayusnow",
+   "name": "SayUsNow",
+   "color": "#0E2F3C",
+   "pattern": "k-lattice",
+   "icon": "chat",
+   "logo": true,
+   "kind": "Ethics and compliance platform",
+   "tagline": "A powerful ethics and compliance tool.",
+   "line": "Cases, conflicts of interest, gifts, learning, diligence and culture, in one platform.",
+   "intro": "SayUsNow brings an organisation's ethics and compliance programme into one platform. Employees and third parties can raise concerns safely and confidentially, investigators can take each case to a documented close, and compliance teams can run declarations, registers, training and diligence from the same place, with one view for the board.",
+   "pillars": [
+    [
+     "cybersecurity",
+     "Safe",
+     "People choose how they speak up, named or anonymously, and can follow their report without revealing who they are."
+    ],
+    [
+     "governance",
+     "Confidential",
+     "Access is limited to the people who need it, and every action on a case is logged."
+    ],
+    [
+     "growth",
+     "Positive change",
+     "Reports, declarations and surveys add up to a picture leaders can act on."
+    ]
+   ],
+   "modules": [
+    [
+     "investigations",
+     "Case",
+     "Case management from intake to closure: triage, assignment, evidence, findings and actions, with a full audit trail."
+    ],
+    [
+     "partnership",
+     "Align (Conflict of Interest)",
+     "Conflict-of-interest declarations, reviews and approvals, kept current for every employee and director."
+    ],
+    [
+     "finance",
+     "Gifts",
+     "A register for gifts, hospitality and donations, with thresholds and approval workflows built in."
+    ],
+    [
+     "presentation",
+     "Learn",
+     "Ethics and compliance training and policy attestations, assigned, tracked and refreshed by team."
+    ],
+    [
+     "due-diligence",
+     "Diligence",
+     "Integrity checks on third parties, linked to the people, declarations and cases they touch."
+    ],
+    [
+     "analytics",
+     "Pulse",
+     "Short culture and ethics surveys that show where trust is strong and where it is slipping."
+    ]
+   ],
+   "for": [
+    "Boards and audit committees",
+    "Chief compliance and ethics officers",
+    "Internal audit and investigations teams",
+    "HR and legal"
+   ],
+   "clusters": [
+    "technology-ai",
+    "tax-regulatory",
+    "crisis-resilience"
+   ],
+   "how": [
+    [
+     "Set up",
+     "We configure SayUsNow to your policies, languages, entities and reporting lines."
+    ],
+    [
+     "Run",
+     "Your team runs the programme day to day, with our support as a managed service if you want it."
+    ],
+    [
+     "Investigate",
+     "When a case needs independent eyes, our Crisis & Resilience team can take it on, inside the same system."
+    ],
+    [
+     "Report",
+     "Dashboards and board-ready reports show trends, open cases, declarations and training coverage."
+    ]
+   ]
+  },
+  {
+   "id": "seecounter",
+   "name": "SeeCounter",
+   "color": "#0B5654",
+   "pattern": "chevron-wake",
+   "icon": "brand-protection",
+   "kind": "Counterfeiting case repository",
+   "tagline": "Every counterfeiting case, tracked in one place.",
+   "line": "A searchable repository of past and ongoing counterfeiting cases, with recent actions delivered to your inbox.",
+   "intro": "SeeCounter starts as one searchable record of counterfeiting enforcement: court cases, raids, seizures, takedowns and regulatory actions, both past and ongoing. Subscribers choose what matters to them, by brand, product category, jurisdiction, court or authority, type of action and date, and receive the latest actions in their inbox. Monitoring and enforcement tools will follow, built on the same records.",
+   "modules": [
+    [
+     "search",
+     "Case repository",
+     "Past and ongoing counterfeiting cases in one searchable place: court orders, raids, seizures, takedowns and regulatory actions."
+    ],
+    [
+     "timeline",
+     "Live case tracker",
+     "Ongoing matters followed as they move, with each new hearing, order or action added to the case record."
+    ],
+    [
+     "target",
+     "Filters",
+     "Find cases by brand, product category, jurisdiction, court or authority, type of action, party and date."
+    ],
+    [
+     "mail",
+     "Inbox alerts",
+     "Subscribe to the filters you care about and receive recent actions by email, as they happen or as a daily or weekly digest."
+    ],
+    [
+     "report",
+     "Case profiles",
+     "Each case summarised: parties, products, places, outcome and source documents."
+    ],
+    [
+     "analytics",
+     "Trends",
+     "Where counterfeiting actions are rising, by product category, region and channel."
+    ],
+    [
+     "risk",
+     "Early warning",
+     "[Planned] Signals of new counterfeits and unauthorised sellers, linked to the cases they resemble."
+    ],
+    [
+     "technology",
+     "Online monitoring",
+     "[Planned] AI scans of marketplaces and social media, with takedowns tracked in the same records."
+    ]
+   ],
+   "for": [
+    "Brand owners and legal heads",
+    "IP counsel and law firms",
+    "Investigators and enforcement teams",
+    "Industry associations"
+   ],
+   "clusters": [
+    "technology-ai",
+    "crisis-resilience",
+    "managed-services"
+   ],
+   "how": [
+    [
+     "Collect",
+     "Cases and actions are gathered from courts, authorities and public sources, and checked before they are added."
+    ],
+    [
+     "Organise",
+     "Each case is profiled and tagged, so it can be found by brand, product, place and type of action."
+    ],
+    [
+     "Subscribe",
+     "You pick your filters and how often you want updates."
+    ],
+    [
+     "Act",
+     "Our Crisis & Resilience team can help you act on what the cases show."
+    ]
+   ]
+  },
+  {
+   "id": "nexapair",
+   "name": "NexaPair",
+   "site": "www.nexapair.ae",
+   "color": "#17807E",
+   "pattern": "paddle-rhythm",
+   "icon": "network",
+   "kind": "Third-party risk management platform",
+   "tagline": "A powerful third-party risk management tool.",
+   "line": "A comprehensive vendor and third-party lifecycle solution that suggests the relationships behind each vendor from day one, well beyond basic due diligence.",
+   "intro": "NexaPair manages every stage of a third-party relationship in one place, from onboarding to exit. It goes beyond basic vendor due diligence: from the first record it suggests the relationships behind a vendor, such as shared owners, directors, addresses, bank details and links to your own employees, so risk is seen in context rather than one questionnaire at a time.",
+   "modules": [
+    [
+     "user",
+     "Onboarding",
+     "Digital intake, documents and approvals, so vendors are checked before they are paid."
+    ],
+    [
+     "network",
+     "Relationship intelligence",
+     "Links between vendors, owners, directors and your own employees, suggested as soon as a vendor is added."
+    ],
+    [
+     "risk",
+     "Risk tiering",
+     "Each third party rated by what it does for you, where and with what access, so effort matches risk."
+    ],
+    [
+     "due-diligence",
+     "Due diligence",
+     "Checks that scale with the tier, from basic verification to enhanced integrity reviews."
+    ],
+    [
+     "analytics",
+     "Continuous monitoring",
+     "Alerts on adverse news, litigation, regulatory action, sanctions and ownership changes."
+    ],
+    [
+     "contract",
+     "Contracts and performance",
+     "Obligations, renewals and service performance tracked against each relationship."
+    ],
+    [
+     "report",
+     "Reporting",
+     "Dashboards for procurement, compliance and the board, by tier, business unit and region."
+    ],
+    [
+     "check",
+     "Off-boarding",
+     "Clean exits, with access removed, obligations closed and records kept."
+    ]
+   ],
+   "for": [
+    "Procurement and supply-chain heads",
+    "Chief risk and compliance officers",
+    "Finance and accounts payable",
+    "Internal audit"
+   ],
+   "clusters": [
+    "technology-ai",
+    "managed-services",
+    "crisis-resilience"
+   ],
+   "how": [
+    [
+     "Onboard",
+     "Vendors are collected, verified and approved, with relationships suggested from the first record."
+    ],
+    [
+     "Assess",
+     "Each vendor is tiered and gets the checks that tier needs."
+    ],
+    [
+     "Monitor",
+     "NexaPair watches for change and alerts the owner of each relationship."
+    ],
+    [
+     "Renew or exit",
+     "Decisions on renewal or exit are taken on evidence, and records are kept."
+    ]
+   ],
+   "soon": "nexapair.in"
+  },
+  {
+   "id": "docuvow",
+   "name": "DocuVow",
+   "color": "#2B2680",
+   "pattern": "k-lattice",
+   "icon": "contract",
+   "kind": "E-signature and signing platform",
+   "tagline": "A powerful e-signature and signing tool.",
+   "line": "Prepare, send, sign and verify documents in one place, with every signed copy sealed and provable.",
+   "intro": "DocuVow takes a document from draft to signed and safely kept. Prepare it from a template, route it to signers in the right order, collect e-signatures on any device, and seal each signed copy with a tamper-evident proof that anyone can check later. Every view, signature and change is recorded, so you can show exactly what was signed, by whom and when.",
+   "modules": [
+    [
+     "contract",
+     "Prepare",
+     "Upload a document or start from a template, place signature, date and initial fields, and set the signing order."
+    ],
+    [
+     "mail",
+     "Send",
+     "Route documents to signers by email or link, with reminders and expiry dates."
+    ],
+    [
+     "check",
+     "Sign",
+     "Signers sign on any device, with identity checks such as one-time codes by email or SMS."
+    ],
+    [
+     "governance",
+     "Seal and verify",
+     "Each signed copy is sealed with a tamper-evident proof recorded on blockchain, so anyone can confirm it has not been altered."
+    ],
+    [
+     "timeline",
+     "Audit trail",
+     "A complete record of who viewed and signed, and when, attached to every document."
+    ],
+    [
+     "data",
+     "Vault",
+     "Signed documents stored securely, searchable and kept for as long as your policy requires."
+    ]
+   ],
+   "for": [
+    "Legal and company secretarial teams",
+    "HR teams",
+    "Sales, procurement and contract managers",
+    "Founders and finance teams"
+   ],
+   "clusters": [
+    "technology-ai",
+    "tax-regulatory",
+    "managed-services"
+   ],
+   "how": [
+    [
+     "Set up",
+     "We configure DocuVow with your templates, signers, approval routes and branding."
+    ],
+    [
+     "Send",
+     "Documents go out for signature in the right order, with reminders."
+    ],
+    [
+     "Sign",
+     "Signers sign on any device after a quick identity check."
+    ],
+    [
+     "Prove",
+     "Each signed copy carries its proof and audit trail, ready for any dispute or audit."
+    ]
+   ]
+  }
+ ],
+ "photos": {},
+ "groups": [
+  {
+   "id": "bfsi",
+   "name": "Banking and financial services",
+   "questions": [
+    "Outsourcing and third-party risk under regulator scrutiny",
+    "Fraud, mis-selling and conduct investigations",
+    "Keeping pace with RBI, SEBI and IRDAI change"
+   ],
+   "clusters": [
+    "crisis-resilience",
+    "tax-regulatory",
+    "technology-ai"
+   ],
+   "members": [
+    {
+     "slug": "banking",
+     "name": "Banking"
+    },
+    {
+     "slug": "financial-services",
+     "name": "Financial services"
+    },
+    {
+     "slug": "insurance",
+     "name": "Insurance"
+    }
+   ],
+   "icon": "banking"
+  },
+  {
+   "id": "pharma",
+   "name": "Pharma and healthcare",
+   "questions": [
+    "Counterfeit medicines and supply-chain integrity",
+    "Distributor and partner due diligence",
+    "Protecting patient data under the DPDP Act"
+   ],
+   "clusters": [
+    "crisis-resilience",
+    "tax-regulatory",
+    "strategy-deals"
+   ],
+   "members": [
+    {
+     "slug": "ayush",
+     "name": "AYUSH"
+    },
+    {
+     "slug": "biotechnology",
+     "name": "Biotechnology"
+    },
+    {
+     "slug": "healthcare",
+     "name": "Healthcare"
+    },
+    {
+     "slug": "medical-devices",
+     "name": "Medical devices"
+    },
+    {
+     "slug": "pharmaceuticals",
+     "name": "Pharmaceuticals"
+    }
+   ],
+   "icon": "pharmaceuticals"
+  },
+  {
+   "id": "auto",
+   "name": "Automotive and mobility",
+   "questions": [
+    "Supplier risk across a deep supply chain",
+    "Strategy for the move to electric",
+    "Spurious spare parts in the aftermarket"
+   ],
+   "clusters": [
+    "strategy-deals",
+    "crisis-resilience",
+    "managed-services"
+   ],
+   "members": [
+    {
+     "slug": "auto-components",
+     "name": "Auto components"
+    },
+    {
+     "slug": "automobiles",
+     "name": "Automobiles"
+    },
+    {
+     "slug": "aviation",
+     "name": "Aviation"
+    },
+    {
+     "slug": "electric-vehicle",
+     "name": "Electric vehicles"
+    },
+    {
+     "slug": "railways",
+     "name": "Railways"
+    },
+    {
+     "slug": "roads",
+     "name": "Roads"
+    }
+   ],
+   "icon": "automobiles"
+  },
+  {
+   "id": "tech",
+   "name": "IT, BPM and digital",
+   "questions": [
+    "AI governance that clients and regulators accept",
+    "Data protection across borders",
+    "Brand misuse on marketplaces and app stores"
+   ],
+   "clusters": [
+    "technology-ai",
+    "tax-regulatory",
+    "international-desk"
+   ],
+   "members": [
+    {
+     "slug": "e-commerce",
+     "name": "E-commerce"
+    },
+    {
+     "slug": "esdm",
+     "name": "Electronics system design and manufacturing"
+    },
+    {
+     "slug": "it-bpm",
+     "name": "IT and BPM"
+    },
+    {
+     "slug": "science-technology",
+     "name": "Science and technology"
+    },
+    {
+     "slug": "services",
+     "name": "Services"
+    }
+   ],
+   "icon": "it-bpm"
+  },
+  {
+   "id": "retail",
+   "name": "Retail and consumer",
+   "questions": [
+    "Counterfeits and grey-market selling",
+    "Distributor networks you can rely on",
+    "Fraud and impersonation in festive peaks"
+   ],
+   "clusters": [
+    "crisis-resilience",
+    "managed-services",
+    "strategy-deals"
+   ],
+   "members": [
+    {
+     "slug": "consumer-durables",
+     "name": "Consumer durables"
+    },
+    {
+     "slug": "fmcg",
+     "name": "FMCG"
+    },
+    {
+     "slug": "gems-jewellery",
+     "name": "Gems and jewellery"
+    },
+    {
+     "slug": "retail",
+     "name": "Retail"
+    },
+    {
+     "slug": "textiles",
+     "name": "Textiles"
+    },
+    {
+     "slug": "tourism-hospitality",
+     "name": "Tourism and hospitality"
+    }
+   ],
+   "icon": "retail"
+  },
+  {
+   "id": "infra",
+   "name": "Infrastructure and real estate",
+   "questions": [
+    "Contractor and partner due diligence",
+    "Project-level fraud and leakage",
+    "Investor readiness for platforms and REITs"
+   ],
+   "clusters": [
+    "strategy-deals",
+    "crisis-resilience",
+    "tax-regulatory"
+   ],
+   "members": [
+    {
+     "slug": "cement",
+     "name": "Cement"
+    },
+    {
+     "slug": "infrastructure",
+     "name": "Infrastructure"
+    },
+    {
+     "slug": "ports",
+     "name": "Ports"
+    },
+    {
+     "slug": "real-estate",
+     "name": "Real estate"
+    }
+   ],
+   "icon": "infrastructure"
+  },
+  {
+   "id": "energy",
+   "name": "Energy and renewables",
+   "questions": [
+    "Partner and land-aggregator diligence",
+    "Structuring for project finance and investors",
+    "ESG and transition disclosures"
+   ],
+   "clusters": [
+    "strategy-deals",
+    "tax-regulatory",
+    "international-desk"
+   ],
+   "members": [
+    {
+     "slug": "oil-gas",
+     "name": "Oil and gas"
+    },
+    {
+     "slug": "power",
+     "name": "Power"
+    },
+    {
+     "slug": "renewable-energy",
+     "name": "Renewable energy"
+    }
+   ],
+   "icon": "renewable-energy"
+  },
+  {
+   "id": "metals",
+   "name": "Metals and manufacturing",
+   "questions": [
+    "Plant, vendor and procurement integrity",
+    "Capacity, acquisition and export strategy",
+    "Compliance for MSMEs that are scaling"
+   ],
+   "clusters": [
+    "strategy-deals",
+    "crisis-resilience",
+    "managed-services"
+   ],
+   "members": [
+    {
+     "slug": "chemicals",
+     "name": "Chemicals"
+    },
+    {
+     "slug": "defence-manufacturing",
+     "name": "Defence manufacturing"
+    },
+    {
+     "slug": "engineering-capital-goods",
+     "name": "Engineering and capital goods"
+    },
+    {
+     "slug": "manufacturing",
+     "name": "Manufacturing"
+    },
+    {
+     "slug": "metals-mining",
+     "name": "Metals and mining"
+    },
+    {
+     "slug": "msme",
+     "name": "MSME"
+    },
+    {
+     "slug": "paper-packaging",
+     "name": "Paper and packaging"
+    },
+    {
+     "slug": "steel",
+     "name": "Steel"
+    }
+   ],
+   "icon": "steel"
+  },
+  {
+   "id": "telecom",
+   "name": "Telecom, media and education",
+   "questions": [
+    "Piracy and content misuse",
+    "Data protection for subscribers and students",
+    "Growth and partnership strategy"
+   ],
+   "clusters": [
+    "crisis-resilience",
+    "technology-ai",
+    "strategy-deals"
+   ],
+   "members": [
+    {
+     "slug": "education",
+     "name": "Education and training"
+    },
+    {
+     "slug": "media-entertainment",
+     "name": "Media and entertainment"
+    },
+    {
+     "slug": "telecommunications",
+     "name": "Telecommunications"
+    }
+   ],
+   "icon": "telecommunications"
+  },
+  {
+   "id": "agri",
+   "name": "Agriculture and food",
+   "questions": [
+    "Food-safety and supply-chain integrity",
+    "Adulteration and look-alike brands",
+    "Investment and processing-capacity decisions"
+   ],
+   "clusters": [
+    "crisis-resilience",
+    "strategy-deals",
+    "managed-services"
+   ],
+   "members": [
+    {
+     "slug": "agriculture",
+     "name": "Agriculture and allied industries"
+    },
+    {
+     "slug": "food-processing",
+     "name": "Food processing"
+    }
+   ],
+   "icon": "agriculture"
+  }
+ ],
+ "articles": [
+  {
+   "id": "growth-and-risk",
+   "section": "Cover Story",
+   "cluster": null,
+   "pattern": "confluence",
+   "mins": 6,
+   "title": "Growth and risk are one decision",
+   "dek": "Boards still tend to discuss where to grow in one meeting and what could go wrong in another. The companies that move well through rough water treat them as one conversation.",
+   "body": [
+    "Most boards we speak to have two agendas that rarely meet. One is about growth: new markets, acquisitions, products, capital. The other is about protection: compliance, fraud, data, reputation. They are often owned by different people, reviewed by different committees and discussed in different language.",
+    "That separation made sense when risks moved slowly. It makes less sense now. A market-entry plan depends on whether the distributors are reliable. An acquisition is only as good as the integrity of the people behind it. A new digital channel brings new data obligations and new ways for a brand to be copied. In each case the growth decision and the risk decision are the same decision, seen from different sides.",
+    "## Three habits that help",
+    "The first is to ask the risk question at the start, not at the end. When a growth idea arrives at the board with its diligence already planned, and the questions about partners, data and regulation already scoped, the discussion is faster and the decision is better.",
+    "The second is to put evidence in front of opinion. Many board debates are really disagreements about facts nobody has checked. A short, sourced read of the market, the counterparty or the regulatory position usually settles more than another round of argument.",
+    "The third is to plan the follow-through. Decisions fail most often in the months after they are taken, when attention moves elsewhere. A named owner, a small number of measures and a date to look again are cheap insurance.",
+    "## Why we built Kayak this way",
+    "Our six clusters are designed to sit at one table. Strategy and deals, tax and regulation, crisis and resilience, technology, managed services and cross-border work are different skills, but our clients' questions rarely respect those boundaries. One lead partner draws on whichever of them a decision needs.",
+    "Confluence takes its name from the same idea: the point where two streams meet and carry on as one. Each month we will look at one decision where growth and risk meet, and at what changed across each of our six areas."
+   ]
+  },
+  {
+   "id": "diligence-is-the-decision",
+   "section": "Deal Water",
+   "cluster": "strategy-deals",
+   "mins": 4,
+   "title": "Diligence is the decision now",
+   "dek": "More capital, more counterparties and less time mean diligence can no longer be a formality at the end of a deal.",
+   "body": [
+    "In a fast market, diligence is often squeezed into the last weeks before signing, after the price is agreed and enthusiasm is high. That is the point at which bad news is least welcome and least likely to change the outcome.",
+    "Buyers who do well tend to move diligence forward. A light integrity and commercial read before the term sheet tests the story the seller is telling and shows which questions deserve the most time. Detailed work then follows on the issues that could change the price or the structure.",
+    "## What to check early",
+    "Who really owns and controls the business, and who they are connected to. Whether the revenue depends on a small number of customers, people or licences. Whether there are disputes, regulatory actions or allegations that the data room does not mention. And whether the management team has done what it says it has done before.",
+    "None of these needs a large team. Each can change whether you proceed."
+   ]
+  },
+  {
+   "id": "data-protection-board",
+   "section": "Regulatory Radar",
+   "cluster": "tax-regulatory",
+   "mins": 4,
+   "title": "Data protection is now a board question",
+   "dek": "The Digital Personal Data Protection Act, 2023 moves personal data from the IT department's list to the board's.",
+   "body": [
+    "The Digital Personal Data Protection Act, 2023 sets out how organisations in India may collect and use personal data, and what they owe the people that data belongs to. Its Rules set out how it works in practice and phase obligations in over time.",
+    "For most companies the hard part is not the law itself but knowing what data they hold, where it sits, why they collect it and who else receives it. Without that map, notices, consent and security measures are guesswork.",
+    "## Where to start",
+    "Map the personal data that matters most: customers, employees, patients, students or users. Check the purpose for each use and whether it is clearly explained. Review the vendors and partners who receive the data. Agree who in the business owns the programme and how the board will hear about progress.",
+    "We work alongside your legal counsel on these programmes. They advise on the law; we help you build the map, the processes and the evidence that you follow them."
+   ]
+  },
+  {
+   "id": "counterfeits-marketplace-speed",
+   "section": "Storm Watch",
+   "cluster": "crisis-resilience",
+   "mins": 3,
+   "title": "Counterfeits move at marketplace speed",
+   "dek": "Fakes, look-alike listings and impersonation now appear and spread online faster than most brand teams can respond.",
+   "body": [
+    "A counterfeit that once took months to reach shelves can now be listed across marketplaces and social channels in days, often with the brand's own photographs. Festive seasons and product launches are the busiest periods for this kind of misuse.",
+    "Brand protection that works at this speed has three parts. Monitoring that looks where your customers actually shop. A clear way to sort the serious cases from the noise. And a working relationship with platforms and counsel so that takedowns and enforcement follow quickly.",
+    "Evidence matters at every step. Test purchases, screenshots and seller details collected properly are what allow your lawyers and the platforms to act."
+   ]
+  },
+  {
+   "id": "ai-five-questions",
+   "section": "Signal",
+   "cluster": "technology-ai",
+   "mins": 3,
+   "title": "Five questions before you fund an AI project",
+   "dek": "A short checklist for boards and leadership teams deciding which AI ideas deserve money this year.",
+   "body": [
+    "What decision or task will this change, and how will we know it has improved? Projects that cannot name a measure tend to drift.",
+    "What data does it need, and do we have the right to use it that way? Data quality and permissions sink more AI projects than models do.",
+    "What happens when it is wrong? Every system makes mistakes; the question is who notices and what it costs.",
+    "Who owns it after launch? A use case without an owner in the business rarely survives its first year.",
+    "What would we stop doing if it works? The value of AI usually shows up in work that is no longer needed, not only in new work that becomes possible."
+   ]
+  },
+  {
+   "id": "entering-india",
+   "section": "Across the Water",
+   "cluster": "international-desk",
+   "mins": 4,
+   "title": "Entering India: choosing the right door",
+   "dek": "Overseas companies have several routes into India. The right one depends on the market, the partners and how much control you need.",
+   "body": [
+    "Companies coming to India usually choose between exporting through distributors, a liaison or branch presence, a wholly owned subsidiary, a joint venture or an acquisition. Each brings different costs, approvals, tax treatment and levels of control.",
+    "The decision is rarely about structure alone. It depends on how the market buys, which partners are available and reliable, and how quickly you need to be on the ground. A clear read of all three usually narrows the options quickly.",
+    "Partner checks deserve particular care. In a new market it is hard to know who you are dealing with, and the cost of a poor choice can outlast the partnership itself."
+   ]
+  },
+  {
+   "id": "vendor-risk-five-questions",
+   "section": "Soundings",
+   "cluster": "managed-services",
+   "mins": 3,
+   "title": "Vendor risk: five questions",
+   "dek": "A quick test of whether your third-party checks would stand up if something went wrong.",
+   "body": [
+    "Do you know who owns your most important vendors, distributors and agents, and who they are connected to?",
+    "Are new third parties checked before they are paid, or afterwards?",
+    "Do checks depend on how risky the relationship is, or is every vendor treated the same way?",
+    "Is anyone watching for changes once a vendor is onboarded: new owners, disputes, regulatory action, adverse news?",
+    "If a regulator or a board member asked tomorrow, could you show the evidence of what was checked and when?"
+   ]
+  },
+  {
+   "id": "why-confluence",
+   "section": "The Heading",
+   "cluster": null,
+   "mins": 2,
+   "title": "Why Confluence",
+   "dek": "A note on the name, and on what to expect from each issue.",
+   "body": [
+    "A confluence is the place where two rivers meet and carry on as one. Our identifier draws the same idea: two blades, the client and Kayak, converging on one stem.",
+    "Each issue opens with a cover story on a decision where growth and risk meet. It then reads across our six areas: Deal Water for transactions, Regulatory Radar for rules, Storm Watch for risk and investigations, Signal for technology and AI, and Across the Water for cross-border work. By the Numbers collects a page of sourced figures; In Conversation talks to a leader; Soundings offers a short checklist; Last Stroke closes with one idea to take away.",
+    "Confluence is free to clients and subscribers and arrives on the first Tuesday of each month."
+   ]
+  }
+ ],
+ "sections": [
+  [
+   "The Heading",
+   "Editor's note"
+  ],
+  [
+   "Cover Story",
+   "One decision, in depth"
+  ],
+  [
+   "Deal Water",
+   "Strategy and transactions"
+  ],
+  [
+   "Regulatory Radar",
+   "Tax and regulation"
+  ],
+  [
+   "Storm Watch",
+   "Risk and investigations"
+  ],
+  [
+   "Signal",
+   "Technology and AI"
+  ],
+  [
+   "Across the Water",
+   "Cross-border"
+  ],
+  [
+   "By the Numbers",
+   "Sourced figures"
+  ],
+  [
+   "In Conversation",
+   "A leader interview"
+  ],
+  [
+   "Soundings",
+   "A short checklist"
+  ],
+  [
+   "Last Stroke",
+   "One idea to keep"
+  ]
+ ],
+ "context": [
+  [
+   "Regulation is tightening",
+   "Data protection, disclosure, related-party and ESG reporting rules now reach the boardroom."
+  ],
+  [
+   "Deals are harder to judge",
+   "More capital, more counterparties and less time make diligence the decision, not a formality."
+  ],
+  [
+   "Risk has gone digital",
+   "Counterfeits, impersonation and fraud now spread online at the speed of a marketplace."
+  ],
+  [
+   "Boards are answerable",
+   "Directors, promoters and investors are expected to know, and to show how they know."
+  ]
+ ],
+ "why": [
+  [
+   "strategy",
+   "Strategy and risk in one room",
+   "Growth and protection decided together, not in separate meetings."
+  ],
+  [
+   "user",
+   "Senior people, every day",
+   "A small, experienced team that stays with you throughout."
+  ],
+  [
+   "globe",
+   "India depth, global reach",
+   "Sector knowledge at home and an International Desk for cross-border work."
+  ],
+  [
+   "target",
+   "Answers you can act on",
+   "Clear recommendations, and help to carry them through."
+  ]
+ ],
+ "models": [
+  [
+   "target",
+   "Focused project",
+   "A defined question, scope, team and fee. Best for strategy, diligence and reviews."
+  ],
+  [
+   "chat",
+   "Advisory retainer",
+   "A standing adviser for the board and leadership, on call when questions arise."
+  ],
+  [
+   "calendar",
+   "Managed service",
+   "An ongoing function we run for you, with agreed service levels and reporting."
+  ],
+  [
+   "risk",
+   "Rapid response",
+   "For a crisis, an allegation or a deal deadline: a senior team mobilised at short notice."
+  ]
+ ],
+ "standards": [
+  [
+   "contract",
+   "Confidential by default",
+   "A non-disclosure agreement before detailed talks, and need-to-know teams."
+  ],
+  [
+   "check",
+   "Conflicts checked first",
+   "Every new engagement is screened before we accept it."
+  ],
+  [
+   "governance",
+   "Data handled with care",
+   "Personal data processed in line with the DPDP Act, 2023."
+  ],
+  [
+   "report",
+   "Evidence you can rely on",
+   "Documented sources and a clear chain of custody."
+  ],
+  [
+   "compliance",
+   "Lawful, ethical methods",
+   "We decline work that would breach the law or our values."
+  ],
+  [
+   "partnership",
+   "Alongside your advisers",
+   "We work with your lawyers and auditors, never in place of them."
+  ]
+ ],
+ "strokes": [
+  [
+   "Diagnose",
+   "Read the water",
+   "The facts, the risks, the people and what lies beneath the surface."
+  ],
+  [
+   "Decide",
+   "Set the heading",
+   "Clear options, a recommendation and a plan you can defend."
+  ],
+  [
+   "Deliver",
+   "Paddle together",
+   "We work alongside your team to carry the plan through."
+  ],
+  [
+   "Sustain",
+   "Hold the course",
+   "Measure, adjust and hand over with the capability in place."
+  ]
+ ],
+ "values": [
+  [
+   "Value one",
+   "Balance",
+   "A steady core that keeps every engagement upright, whatever the conditions."
+  ],
+  [
+   "Value two",
+   "Clarity",
+   "Reading the water as it really is: the facts, the risks and what lies beneath the surface."
+  ],
+  [
+   "Value three",
+   "Direction",
+   "A clear heading, and the conviction to act on it together with the client."
+  ]
+ ],
+ "promises": [
+  [
+   "Independent by design",
+   "Our advice serves your decision and nothing else."
+  ],
+  [
+   "Senior-led, start to finish",
+   "The people who scope the work are the people who do it."
+  ],
+  [
+   "Evidence before opinion",
+   "Every finding is sourced, tested and shown."
+  ],
+  [
+   "Plain English, clear choices",
+   "Options, a recommendation and the reasons, on one page."
+  ],
+  [
+   "Built to be carried out",
+   "We stay to help your team put the answer to work."
+  ]
+ ],
+ "careers": {
+  "why": [
+   [
+    "presentation",
+    "Consequential work",
+    "Board-level questions on strategy, deals, regulation and risk, from your first week."
+   ],
+   [
+    "network",
+    "Six clusters, one team",
+    "Work across disciplines instead of inside one service line."
+   ],
+   [
+    "user",
+    "Close to clients",
+    "Small, senior teams mean you see the whole engagement, start to finish."
+   ],
+   [
+    "growth",
+    "A firm to shape",
+    "Founding colleagues help decide how Kayak works, hires and grows."
+   ]
+  ],
+  "steps": [
+   [
+    "A short note",
+    "Tell us about your experience and where you would fit."
+   ],
+   [
+    "A conversation",
+    "An informal call with a partner from the relevant cluster."
+   ],
+   [
+    "A working session",
+    "A short case drawn from the kind of work we do."
+   ],
+   [
+    "An offer",
+    "A clear offer, and a plan for your first ninety days."
+   ]
+  ]
+ },
+ "next": [
+  [
+   "A confidential conversation",
+   "You tell us the question; we listen and ask what matters."
+  ],
+  [
+   "A short scoping note",
+   "The question, approach, team and timeline on two pages."
+  ],
+  [
+   "A clear proposal",
+   "Scope, deliverables and a fee agreed before work begins."
+  ],
+  [
+   "We start paddling",
+   "Kick-off with your team and an agreed date for the first read-out."
+  ]
+ ]
+}

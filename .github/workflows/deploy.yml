@@ -1,0 +1,182 @@
+# One-click publish to Cloudflare for www.kayaksa.com, learn.kayaksa.com and internal.kayaksa.com.
+# Needs repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID. AI, email and other keys
+# are optional and copied to the Workers only when present. Keys are never printed.
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: "Which sites to publish (comma-separated: www, learn, internal, or all)"
+        default: "www"
+        required: true
+      replace_dns:
+        description: "Replace existing A/AAAA/CNAME records on the site hostnames (never touches MX or TXT email records)"
+        type: boolean
+        default: false
+      sync_brand:
+        description: "Upload the brand library to R2 (internal portal)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths: ["apps/**", "packages/**", "scripts/**", ".github/workflows/deploy.yml"]
+
+concurrency: { group: deploy, cancel-in-progress: false }
+
+permissions: { contents: read }
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  ZONE_NAME: kayaksa.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Build shared assets and check types
+        run: |
+          python3 packages/learnkit/content/build.py
+          node scripts/build-assets.mjs
+          npm run typecheck
+
+      - name: Choose sites
+        id: apps
+        run: |
+          A="${{ github.event.inputs.apps }}"
+          # A push to main republishes the sites listed in the DEPLOY_APPS repository variable (default: www).
+          if [ -z "$A" ]; then A="${{ vars.DEPLOY_APPS || 'www' }}"; fi
+          if [ "$A" = "all" ]; then A="www,learn,internal"; fi
+          echo "list=$A" >> "$GITHUB_OUTPUT"
+          echo "Publishing: $A" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check Cloudflare access
+        id: cf
+        run: |
+          set -e
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository secrets."; exit 1; fi
+          V=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify | jq -r '.result.status // "invalid"')
+          [ "$V" = "active" ] || V=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/verify" | jq -r '.result.status // "invalid"')
+          echo "Token status: $V"
+          [ "$V" = "active" ] || { echo "::error::The Cloudflare API token is not active."; exit 1; }
+          ZONE=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME" | jq -r '.result[0].id // empty')
+          [ -n "$ZONE" ] || { echo "::error::The token cannot see the $ZONE_NAME zone. Give it Zone: Read, DNS: Edit and Workers Routes: Edit for kayaksa.com."; exit 1; }
+          echo "zone=$ZONE" >> "$GITHUB_OUTPUT"
+          echo "Zone $ZONE_NAME found." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Databases
+        run: |
+          set -e
+          ensure() { # name app binding placeholder
+            ID=$(npx wrangler d1 list --json | jq -r --arg n "$1" '.[] | select(.name==$n) | .uuid')
+            if [ -z "$ID" ]; then npx wrangler d1 create "$1" --location apac >/dev/null; ID=$(npx wrangler d1 list --json | jq -r --arg n "$1" '.[] | select(.name==$n) | .uuid'); echo "Created database $1" >> "$GITHUB_STEP_SUMMARY"; fi
+            echo "$ID"
+          }
+          WWW=$(ensure kayaksa-www); LEARN=$(ensure kayaksa-learn); INTERNAL=$(ensure kayaksa-internal)
+          sed -i "s/00000000-0000-0000-0000-000000000002/$WWW/" apps/www/wrangler.jsonc apps/internal/wrangler.jsonc
+          sed -i "s/00000000-0000-0000-0000-000000000001/$LEARN/" apps/learn/wrangler.jsonc apps/internal/wrangler.jsonc
+          sed -i "s/00000000-0000-0000-0000-000000000000/$INTERNAL/" apps/internal/wrangler.jsonc
+          sed -i "s/00000000-0000-0000-0000-000000000000/$LEARN/" apps/learn/wrangler.jsonc
+          for a in www learn internal; do
+            case ",${{ steps.apps.outputs.list }}," in *",$a,"*) npx wrangler d1 migrations apply "kayaksa-$a" --remote -c "apps/$a/wrangler.jsonc";; esac
+          done
+
+      - name: Check the site addresses in DNS
+        env:
+          ZONE: ${{ steps.cf.outputs.zone }}
+          REPLACE: ${{ github.event.inputs.replace_dns }}
+        run: |
+          set -e
+          hosts=""
+          case ",${{ steps.apps.outputs.list }}," in *",www,"*) hosts="$hosts www.kayaksa.com kayaksa.com";; esac
+          case ",${{ steps.apps.outputs.list }}," in *",learn,"*) hosts="$hosts learn.kayaksa.com";; esac
+          case ",${{ steps.apps.outputs.list }}," in *",internal,"*) hosts="$hosts internal.kayaksa.com";; esac
+          blocked=0
+          for h in $hosts; do
+            R=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?name=$h&per_page=100")
+            C=$(echo "$R" | jq -c '[.result[] | select((.type=="A" or .type=="AAAA" or .type=="CNAME") and ((.meta.read_only // false) | not))]')
+            n=$(echo "$C" | jq 'length')
+            if [ "$n" = "0" ]; then echo "- $h: free" >> "$GITHUB_STEP_SUMMARY"; continue; fi
+            echo "- $h has existing records:" >> "$GITHUB_STEP_SUMMARY"
+            echo "$C" | jq -r '.[] | "  - \(.type) \(.content) (proxied: \(.proxied))"' >> "$GITHUB_STEP_SUMMARY"
+            if [ "$REPLACE" = "true" ]; then
+              for id in $(echo "$C" | jq -r '.[].id'); do
+                curl -sS -X DELETE -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records/$id" | jq -e '.success' >/dev/null
+              done
+              echo "  - replaced (a copy of the old records is listed above)" >> "$GITHUB_STEP_SUMMARY"
+            else blocked=1; fi
+          done
+          if [ "$blocked" = "1" ]; then
+            echo "::error::Some site addresses already point elsewhere (see the summary). Run again with 'Replace existing records' ticked to switch them to the new site. Email (MX/TXT) records are never touched."
+            exit 1
+          fi
+
+      - name: Publish www.kayaksa.com
+        if: contains(format(',{0},', steps.apps.outputs.list), ',www,')
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CONTACT_PHONE: ${{ secrets.CONTACT_PHONE }}
+        run: |
+          set -e
+          npx wrangler deploy -c apps/www/wrangler.jsonc
+          have=$(npx wrangler secret list --name kayaksa-www --format json 2>/dev/null | jq -r '.[].name' || true)
+          node scripts/secrets.mjs ANTHROPIC_API_KEY OPENAI_API_KEY XAI_API_KEY RESEND_API_KEY CONTACT_PHONE > /tmp/s.json
+          echo "$have" | grep -qx STATS_SALT || node -e 'const f="/tmp/s.json";const j=JSON.parse(require("fs").readFileSync(f));j.STATS_SALT=require("crypto").randomBytes(24).toString("base64url");require("fs").writeFileSync(f,JSON.stringify(j))'
+          npx wrangler secret bulk /tmp/s.json --name kayaksa-www; rm -f /tmp/s.json
+          echo "### www.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish learn.kayaksa.com
+        if: contains(format(',{0},', steps.apps.outputs.list), ',learn,')
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          set -e
+          npx wrangler deploy -c apps/learn/wrangler.jsonc
+          node scripts/secrets.mjs RESEND_API_KEY > /tmp/s.json
+          [ "$(cat /tmp/s.json)" = "{}" ] || npx wrangler secret bulk /tmp/s.json --name kayaksa-learn; rm -f /tmp/s.json
+          echo "### learn.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish internal.kayaksa.com
+        if: contains(format(',{0},', steps.apps.outputs.list), ',internal,')
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          set -e
+          npx wrangler r2 bucket list | grep -q "kayaksa-brand" || npx wrangler r2 bucket create kayaksa-brand
+          npx wrangler deploy -c apps/internal/wrangler.jsonc
+          have=$(npx wrangler secret list --name kayaksa-internal --format json 2>/dev/null | jq -r '.[].name' || true)
+          node scripts/secrets.mjs ANTHROPIC_API_KEY OPENAI_API_KEY XAI_API_KEY RESEND_API_KEY > /tmp/s.json
+          NEWBOOT=""
+          if ! echo "$have" | grep -qx AUTH_ENCRYPTION_KEY; then
+            NEWBOOT=$(node -e 'console.log(require("crypto").randomBytes(18).toString("base64url"))')
+            node -e 'const f="/tmp/s.json";const j=JSON.parse(require("fs").readFileSync(f));j.AUTH_ENCRYPTION_KEY=require("crypto").randomBytes(32).toString("base64url");j.BOOTSTRAP_TOKEN=process.argv[1];require("fs").writeFileSync(f,JSON.stringify(j))' "$NEWBOOT"
+          fi
+          npx wrangler secret bulk /tmp/s.json --name kayaksa-internal; rm -f /tmp/s.json
+          echo "### internal.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$NEWBOOT" ]; then
+            echo "First-run set-up code (works once, only for the SuperAdmin emails): \`$NEWBOOT\`. Open https://internal.kayaksa.com/setup to create your account and two-factor sign-in." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload the brand library
+        if: github.event.inputs.sync_brand == 'true'
+        run: node scripts/sync-brand.mjs
+
+      - name: Smoke test
+        run: |
+          sleep 20
+          case ",${{ steps.apps.outputs.list }}," in *",www,"*) curl -fsS https://www.kayaksa.com/api/health && echo;; esac
+          case ",${{ steps.apps.outputs.list }}," in *",learn,"*) curl -fsS https://learn.kayaksa.com/healthz && echo;; esac
+          case ",${{ steps.apps.outputs.list }}," in *",internal,"*) curl -fsS https://internal.kayaksa.com/healthz && echo;; esac

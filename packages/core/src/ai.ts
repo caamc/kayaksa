@@ -48,6 +48,8 @@ interface CallOpts {
   maxTokens?: number;
   temperature?: number;
   stream: boolean;
+  /** Anthropic prompt caching for a long, stable system prompt (cuts cost and latency). */
+  cacheSystem?: boolean;
 }
 
 async function call(env: AiEnv, id: ProviderId, o: CallOpts): Promise<Response> {
@@ -57,7 +59,7 @@ async function call(env: AiEnv, id: ProviderId, o: CallOpts): Promise<Response> 
     return fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model, max_tokens: o.maxTokens ?? 2048, system: o.system, messages: o.messages, stream: o.stream, ...(o.temperature != null ? { temperature: o.temperature } : {}) }),
+      body: JSON.stringify({ model, max_tokens: o.maxTokens ?? 2048, system: o.cacheSystem ? [{ type: "text", text: o.system, cache_control: { type: "ephemeral" } }] : o.system, messages: o.messages, stream: o.stream, ...(o.temperature != null ? { temperature: o.temperature } : {}) }),
     });
   }
   const url = id === "openai" ? "https://api.openai.com/v1/chat/completions" : "https://api.x.ai/v1/chat/completions";

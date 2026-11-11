@@ -1,0 +1,25 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "kayaksa-www",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "www.kayaksa.com", "custom_domain": true },
+    { "pattern": "kayaksa.com", "custom_domain": true }
+  ],
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none", "not_found_handling": "none" },
+  "d1_databases": [{ "binding": "DB", "database_name": "kayaksa-www", "database_id": "00000000-0000-0000-0000-000000000002", "migrations_dir": "migrations" }],
+  "rules": [{ "type": "Text", "globs": ["**/*.html"], "fallthrough": false }],
+  "observability": { "enabled": true },
+  "triggers": { "crons": ["30 2 * * *"] },
+  "vars": {
+    "SITE_URL": "https://www.kayaksa.com",
+    "AI_DEFAULT_PROVIDER": "anthropic",
+    "MAIL_FROM": "Kayak Strategic Advisors <no-reply@kayaksa.com>",
+    "ENQUIRY_TO": "enquiries@kayaksa.com",
+    "KAY_VOICE": "ash"
+  }
+  // Secrets: ANTHROPIC_API_KEY, OPENAI_API_KEY (Kay's voice), XAI_API_KEY, RESEND_API_KEY, STATS_SALT; optional CONTACT_PHONE.
+}
