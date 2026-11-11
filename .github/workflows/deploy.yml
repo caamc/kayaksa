@@ -110,6 +110,8 @@ jobs:
           blocked=0
           for h in $hosts; do
             R=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?name=$h&per_page=100")
+            if [ "$(echo "$R" | jq -r '.success')" != "true" ]; then
+              echo "::error::Cannot read DNS records for $h: $(echo "$R" | jq -c '.errors'). The token needs Zone DNS Edit for kayaksa.com."; exit 1; fi
             C=$(echo "$R" | jq -c '[.result[] | select((.type=="A" or .type=="AAAA" or .type=="CNAME") and ((.meta.read_only // false) | not))]')
             n=$(echo "$C" | jq 'length')
             if [ "$n" = "0" ]; then echo "- $h: free" >> "$GITHUB_STEP_SUMMARY"; continue; fi
