@@ -138,8 +138,15 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           CONTACT_PHONE: ${{ secrets.CONTACT_PHONE }}
         run: |
-          set -e
-          npx wrangler deploy -c apps/www/wrangler.jsonc
+          set -eo pipefail
+          if ! npx wrangler deploy -c apps/www/wrangler.jsonc 2>&1 | tee /tmp/d.log; then
+            if grep -q 100117 /tmp/d.log; then
+              echo "::warning::The site is published, but www.kayaksa.com and kayaksa.com still point to the old website. Remove their A/CNAME records in Cloudflare DNS (keep MX and TXT), then run this workflow again."
+              echo "**www.kayaksa.com still points to the old website.** Remove the A/CNAME records for www and the root (keep MX and TXT email records) and run again." >> "$GITHUB_STEP_SUMMARY"
+            else exit 1; fi
+          fi
+          PREVIEW=$(grep -o 'https://kayaksa-www[^ ]*workers.dev' /tmp/d.log | head -1 || true)
+          [ -n "$PREVIEW" ] && echo "Preview: $PREVIEW" >> "$GITHUB_STEP_SUMMARY" && echo "$PREVIEW" > /tmp/www-preview
           have=$(npx wrangler secret list --name kayaksa-www --format json 2>/dev/null | jq -r '.[].name' || true)
           node scripts/secrets.mjs ANTHROPIC_API_KEY OPENAI_API_KEY XAI_API_KEY RESEND_API_KEY CONTACT_PHONE > /tmp/s.json
           echo "$have" | grep -qx STATS_SALT || node -e 'const f="/tmp/s.json";const j=JSON.parse(require("fs").readFileSync(f));j.STATS_SALT=require("crypto").randomBytes(24).toString("base64url");require("fs").writeFileSync(f,JSON.stringify(j))'
@@ -188,6 +195,6 @@ jobs:
       - name: Smoke test
         run: |
           sleep 20
-          case ",${{ steps.apps.outputs.list }}," in *",www,"*) curl -fsS https://www.kayaksa.com/api/health && echo;; esac
+          case ",${{ steps.apps.outputs.list }}," in *",www,"*) [ -f /tmp/www-preview ] && curl -fsS "$(cat /tmp/www-preview)/api/health" && echo; curl -fsS https://www.kayaksa.com/api/health && echo || echo "www.kayaksa.com is not on the new site yet";; esac
           case ",${{ steps.apps.outputs.list }}," in *",learn,"*) curl -fsS https://learn.kayaksa.com/healthz && echo;; esac
           case ",${{ steps.apps.outputs.list }}," in *",internal,"*) curl -fsS https://internal.kayaksa.com/healthz && echo;; esac

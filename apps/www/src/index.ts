@@ -30,6 +30,8 @@ app.use("*", async (c, next) => {
   const u = new URL(c.req.url);
   if (u.hostname === "kayaksa.com") return c.redirect(`https://www.kayaksa.com${u.pathname}${u.search}`, 301);
   await next();
+  // Preview addresses must never compete with www.kayaksa.com in search results.
+  if (u.hostname.endsWith(".workers.dev")) { c.res = new Response(c.res.body, c.res); c.res.headers.set("X-Robots-Tag", "noindex, nofollow"); }
 });
 
 /** Site data: the built-in content plus everything published from the internal portal. */
