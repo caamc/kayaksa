@@ -15,10 +15,10 @@ export const NAV = [
     { id: "decks", label: "Presentations", icon: "slides" },
   ] },
   { group: "Grow", items: [{ id: "website", label: "Website", icon: "globe" }, { id: "learn", label: "Kayak Learn", icon: "learn" }] },
-  { group: "Administration", admin: true, items: [{ id: "admin", label: "People & access", icon: "users" }, { id: "audit", label: "Audit log", icon: "activity" }] },
+  { group: "Administration", admin: true, items: [{ id: "admin", label: "People & access", icon: "users" }, { id: "sales", label: "Learn sales", icon: "briefcase" }, { id: "security", label: "Security", icon: "shield" }, { id: "audit", label: "Audit log", icon: "activity" }] },
 ];
 
-const VIEWS = { home: "home", brand: "brand", tools: "tools", network: "network", ai: "ai", cards: "cards", decks: "decks", learn: "learn", website: "website", admin: "admin", audit: "admin", account: "account" };
+const VIEWS = { home: "home", brand: "brand", tools: "tools", network: "network", ai: "ai", cards: "cards", decks: "decks", learn: "learn", website: "website", security: "security", sales: "sales", admin: "admin", audit: "security", account: "account" };
 
 export const state = { me: null };
 

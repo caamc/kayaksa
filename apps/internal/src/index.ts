@@ -1,5 +1,6 @@
 // internal.kayaksa.com — Kayak's staff portal. Everything except the sign-in pages requires a
 // password plus TOTP two-factor session.
+import { shield, pruneSecurity } from "../../../packages/core/src/shield";
 import { Hono } from "hono";
 import { securityHeaders, sameOrigin, HttpError } from "../../../packages/core/src/http";
 import { learnApi } from "../../../packages/learnkit/src/routes";
@@ -11,11 +12,14 @@ import { tools, network } from "./directory";
 import { ai } from "./assistant";
 import { cards, decks } from "./studio";
 import { website } from "./website";
+import { security } from "./security";
+import { learnSales } from "./learnsales";
 
 type V = { Bindings: Env; Variables: { user: User } };
 const app = new Hono<V>();
 
 app.use("*", securityHeaders({ noindex: true }));
+app.use("*", shield("internal", (e) => e.DB, { allowGoodBots: false }));
 app.use("/api/*", sameOrigin());
 app.onError((e: any, c) => {
   const status = e instanceof HttpError ? e.status : e?.status || 500;
@@ -57,6 +61,9 @@ app.use("/api/decks/*", guard);
 app.use("/api/decks", guard);
 app.use("/api/learn/*", guard);
 app.use("/api/website/*", guard);
+app.use("/api/security/*", guard);
+app.use("/api/learnsales/*", guard);
+app.use("/api/learnsales", guard);
 app.use("/files/*", guard);
 app.use("/app", guard);
 app.use("/app/*", guard);
@@ -71,6 +78,8 @@ app.route("/api/ai", ai);
 app.route("/api/cards", cards);
 app.route("/api/decks", decks);
 app.route("/api/website", website);
+app.route("/api/security", security);
+app.route("/api/learnsales", learnSales);
 app.route(
   "/api/learn",
   learnApi({
@@ -108,4 +117,10 @@ app.all("*", async (c) => {
   return res;
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  async scheduled(_e: ScheduledEvent, env: Env) {
+    await pruneSecurity(env.DB);
+    if (env.WWW_DB) await pruneSecurity(env.WWW_DB).catch(() => {});
+  },
+};

@@ -164,10 +164,14 @@ jobs:
         if: contains(format(',{0},', steps.apps.outputs.list), ',learn,')
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RAZORPAY_KEY_ID: ${{ secrets.RAZORPAY_KEY_ID }}
+          RAZORPAY_KEY_SECRET: ${{ secrets.RAZORPAY_KEY_SECRET }}
+          RAZORPAY_WEBHOOK_SECRET: ${{ secrets.RAZORPAY_WEBHOOK_SECRET }}
+          KAYAK_GSTIN: ${{ secrets.KAYAK_GSTIN }}
         run: |
           set -e
           npx wrangler deploy -c apps/learn/wrangler.jsonc
-          node scripts/secrets.mjs RESEND_API_KEY > /tmp/s.json
+          node scripts/secrets.mjs RESEND_API_KEY RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET RAZORPAY_WEBHOOK_SECRET KAYAK_GSTIN > /tmp/s.json
           [ "$(cat /tmp/s.json)" = "{}" ] || npx wrangler secret bulk /tmp/s.json --name kayaksa-learn; rm -f /tmp/s.json
           echo "### learn.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
 
@@ -203,6 +207,6 @@ jobs:
       - name: Smoke test
         run: |
           sleep 20
-          case ",${{ steps.apps.outputs.list }}," in *",www,"*) [ -f /tmp/www-preview ] && curl -fsS "$(cat /tmp/www-preview)/api/health" && echo; curl -fsS -o /dev/null -w "Kay voice test: %{http_code} %{content_type}\n" -X POST -H "Content-Type: application/json" -H "Origin: https://www.kayaksa.com" -d '{"text":"Hello, I am Kay."}' https://www.kayaksa.com/api/kay/speak || true; curl -fsS https://www.kayaksa.com/api/health && echo || echo "www.kayaksa.com is not on the new site yet";; esac
+          case ",${{ steps.apps.outputs.list }}," in *",www,"*) [ -f /tmp/www-preview ] && curl -fsS "$(cat /tmp/www-preview)/api/health" && echo; curl -fsS -A "Mozilla/5.0 (KayakDeployCheck)" -o /dev/null -w "Kay voice test: %{http_code} %{content_type}\n" -X POST -H "Content-Type: application/json" -H "Origin: https://www.kayaksa.com" -d '{"text":"Hello, I am Kay."}' https://www.kayaksa.com/api/kay/speak || true; curl -fsS https://www.kayaksa.com/api/health && echo || echo "www.kayaksa.com is not on the new site yet";; esac
           case ",${{ steps.apps.outputs.list }}," in *",learn,"*) curl -fsS https://learn.kayaksa.com/healthz && echo;; esac
           case ",${{ steps.apps.outputs.list }}," in *",internal,"*) curl -fsS https://internal.kayaksa.com/healthz && echo;; esac

@@ -32,7 +32,7 @@ export function kayKnowledge(d: SiteData): string {
   L.push("\nINDUSTRIES: wide industry and sector exposure across sector families: " + d.groups.map((g: any) => g.name).join("; ") + " [/industries]. Never quote a number of industries.");
   L.push("\nCONFLUENCE, Kayak's monthly magazine (first Tuesday of the month) [/insights]. Articles:");
   for (const a of d.articles) L.push(`- ${a.section}: "${a.title}" [/insights/${a.id}]: ${a.dek || ""}`);
-  L.push("\nOTHER PAGES: About us [/about], Careers [/careers] (founding team; no open listings; send a short note), Contact [/contact], Privacy and terms [/legal]. Kayak Learn, free courses with certificates on ethics, compliance, risk, governance and responsible AI: https://learn.kayaksa.com");
+  L.push("\nOTHER PAGES: About us [/about], Careers [/careers] (founding team; no open listings; send a short note), Contact [/contact], Privacy and terms [/legal]. Kayak Learn, paid professional courses with assessments and verifiable certificates on ethics, compliance, risk, governance and responsible AI (list price ₹15,000 per course; launch offer ₹10,000 plus 18% GST; 12 months access): https://learn.kayaksa.com. Never describe Kayak Learn as free.");
   return L.join("\n");
 }
 

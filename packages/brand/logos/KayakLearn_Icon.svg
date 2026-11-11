@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160" role="img" aria-label="Kayak Learn"><title>Kayak Learn</title>
+<rect width="160" height="160" rx="34" fill="#0E2F3C"/><g transform="translate(26 14)"><g class="kl-mark">
+  <path class="kl-b1" fill="#5DB2AB" d="M0 22 L30 22 L44 48.25 L44 81.3 Z"/>
+  <path class="kl-b2" fill="#EE9B1E" d="M92 22 L62 22 L48 48.25 L48 81.3 Z"/>
+  <path class="kl-st" fill="#FFFFFF" d="M32 73 L46 92 L60 73 L60 122 L32 122 Z"/>
+  <g class="kl-cap">
+    <path fill="#FFFFFF" d="M50 10 L77 0 L104 10 L77 20 Z"/>
+    <path fill="#FFFFFF" d="M62 14.5 L62 24 C70 29 84 29 92 24 L92 14.5 L77 20 Z"/>
+    <path fill="none" stroke="#F5C46D" stroke-width="2.2" stroke-linecap="round" d="M77 10 L102 11 L102 27"/>
+    <rect fill="#F5C46D" x="99.6" y="26" width="4.8" height="8" rx="1.6"/>
+  </g>
+</g></g></svg>

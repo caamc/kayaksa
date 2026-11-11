@@ -5,6 +5,7 @@ import type { Context } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { randomToken, sha256hex } from "./crypto";
 import { clientIp } from "./http";
+import { auditFull } from "./shield";
 
 export type SessionKind = "full" | "pre";
 
@@ -83,9 +84,6 @@ export async function endAllSessions(db: D1Database, userId: string) {
   await db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId).run();
 }
 
-export async function audit(c: Context, db: D1Database, userId: string | null, action: string, detail: unknown = null) {
-  await db
-    .prepare("INSERT INTO audit_log (at, user_id, action, detail, ip) VALUES (?,?,?,?,?)")
-    .bind(new Date().toISOString(), userId, action, detail == null ? null : JSON.stringify(detail).slice(0, 2000), clientIp(c))
-    .run();
+export async function audit(c: Context, _db: D1Database, userId: string | null, action: string, detail: unknown = null) {
+  await auditFull(c, _db, userId, action, detail);
 }

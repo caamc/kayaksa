@@ -3,6 +3,7 @@
 import { Hono } from "hono";
 import { publicCatalog, lessonOf, quizFor, grade, course, path as getPath, getCatalog, checkByte } from "./catalog";
 import { certificatePdf, certificateId } from "./certificate";
+import { priceList } from "./pricing";
 
 export interface Learner { id: string; name: string; verified?: boolean }
 
@@ -11,6 +12,8 @@ export interface LearnOptions {
   learner: (c: any) => Promise<Learner | null>;
   verifyBase: (c: any) => string; // e.g. https://learn.kayaksa.com/verify/
   onIssued?: (c: any, learner: Learner, cert: { id: string; title: string; kind: string; ref: string; issued_at: string }) => Promise<void>;
+  /** Paid access. When set, lessons, assessments, progress and bytes need an active enrolment. */
+  entitlements?: (c: any, learner: Learner) => Promise<Set<string>>;
 }
 
 export function learnApi(o: LearnOptions) {
@@ -24,25 +27,58 @@ export function learnApi(o: LearnOptions) {
   }
   app.onError((e: any, c) => c.json({ error: e.message || "Something went wrong." }, e.status || 500));
 
-  app.get("/catalog", (c) => c.json(publicCatalog(o.internal)));
+  // Access control for paid learning. Staff (internal) have everything.
+  async function owned(c: any, l: Learner): Promise<Set<string> | null> {
+    return o.entitlements ? o.entitlements(c, l) : null;
+  }
+  async function mustOwn(c: any, courseId: string): Promise<Learner> {
+    const l = await o.learner(c);
+    if (!o.entitlements) { if (!l) throw Object.assign(new Error("Sign in to save your progress."), { status: 401 }); return l; }
+    if (!l) throw Object.assign(new Error("Sign in and enrol to open this course."), { status: 401 });
+    const set = await owned(c, l);
+    if (!set!.has(courseId)) throw Object.assign(new Error("Enrol in this course to open its lessons and assessment."), { status: 402 });
+    return l;
+  }
 
-  app.get("/courses/:id/lessons/:lesson", (c) => {
+  app.get("/catalog", (c) => {
+    const cat: any = publicCatalog(o.internal);
+    if (o.entitlements) {
+      cat.bytes = cat.bytes.map((b: any) => ({ ...b, body: undefined, teaser: String(b.body || "").replace(/[#*_>`\[\]]/g, "").split(/\n\s*\n/)[0].slice(0, 220) }));
+      cat.pricing = priceList();
+    }
+    return c.json(cat);
+  });
+
+  app.get("/bytes/:id", async (c) => {
+    const bt = getCatalog().bytes.find((x) => x.id === c.req.param("id"));
+    if (!bt || !visible(bt.audience || "public")) return c.json({ error: "Not found." }, 404);
+    if (o.entitlements) {
+      const l = await o.learner(c);
+      if (!l) return c.json({ error: "Sign in to read awareness bytes. They come with every Kayak Learn enrolment." }, 401);
+      if (!(await owned(c, l))!.size) return c.json({ error: "Awareness bytes come with every Kayak Learn enrolment. Enrol in any course to unlock the full library." }, 402);
+    }
+    return c.json({ body: bt.body });
+  });
+
+  app.get("/courses/:id/lessons/:lesson", async (c) => {
     const crs = course(c.req.param("id"));
     if (!crs || !visible(crs.audience)) return c.json({ error: "Course not found." }, 404);
+    if (o.entitlements) await mustOwn(c, crs.id);
     const l = lessonOf(crs.id, c.req.param("lesson"));
     if (!l) return c.json({ error: "Lesson not found." }, 404);
     return c.json({ lesson: l });
   });
 
-  app.get("/courses/:id/quiz", (c) => {
+  app.get("/courses/:id/quiz", async (c) => {
     const crs = course(c.req.param("id"));
     if (!crs || !visible(crs.audience)) return c.json({ error: "Course not found." }, 404);
+    if (o.entitlements) await mustOwn(c, crs.id);
     return c.json(quizFor(crs.id));
   });
 
   app.get("/me", async (c) => {
     const l = await o.learner(c);
-    if (!l) return c.json({ signedIn: false, lessons: {}, quizzes: {}, certificates: [] });
+    if (!l) return c.json({ signedIn: false, lessons: {}, quizzes: {}, certificates: [], enrolled: [] });
     const db = c.env.DB as D1Database;
     const [lp, qa, ce] = await Promise.all([
       db.prepare("SELECT course_id, lesson_id FROM learn_progress WHERE user_id = ?").bind(l.id).all<any>(),
@@ -53,7 +89,8 @@ export function learnApi(o: LearnOptions) {
     for (const r of lp.results) (lessons[r.course_id] ||= []).push(r.lesson_id);
     const quizzes: Record<string, { best: number; passed: boolean }> = {};
     for (const r of qa.results) quizzes[r.course_id] = { best: r.best, passed: !!r.passed };
-    return c.json({ signedIn: true, name: l.name, verified: l.verified !== false, lessons, quizzes, certificates: ce.results });
+    const own = await owned(c, l);
+    return c.json({ signedIn: true, name: l.name, verified: l.verified !== false, lessons, quizzes, certificates: ce.results, enrolled: own ? [...own] : null });
   });
 
   async function issue(c: any, l: Learner, kind: "course" | "path", ref: string, title: string) {
@@ -80,8 +117,9 @@ export function learnApi(o: LearnOptions) {
     const passed = new Set(qa.results.map((r: any) => r.course_id));
     const complete = new Set<string>();
     const issued: any[] = [];
+    const own = await owned(c, l);
     for (const crs of getCatalog().courses) {
-      if (!visible(crs.audience) || !passed.has(crs.id)) continue;
+      if (!visible(crs.audience) || !passed.has(crs.id) || (own && !own.has(crs.id))) continue;
       const done = lessons.get(crs.id);
       if (!crs.lessons.every((x) => done?.has(x.id))) continue;
       complete.add(crs.id);
@@ -101,6 +139,7 @@ export function learnApi(o: LearnOptions) {
     const b = await c.req.json().catch(() => ({}));
     const crs = course(String(b.courseId || ""));
     if (!crs || !visible(crs.audience) || !lessonOf(crs.id, String(b.lessonId || ""))) return c.json({ error: "Lesson not found." }, 404);
+    if (o.entitlements) await mustOwn(c, crs.id);
     await c.env.DB.prepare("INSERT OR IGNORE INTO learn_progress (user_id, course_id, lesson_id, done_at) VALUES (?,?,?,?)").bind(l.id, crs.id, b.lessonId, new Date().toISOString()).run();
     return c.json({ ok: true, issued: await award(c, l) });
   });
@@ -115,6 +154,7 @@ export function learnApi(o: LearnOptions) {
     const l = await need(c);
     const crs = course(c.req.param("id"));
     if (!crs || !visible(crs.audience)) return c.json({ error: "Course not found." }, 404);
+    if (o.entitlements) await mustOwn(c, crs.id);
     const b = await c.req.json().catch(() => ({}));
     const answers = Array.isArray(b.answers) ? b.answers.map((x: unknown) => (Number.isInteger(x) ? Number(x) : -1)).slice(0, 50) : [];
     const db = c.env.DB as D1Database;
@@ -134,6 +174,7 @@ export function learnApi(o: LearnOptions) {
     const b = await c.req.json().catch(() => ({}));
     const bt = getCatalog().bytes.find((x) => x.id === c.req.param("id"));
     if (!bt || !visible(bt.audience || "public")) return c.json({ error: "Not found." }, 404);
+    if (o.entitlements) { const l = await need(c); if (!(await owned(c, l))!.size) return c.json({ error: "Enrol in any course to use awareness bytes." }, 402); }
     const r = checkByte(bt.id, Number(b.answer));
     return r ? c.json(r) : c.json({ error: "Not found." }, 404);
   });

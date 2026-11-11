@@ -11,6 +11,8 @@ const fails = [];
 const check = (ok, msg) => { console.log(`${ok ? "PASS" : "FAIL"}  ${msg}`); if (!ok) fails.push(msg); };
 
 const browser = await chromium.launch();
+// Kayak Shield refuses "HeadlessChrome", so present as a normal browser.
+const _nc = browser.newContext.bind(browser); browser.newContext = (o = {}) => _nc({ userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36", ...o });
 const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 }, acceptDownloads: true });
 const page = await ctx.newPage();
 const errors = [];
@@ -41,6 +43,36 @@ await page.check("#consent");
 await page.click("[data-a=go]");
 await page.waitForSelector("a[href='#/certificates']", { timeout: 10000 });
 check(true, "sign-up works and signs the learner in");
+
+// Paid access: lessons are locked until enrolment
+const locked = await page.request.get(`${BASE}/api/learn/courses/posh/lessons/l1`);
+check(locked.status() === 402, "lessons are locked until the learner enrols");
+await page.goto(`${BASE}/#/course/posh`);
+await page.waitForSelector("[data-enrol]");
+const priceText = await page.textContent(".buy");
+check(priceText.includes("₹15,000") && priceText.includes("₹10,000") && priceText.includes("33% off"), "course shows list ₹15,000, offer ₹10,000, 33% off");
+await page.screenshot({ path: OUT + "learn-course-buy.png" });
+await page.click("[data-enrol]");
+await page.waitForSelector("#bs");
+check((await page.textContent("#sum")).includes("₹11,800"), "checkout shows ₹11,800 with GST for Maharashtra");
+await page.selectOption("#bs", "Karnataka");
+check((await page.textContent("#sum")).includes("IGST"), "out-of-state buyers are charged IGST");
+await page.screenshot({ path: OUT + "learn-checkout.png" });
+await page.click("[data-a=go]");
+await page.waitForSelector("#ee:not([hidden])");
+check((await page.textContent("#ee")).includes("terms"), "checkout needs the terms accepted");
+await page.check("#bt");
+await page.click("[data-a=go]");
+await page.waitForFunction(() => location.hash === "#/purchases", null, { timeout: 10000 });
+await page.waitForSelector("text=Awaiting payment");
+check(true, "without the payment gateway, the order waits for a payment link");
+// Record the payment as the team would from the internal portal
+const { execSync } = await import("node:child_process");
+const ord = (await (await page.request.get(`${BASE}/api/pay/orders`)).json()).orders[0].id;
+const now = new Date().toISOString(), until = new Date(Date.now() + 365 * 864e5).toISOString();
+execSync(`npx wrangler d1 execute kayaksa-learn --local --command "UPDATE orders SET status='paid', method='bank', invoice_no='KL/26-27/00001', paid_at='${now}' WHERE id='${ord}'; INSERT INTO enrolments (user_id, course_id, order_id, created_at, expires_at) SELECT user_id, 'posh', id, '${now}', '${until}' FROM orders WHERE id='${ord}';"`, { cwd: new URL("../../apps/learn/", import.meta.url).pathname, stdio: "ignore" });
+const inv = await page.request.get(`${BASE}/invoice/${ord}`);
+check(inv.ok() && (await inv.text()).includes("KL/26-27/00001"), "invoice page shows the invoice number");
 
 // Complete a course
 const c = CAT.courses.find((x) => x.id === "posh");
@@ -85,7 +117,7 @@ await page.screenshot({ path: OUT + "learn-verify.png" });
 await page.goto(`${BASE}/verify/KSA-0000-0000`);
 check((await page.textContent("body")).includes("No certificate"), "unknown ID is reported as not found");
 
-// Byte check
+// Byte check (unlocked by the enrolment)
 await page.goto(`${BASE}/#/byte/byte-deepfake`);
 await page.waitForSelector("[data-o]");
 await page.click("[data-o='1']");

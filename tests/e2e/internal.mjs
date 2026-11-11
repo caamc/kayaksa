@@ -27,6 +27,8 @@ const fails = [];
 const check = (ok, msg) => { console.log(`${ok ? "PASS" : "FAIL"}  ${msg}`); if (!ok) fails.push(msg); };
 
 const browser = await chromium.launch();
+// Kayak Shield refuses "HeadlessChrome", so present as a normal browser.
+const _nc = browser.newContext.bind(browser); browser.newContext = (o = {}) => _nc({ userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36", ...o });
 const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 } });
 const page = await ctx.newPage();
 const errors = [];
@@ -65,13 +67,14 @@ await page.screenshot({ path: OUT + "internal-home.png" });
 const again = await page.request.post(`${BASE}/api/auth/setup`, { data: { email: EMAIL, token: vars.BOOTSTRAP_TOKEN, name: "X", password: PASSWORD + "x" }, headers: { Origin: BASE } });
 check(again.status() === 409 || again.status() === 403, "set-up refuses an already active SuperAdmin");
 
-for (const v of ["brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "account"]) {
+for (const v of ["brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "account"]) {
   await page.goto(`${BASE}/app#/${v}`);
   await page.waitForFunction(() => !document.querySelector("#main .spinner") || document.querySelector("#main h1"), null, { timeout: 15000 });
   await page.waitForTimeout(600);
   const h1 = await page.textContent("#main h1").catch(() => "");
-  check(!!h1, `${v} renders (${(h1 || "").trim().slice(0, 40)})`);
-  await page.screenshot({ path: OUT + `internal-${v}.png`, fullPage: v === "cards" || v === "brand" });
+  const err = await page.textContent("#main .note.danger").catch(() => null);
+  check(!!h1 && !err, `${v} renders (${(h1 || "").trim().slice(0, 40)})${err ? " — " + err : ""}`);
+  await page.screenshot({ path: OUT + `internal-${v.replace("/", "-")}.png`, fullPage: v === "cards" || v === "brand" });
 }
 
 // Invite a colleague and accept the invite in a fresh browser

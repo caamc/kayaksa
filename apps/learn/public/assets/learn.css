@@ -25,3 +25,62 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .prose{max-width:760px;font-family:var(--serif);font-size:1.04rem;line-height:1.7}
 .prose h2{font-family:var(--display);font-size:1.2rem;margin-top:24px}
 .btn-accent{background:var(--saffron);color:#0E2F3C;border-color:var(--saffron)}.btn-accent:hover{filter:brightness(1.06);color:#0E2F3C}
+
+/* ---------- Kayak Learn brand */
+.kl-logo{display:block;height:34px;width:auto}
+.kl-dark{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kl-dark{display:block}:root:not([data-theme="light"]) .kl-light{display:none}}
+:root[data-theme="dark"] .kl-dark{display:block}:root[data-theme="dark"] .kl-light{display:none}
+
+/* Hero with the animated logo reveal */
+.kl-intro{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:center;
+  background:radial-gradient(120% 90% at 85% 30%,#17807E33 0,transparent 55%),linear-gradient(160deg,#0B1F28 0%,#0E2F3C 55%,#123B4A 100%)}
+.kl-intro::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:36px 36px;mask-image:radial-gradient(80% 80% at 70% 40%,#000 30%,transparent 80%)}
+.kl-stage{order:2;position:relative;z-index:1;aspect-ratio:1.35;display:grid;place-items:center;min-width:0}
+.kl-ring{position:absolute;width:86%;aspect-ratio:1;border:1px solid #F5C46D40;border-radius:50%;box-shadow:inset 0 0 80px #17807E30}
+.kl-anim{width:min(100%,460px);position:relative}
+.kl-anim svg{width:100%;height:auto;display:block;overflow:visible}
+.kl-replay{position:absolute;right:0;bottom:0;display:inline-flex;gap:6px;align-items:center;padding:7px 12px;border:1px solid #ffffff40;border-radius:999px;background:#ffffff10;color:#E3EEEC;font:600 .82rem var(--sans);cursor:pointer}
+.kl-replay:hover{background:#ffffff20}
+.kl-replay .ico{width:14px;height:14px}
+@media (max-width:860px){.kl-intro{grid-template-columns:1fr}.kl-stage{order:0;aspect-ratio:2.2}.kl-ring{width:55%}}
+.kl-intro.play .kl-ring{animation:klRing 1.4s cubic-bezier(.2,.8,.2,1) both}
+.kl-intro.play .kl-b1{animation:klDrop .7s .15s cubic-bezier(.2,.9,.25,1.2) both}
+.kl-intro.play .kl-b2{animation:klDrop .7s .3s cubic-bezier(.2,.9,.25,1.2) both}
+.kl-intro.play .kl-st{animation:klRise .7s .45s cubic-bezier(.2,.9,.25,1.1) both}
+.kl-intro.play .kl-cap{animation:klCap .8s .95s cubic-bezier(.3,1.4,.4,1) both;transform-origin:77px 10px}
+.kl-intro.play .kl-k{animation:klText .8s .7s ease-out both}
+.kl-intro.play .kl-l{animation:klText .8s .9s ease-out both}
+.kl-intro.play .kl-dash{animation:klDash .6s 1.5s ease-out both;transform-origin:left center;transform-box:fill-box}
+@keyframes klRing{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes klDrop{from{transform:translateY(-40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes klRise{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes klCap{0%{transform:translateY(-60px) rotate(-25deg);opacity:0}60%{opacity:1}100%{transform:none;opacity:1}}
+@keyframes klText{from{opacity:0;transform:translateX(-14px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes klDash{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.kl-intro *{animation:none!important}.kl-replay{display:none}}
+
+/* Offer and prices */
+.offer{display:grid;gap:2px;padding:14px 18px;border-left:4px solid var(--saffron);background:#ffffff0d;max-width:max-content}
+.offer s{color:#A9C0C6}.offer b{font:800 1.6rem/1.1 var(--display);color:#fff}.offer em{font-style:normal;margin-left:6px;padding:2px 8px;background:var(--saffron);color:#0E2F3C;font:700 .78rem var(--sans);vertical-align:4px}
+.offer small{color:#A9C0C6}
+.price{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.price s{color:var(--faint);font-size:.9rem}.price b{font:800 1.15rem var(--display);color:var(--fg)}
+.price em{font-style:normal;padding:1px 7px;background:color-mix(in srgb,var(--saffron) 22%,transparent);color:var(--fg);font:700 .74rem var(--sans)}
+.price small{flex-basis:100%;color:var(--muted);font-size:.85rem}
+.price.big b{font-size:2.2rem}.price.big s{font-size:1.05rem}
+.buy{border:1px solid var(--line);border-top:5px solid var(--saffron);background:var(--surface);padding:22px;box-shadow:0 18px 40px -28px #0E2F3C66}
+.split>.stack:last-child>.buy{position:sticky;top:84px}
+.incl{list-style:none;margin:4px 0;padding:0;display:grid;gap:8px}
+.incl li{display:flex;gap:8px;align-items:flex-start}.incl .ico{color:var(--accent);flex:none;margin-top:3px}
+.btn-block{width:100%;justify-content:center}
+.lock .ico{width:14px;height:14px;color:var(--faint);vertical-align:-2px}
+.sum td{padding:7px 4px}.sum .tot td{font-weight:800;border-top:2px solid var(--fg)}
+.ok-text{color:var(--ok,#4B7A4E)}
+.num{text-align:right;white-space:nowrap}
+.lhead .ksa-logo img.kl-logo{height:38px;width:auto}
+.lhead .ksa-logo img.kl-dark{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lhead .ksa-logo img.kl-dark{display:block}:root:not([data-theme="light"]) .lhead .ksa-logo img.kl-light{display:none}}
+:root[data-theme="dark"] .lhead .ksa-logo img.kl-dark{display:block}:root[data-theme="dark"] .lhead .ksa-logo img.kl-light{display:none}
+.kl-anim{width:min(84%,400px);filter:drop-shadow(0 10px 40px #17807E55)}
+.lhero.kl-intro .stats{gap:22px 30px}

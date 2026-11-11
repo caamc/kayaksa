@@ -1,4 +1,5 @@
 {
+  "triggers": { "crons": ["35 1 * * *"] },
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "kayaksa-internal",
   "main": "src/index.ts",

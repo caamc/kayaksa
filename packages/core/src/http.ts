@@ -3,6 +3,8 @@ import type { Context, MiddlewareHandler } from "hono";
 
 export interface CspOptions {
   connect?: string[];
+  script?: string[];
+  frame?: string[];
   img?: string[];
   frameAncestors?: string;
 }
@@ -10,12 +12,13 @@ export interface CspOptions {
 export function csp(opts: CspOptions = {}): string {
   return [
     "default-src 'self'",
-    "script-src 'self'",
+    `script-src 'self'${opts.script?.length ? " " + opts.script.join(" ") : ""}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob:${opts.img?.length ? " " + opts.img.join(" ") : ""}`,
     "font-src 'self' data:",
     `connect-src 'self'${opts.connect?.length ? " " + opts.connect.join(" ") : ""}`,
     "media-src 'self' blob:",
+    ...(opts.frame?.length ? [`frame-src ${opts.frame.join(" ")}`] : []),
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'self'",

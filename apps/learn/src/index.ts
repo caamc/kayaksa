@@ -1,5 +1,6 @@
-// learn.kayaksa.com — free public learning on ethics, compliance, risk, governance and AI.
-// Anyone can browse; a free account saves progress and earns verifiable certificates.
+// learn.kayaksa.com — paid professional learning on ethics, compliance, risk, governance and AI.
+// Anyone can browse the catalogue; an enrolment opens a course for 12 months with a verifiable certificate.
+import { shield, pruneSecurity } from "../../../packages/core/src/shield";
 import { Hono } from "hono";
 import { securityHeaders, sameOrigin, HttpError, readJson, str, email as cleanEmail, rateLimit, clientIp } from "../../../packages/core/src/http";
 import { hashPassword, verifyPassword, passwordProblems, randomToken, sha256hex } from "../../../packages/core/src/crypto";
@@ -7,8 +8,11 @@ import { createSession, readSession, endSession, endAllSessions, audit, SessionC
 import { mailEnabled, mailHtml, sendMail, MailEnv } from "../../../packages/core/src/mail";
 import { learnApi } from "../../../packages/learnkit/src/routes";
 import { getCatalog } from "../../../packages/learnkit/src/catalog";
+import { entitlements, type PayEnv } from "../../../packages/learnkit/src/commerce";
+import { payApi, invoicePage, razorpayWebhook } from "./pay";
 
-interface Env extends MailEnv {
+interface Env extends MailEnv, PayEnv {
+  LEARN_SALES_TO?: string;
   DB: D1Database;
   ASSETS: Fetcher;
   SITE_URL: string;
@@ -19,7 +23,10 @@ const SESSION: SessionConfig = { cookie: "__Host-kl_sid", fullTtlHours: 24 * 30,
 const GENERIC = "Email or password is not correct.";
 const app = new Hono<C>();
 
-app.use("*", securityHeaders());
+// Razorpay Checkout runs in an iframe from checkout.razorpay.com.
+app.use("*", securityHeaders({ script: ["https://checkout.razorpay.com"], frame: ["https://api.razorpay.com", "https://checkout.razorpay.com"], connect: ["https://api.razorpay.com", "https://lumberjack.razorpay.com"], img: ["https://cdn.razorpay.com"] }));
+app.post("/hooks/razorpay", razorpayWebhook);
+app.use("*", shield("learn", (e) => e.DB, { allowGoodBots: true }));
 app.use("/api/*", sameOrigin());
 app.onError((e: any, c) => {
   const status = e instanceof HttpError ? e.status : e?.status || 500;
@@ -201,7 +208,7 @@ app.get("/api/account/export", async (c) => {
   const u = await currentUser(c);
   if (!u) return c.json({ error: "Sign in first." }, 401);
   const q = (sql: string) => c.env.DB.prepare(sql).bind(u.id).all().then((r) => r.results);
-  const data = { account: u, progress: await q("SELECT course_id, lesson_id, done_at FROM learn_progress WHERE user_id = ?"), assessments: await q("SELECT course_id, score, passed, at FROM quiz_attempts WHERE user_id = ?"), certificates: await q("SELECT id, kind, ref_id, holder, title, issued_at FROM certificates WHERE user_id = ?") };
+  const data = { account: u, progress: await q("SELECT course_id, lesson_id, done_at FROM learn_progress WHERE user_id = ?"), assessments: await q("SELECT course_id, score, passed, at FROM quiz_attempts WHERE user_id = ?"), certificates: await q("SELECT id, kind, ref_id, holder, title, issued_at FROM certificates WHERE user_id = ?"), enrolments: await q("SELECT course_id, created_at, expires_at, revoked_at FROM enrolments WHERE user_id = ?"), orders: await q("SELECT id, title, total_paise, status, invoice_no, buyer_name, buyer_org, buyer_gstin, buyer_state, created_at, paid_at FROM orders WHERE user_id = ?") };
   return new Response(JSON.stringify(data, null, 2), { headers: { "Content-Type": "application/json", "Content-Disposition": 'attachment; filename="kayak-learn-my-data.json"', "Cache-Control": "no-store" } });
 });
 app.post("/api/account/delete", async (c) => {
@@ -214,6 +221,9 @@ app.post("/api/account/delete", async (c) => {
     c.env.DB.prepare("DELETE FROM learn_progress WHERE user_id = ?").bind(u.id),
     c.env.DB.prepare("DELETE FROM quiz_attempts WHERE user_id = ?").bind(u.id),
     c.env.DB.prepare("DELETE FROM certificates WHERE user_id = ?").bind(u.id),
+    c.env.DB.prepare("DELETE FROM enrolments WHERE user_id = ?").bind(u.id),
+    // Paid orders and invoices are kept for eight years under GST and income-tax law; unpaid ones go now.
+    c.env.DB.prepare("DELETE FROM orders WHERE user_id = ? AND status NOT IN ('paid','refunded')").bind(u.id),
     c.env.DB.prepare("DELETE FROM users WHERE id = ?").bind(u.id),
   ]);
   await audit(c, c.env.DB, null, "learner.deleted");
@@ -229,19 +239,22 @@ app.route("/api/learn", learnApi({
     return u ? { id: u.id, name: u.name, verified: !!u.verified } : null;
   },
   verifyBase: (c) => `${site(c)}/verify/`,
+  entitlements: (c, l) => entitlements(c.env.DB, l.id),
 }));
+app.route("/api/pay", payApi(currentUser, site));
+app.get("/invoice/:id", (c) => invoicePage(c, currentUser));
 app.all("/api/*", (c) => c.json({ error: "Not found." }, 404));
 
 // ---------------------------------------------------------------- public pages
 const esc = (s: string) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
 function shellPage(title: string, body: string, desc = "") {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>${esc(title)}</title>${desc ? `<meta name="description" content="${esc(desc)}">` : ""}<link rel="icon" href="/_shared/logos/KSA_Identifier_FullColour.svg" type="image/svg+xml">
+<title>${esc(title)}</title>${desc ? `<meta name="description" content="${esc(desc)}">` : ""}<link rel="icon" href="/_shared/logos/KayakLearn_Mark.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/_shared/css/kayak.css"><link rel="stylesheet" href="/_shared/css/learn.css"><link rel="stylesheet" href="/assets/learn.css"></head>
-<body><header class="lhead"><a class="ksa-logo" href="/"><img src="/_shared/logos/KSA_Wordmark_FullColour.svg" alt="Kayak" height="22"><span class="sub">Learn</span></a><nav class="lnav"><a href="/">Courses</a><a href="/verify">Verify a certificate</a></nav></header>
+<body><header class="lhead"><a class="ksa-logo" href="/"><img src="/_shared/logos/KayakLearn_Logo_FullColour.svg" alt="Kayak Learn" height="34"></a><nav class="lnav"><a href="/">Courses</a><a href="/verify">Verify a certificate</a></nav></header>
 <main class="lmain">${body}</main>${footer()}</body></html>`;
 }
-const footer = () => `<footer class="lfoot"><div class="page"><div class="row between"><span>Kayak Learn is a free service of Kayak Strategic Advisors Private Limited, Mumbai and Thane.</span><span><a href="/#/privacy">Privacy notice</a> · <a href="https://www.kayaksa.com">www.kayaksa.com</a></span></div><p class="small">Courses are for general awareness and are not legal advice. Regulatory references are reviewed periodically and are stated as at November 2026.</p></div></footer>`;
+const footer = () => `<footer class="lfoot"><div class="page"><div class="row between"><span>Kayak Learn is offered by Kayak Strategic Advisors Private Limited, Mumbai and Thane.</span><span><a href="/#/terms">Terms of sale and refunds</a> · <a href="/#/privacy">Privacy notice</a> · <a href="https://www.kayaksa.com">www.kayaksa.com</a></span></div><p class="small">Courses are for general awareness and are not legal advice. Regulatory references are reviewed periodically and are stated as at November 2026.</p></div></footer>`;
 
 async function verifyHtml(c: any, id: string | null) {
   if (!id) {
@@ -283,4 +296,10 @@ app.all("*", async (c) => {
   return res;
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  async scheduled(_e: ScheduledEvent, env: Env) {
+    await pruneSecurity(env.DB);
+    await env.DB.prepare("DELETE FROM rate_limits").run();
+  },
+};

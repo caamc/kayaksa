@@ -1,6 +1,7 @@
 // www.kayaksa.com: the public website, served dynamically from a Cloudflare Worker.
 // Pages are rendered on the server (titles, descriptions, structured data and readable content
 // for search engines and AI assistants), then the browser app takes over for smooth navigation.
+import { shield, securityEvent, auditFull, pruneSecurity } from "../../../packages/core/src/shield";
 import { Hono } from "hono";
 import { securityHeaders, sameOrigin, HttpError, str, email as cleanEmail, rateLimit, clientIp } from "../../../packages/core/src/http";
 import { randomToken, sha256hex } from "../../../packages/core/src/crypto";
@@ -17,6 +18,7 @@ const app = new Hono<C>();
 const D: any = STATIC_DATA;
 
 app.use("*", securityHeaders({ permissions: "camera=(), microphone=(self), geolocation=(), payment=(), usb=()" }));
+app.use("*", shield("www", (e) => e.DB, { allowGoodBots: true }));
 app.use("/api/*", sameOrigin());
 app.onError((e: any, c) => {
   const status = e instanceof HttpError ? e.status : e?.status || 500;
@@ -143,7 +145,7 @@ ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replac
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=120, must-revalidate" },
   });
 }
-const VERSION = "2026-11-11e";
+const VERSION = "2026-11-11f";
 
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);
@@ -152,8 +154,10 @@ app.post("/api/forms", async (c) => {
   if (!(await rateLimit(c.env.DB, `form:${ip}`, 12, 3600))) return c.json({ error: "Too many submissions from this network. Please email enquiries@kayaksa.com." }, 429);
   const b: any = await c.req.json().catch(() => ({}));
   const f = b.fields || {};
-  if (f.website) return c.json({ ok: true }); // honeypot: pretend success to bots
-  if (b.t && Date.now() - Number(b.t) < 2500) return c.json({ ok: true }); // filled faster than a human could
+  if (f.website || (b.t && Date.now() - Number(b.t) < 2500)) { // honeypot or faster than a human: pretend success to bots
+    await securityEvent(c, c.env.DB, "www", { kind: "form.bot", severity: "low", detail: { form: str(b.kind, 20) } });
+    return c.json({ ok: true });
+  }
   const kind = String(b.kind || "");
   const now = new Date().toISOString();
   const country = (c.req.raw as any).cf?.country || "";
@@ -170,6 +174,7 @@ app.post("/api/forms", async (c) => {
     await c.env.DB.prepare(`INSERT INTO subscribers (id, email, list, filters, frequency, status, token_hash, consent_at, created_at, confirmed_at) VALUES (?,?,?,?,?,?,?,?,?,?)
       ON CONFLICT(email, list) DO UPDATE SET filters = excluded.filters, frequency = excluded.frequency, token_hash = excluded.token_hash, status = CASE WHEN subscribers.status = 'active' THEN 'active' ELSE excluded.status END, consent_at = excluded.consent_at`)
       .bind(crypto.randomUUID(), e, list, JSON.stringify(filters), freq, pending ? "pending" : "active", await sha256hex(token), now, now, pending ? null : now).run();
+    await auditFull(c, c.env.DB, null, `www.${list}.subscribed`, { email: e.replace(/^(.).*(@.*)$/, "$1***$2"), frequency: freq });
     if (pending) {
       const name = list === "seecounter" ? "SeeCounter alerts" : "Confluence";
       await sendMail(c.env, e, `Confirm your subscription to ${name}`, mailHtml({ site: "WWW", title: `Confirm your subscription to ${name}`,
@@ -189,6 +194,7 @@ app.post("/api/forms", async (c) => {
     const id = crypto.randomUUID();
     await c.env.DB.prepare("INSERT INTO enquiries (id, kind, source, name, email, organisation, phone, area, message, link, transcript, page, country, consent_at, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
       .bind(id, kind, b.source === "kay" ? "kay" : "form", name, e, str(f.org, 160), str(f.phone, 40), str(f.cluster, 120), msg, link, str(b.transcript, 12000), str(b.page, 200), country, now, now).run();
+    await auditFull(c, c.env.DB, null, `www.${kind}.submitted`, { id, via: b.source === "kay" ? "kay" : "form", page: str(b.page, 200) });
     if (mailEnabled(c.env) && c.env.ENQUIRY_TO) {
       const rows = [["Name", name], ["Email", e], ["Organisation", str(f.org, 160)], ["Phone", str(f.phone, 40)], ["Area", str(f.cluster, 120)], ["Link", link], ["Came via", b.source === "kay" ? "Kay" : "Website form"]].filter((r) => r[1]);
       c.executionCtx.waitUntil(sendMail(c.env, c.env.ENQUIRY_TO, `${kind === "career" ? "Careers note" : "New enquiry"}: ${name}${f.org ? `, ${str(f.org, 80)}` : ""}`, mailHtml({ site: "WWW",
@@ -285,7 +291,7 @@ app.get("/tools", (c) => c.redirect("/solutions", 301));
 app.get("/tools/:id", (c) => c.redirect(`/solutions/${c.req.param("id")}`, 301));
 
 // ------------------------------------------------------------------ SEO and AI discoverability
-app.get("/robots.txt", (c) => c.text(`User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${site(c)}/sitemap.xml\n`));
+app.get("/robots.txt", (c) => c.text(`# Search engines and AI assistants are welcome. Scrapers and SEO harvesters are not, and are blocked.\n${["SemrushBot", "AhrefsBot", "MJ12bot", "DotBot", "Bytespider", "PetalBot", "BLEXBot", "DataForSeoBot", "serpstatbot", "MegaIndex", "CCBot", "Diffbot", "omgili", "Timpibot", "ImagesiftBot"].map((b) => `User-agent: ${b}\nDisallow: /\n`).join("\n")}\nUser-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${site(c)}/sitemap.xml\n`));
 app.get("/sitemap.xml", async (c) => {
   const data = await siteData(c);
   const base = site(c);
@@ -301,7 +307,7 @@ app.get("/llms.txt", async (c) => {
     `## Services in detail`, ...SV.map((x) => `- [${x.name}](${base}/services/${x.cluster}/${x.slug}): ${x.summary}`), ``,
     `## Kayak Solutions (Thought, Designed and Developed in India for the World)`, ...d.tools.map((x: any) => `- [${x.name}](${base}/solutions/${x.id}): ${x.kind}. ${x.line}`), ``,
     `## Confluence (monthly insights)`, ...d.articles.map((x: any) => `- [${x.title}](${base}/insights/${x.id}): ${x.dek || ""}`), ``,
-    `## About`, `- [About us](${base}/about)`, `- [Contact](${base}/contact)`, `- [Kayak Learn: free courses with certificates](https://learn.kayaksa.com)`, `- Affiliates: Kayak Innovations (OPC) Private Limited (holds the IP of Kayak's solutions); Brand Defence & Integrity™ (www.bdiglobe.com); Kayak Technology Solutions, a partnership firm that develops and markets Kayak's SaaS solutions, led by Tan.ai (https://tanai.online), CTO for the group.`];
+    `## About`, `- [About us](${base}/about)`, `- [Contact](${base}/contact)`, `- [Kayak Learn: professional courses with verifiable certificates](https://learn.kayaksa.com)`, `- Affiliates: Kayak Innovations (OPC) Private Limited (holds the IP of Kayak's solutions); Brand Defence & Integrity™ (www.bdiglobe.com); Kayak Technology Solutions, a partnership firm that develops and markets Kayak's SaaS solutions, led by Tan.ai (https://tanai.online), CTO for the group.`];
   return c.text(t.join("\n"), 200, { "Cache-Control": "public, max-age=3600" });
 });
 
@@ -334,5 +340,6 @@ export default {
       env.DB.prepare("DELETE FROM enquiries WHERE created_at < ? AND status IN ('closed','spam')").bind(new Date(Date.now() - 3 * 365 * 86400_000).toISOString()),
     ]);
     await dailyCleanup(env);
+    await pruneSecurity(env.DB);
   },
 };

@@ -1,4 +1,5 @@
 // Sign-in with password plus mandatory TOTP two-factor authentication.
+import { securityEvent } from "../../../packages/core/src/shield";
 import { Hono } from "hono";
 import { hashPassword, verifyPassword, passwordProblems, randomToken, sha256hex, safeEqual, seal, unseal } from "../../../packages/core/src/crypto";
 import { newTotpSecret, totpUri, verifyTotp } from "../../../packages/core/src/totp";
@@ -62,6 +63,7 @@ auth.post("/login", async (c) => {
   const pw = typeof b.password === "string" ? b.password : "";
   const ip = clientIp(c);
   if (!(await rateLimit(c.env.DB, `login-ip:${ip}`, 30, 900)) || (e && !(await rateLimit(c.env.DB, `login-email:${e}`, 12, 900)))) {
+    await securityEvent(c, c.env.DB, "internal", { kind: "auth.brute_force", severity: "high", detail: { email: e } });
     return c.json({ error: "Too many attempts. Wait 15 minutes and try again." }, 429);
   }
   if (!e || !pw) return c.json({ error: GENERIC }, 400);
@@ -77,6 +79,9 @@ auth.post("/login", async (c) => {
       const lock = failed >= LOCK_AFTER ? new Date(Date.now() + LOCK_MINUTES * 60_000).toISOString() : null;
       await c.env.DB.prepare("UPDATE users SET failed = ?, locked_until = ? WHERE id = ?").bind(lock ? 0 : failed, lock, u.id).run();
       await audit(c, c.env.DB, u.id, lock ? "auth.locked" : "auth.failed_password");
+      await securityEvent(c, c.env.DB, "internal", { kind: lock ? "auth.account_locked" : "auth.failed_password", severity: lock ? "high" : "low", userId: u.id, detail: { email: e, attempt: failed } });
+    } else {
+      await securityEvent(c, c.env.DB, "internal", { kind: "auth.unknown_account", severity: "medium", detail: { email: e } });
     }
     return c.json({ error: GENERIC }, 401);
   }
@@ -110,6 +115,7 @@ auth.post("/totp", async (c) => {
     }
   }
   await audit(c, c.env.DB, u.id, "auth.failed_code");
+  await securityEvent(c, c.env.DB, "internal", { kind: "auth.failed_2fa", severity: "medium", userId: u.id });
   return c.json({ error: "That code is not correct or has already been used." }, 401);
 });
 
@@ -156,6 +162,7 @@ auth.post("/setup", async (c) => {
   if (!boot || boot.length < 24) return c.json({ error: "First-run set-up is switched off." }, 403);
   if (!e || !superadmins(c.env).includes(e) || !safeEqual(await sha256hex(token), await sha256hex(boot))) {
     await audit(c, c.env.DB, null, "auth.setup_refused", { email: e });
+    await securityEvent(c, c.env.DB, "internal", { kind: "auth.setup_refused", severity: "high", detail: { email: e } });
     return c.json({ error: "The email or set-up token is not correct." }, 403);
   }
   if (!name) return c.json({ error: "Enter your name." }, 400);

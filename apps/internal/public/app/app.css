@@ -121,3 +121,31 @@
 .page > a.small:first-child .ico:first-child{transform:rotate(180deg)}
 .bars{display:flex;align-items:flex-end;gap:3px;height:140px}.bars span{flex:1;background:var(--accent);min-height:3px}.bars span:hover{background:var(--saffron)}.table td.num{text-align:right;font-variant-numeric:tabular-nums}
 .chips a.chip{text-decoration:none}
+
+/* Security */
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86em}
+.nowrap{white-space:nowrap}
+.wrap-row{flex-wrap:wrap;gap:10px}
+.steps-plain{margin:0;padding-left:1.2em;display:grid;gap:8px;line-height:1.55}
+
+/* Colour guide */
+.share{display:flex;height:34px;border:1px solid var(--line);overflow:hidden}
+.share span+span{border-left:1px solid rgba(255,255,255,.35)}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid var(--line);flex:none;vertical-align:-2px}
+.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:10px}
+.pair{display:grid;gap:4px;padding:14px 16px;border:1px solid var(--line)}
+.pair b{font:800 1.6rem/1 var(--display)}
+.pair small{opacity:.85}
+.grad{display:grid;text-align:left;border:1px solid var(--line);background:var(--surface);padding:0;cursor:pointer;color:inherit;font:inherit}
+.grad i{display:block;height:86px}
+.grad span{padding:10px 12px}
+.grad:hover{border-color:var(--accent,#17807E)}
+.mixer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px}
+@media (max-width:760px){.mixer{grid-template-columns:1fr}}
+.mixer .row{gap:8px;flex-wrap:wrap}
+.mixer input[type=color]{width:44px;height:38px;padding:0;border:1px solid var(--line);background:none}
+.mx-prev{display:grid;gap:8px;padding:28px;min-height:170px;align-content:center;border:1px solid var(--line)}
+.mx-prev b{font:800 1.6rem/1.15 var(--display)}
+.mx-prev p{margin:0;font:1rem/1.55 var(--serif)}
+.royal-meter{height:6px;background:var(--line);overflow:hidden}
+.royal-meter span{display:block;height:100%;background:linear-gradient(90deg,#B4472F,#EE9B1E 50%,#17807E)}

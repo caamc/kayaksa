@@ -8,6 +8,8 @@ mkdirSync(OUT, { recursive: true });
 const fails = [];
 const check = (ok, msg) => { console.log(`${ok ? "PASS" : "FAIL"}  ${msg}`); if (!ok) fails.push(msg); };
 const browser = await chromium.launch();
+// Kayak Shield refuses "HeadlessChrome", so present as a normal browser.
+const _nc = browser.newContext.bind(browser); browser.newContext = (o = {}) => _nc({ userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0 Safari/537.36", ...o });
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
 const errors = [];

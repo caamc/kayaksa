@@ -1,3 +1,4 @@
+import { colourGuide, wireColourGuide } from "./colour.js";
 import { $, $$, api, esc, html, raw, ico, toast, dialog, confirmDialog, copyText, fmtBytes, setBusy } from "/_shared/js/ui.js";
 
 const PRIMARY = [
@@ -49,6 +50,7 @@ export async function render(main, { me, query }) {
       <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr))">${PRIMARY.map(([n, h, r]) => html`<button class="swatch" data-hex="${h}"><i style="background:${h}"></i><span><b>${n}</b><br><code>${h}</code> · RGB ${rgb(h)}<br><span class="muted">${r}</span></span></button>`)}</div>
       <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,130px),1fr))">${SECONDARY.map(([n, h]) => html`<button class="swatch" data-hex="${h}"><i style="background:${h};height:48px"></i><span><b>${n}</b><br><code>${h}</code></span></button>`)}</div>
     </section>
+    ${raw(colourGuide())}
 
     <section class="stack" id="lib"><h2>Brand library</h2>
       <div class="toolbar"><label class="search"><span class="sr-only">Search the library</span>${ico("search")}<input class="input" id="q" placeholder="Search logos, templates, icons…" autocomplete="off"></label></div>
@@ -58,6 +60,7 @@ export async function render(main, { me, query }) {
   </div>`);
 
   $$("[data-hex]", main).forEach((b) => (b.onclick = () => copyText(b.dataset.hex)));
+  wireColourGuide(main);
   $$("[data-c]", main).forEach((b) => (b.onclick = () => { cat = cats.find((c) => c.toLowerCase().includes(b.dataset.c.toLowerCase())) || "All"; draw(); $("#lib").scrollIntoView({ behavior: "smooth" }); }));
   $("#q").oninput = (e) => { q = e.target.value.toLowerCase(); draw(); };
 
