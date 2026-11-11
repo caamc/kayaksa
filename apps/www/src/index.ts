@@ -1,6 +1,7 @@
 // www.kayaksa.com: the public website, served dynamically from a Cloudflare Worker.
 // Pages are rendered on the server (titles, descriptions, structured data and readable content
 // for search engines and AI assistants), then the browser app takes over for smooth navigation.
+import { exhibitHtml, cleanExhibit } from "./exhibit";
 import { shield, securityEvent, auditFull, pruneSecurity } from "../../../packages/core/src/shield";
 import { magazinePage, BUILT_IN, type Edition } from "./magazine";
 import { Hono } from "hono";
@@ -62,6 +63,21 @@ async function siteData(c: any) {
   const data: any = { ...D, articles: [...D.articles] };
   const ed = await latestEdition(c);
   data.confluence = { id: ed.id, issue: ed.issue, month: ed.month, period: ed.period, coverTitle: ed.coverTitle, coverDek: ed.coverDek, coverLines: ed.coverLines, spotlight: ed.spotlight?.tool || null };
+  // The featured exhibit on the Insights page: the issue's first bar or column exhibit, drawn exactly as in the magazine.
+  {
+    const ROT = ["photo", "pattern", "exhibit", "quote"];
+    let n = 0;
+    for (const [i, s] of (ed.stories || []).entries()) {
+      const x = cleanExhibit(s.exhibit);
+      if (!x) continue;
+      n++;
+      if (x.kind === "bar" || x.kind === "column") {
+        const lay = s.layout || ROT[i % 4];
+        data.confluence.exhibit = { story: s.title, dek: s.dek, page: 6 + i * 2 + (lay === "quote" ? 1 : 0), html: exhibitHtml(x, n, { wide: true }) };
+        break;
+      }
+    }
+  }
   try {
     const rows = await c.env.DB.prepare("SELECT id, section, cluster, pattern, mins, title, dek, body, published_at FROM articles WHERE status = 'published' ORDER BY published_at DESC LIMIT 60").all();
     const live = (rows.results as any[]).map((r) => ({ ...r, cluster: r.cluster === "tax-regulatory" ? "tax-legal-regulatory" : r.cluster, body: JSON.parse(r.body || "[]") }));
@@ -164,7 +180,7 @@ ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replac
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=120, must-revalidate" },
   });
 }
-const VERSION = "2026-11-12a";
+const VERSION = "2026-11-12b";
 
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);

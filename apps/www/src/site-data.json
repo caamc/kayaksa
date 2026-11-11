@@ -546,7 +546,121 @@
      "Decisions on renewal or exit are taken on evidence, and records are kept."
     ]
    ],
-   "soon": "nexapair.in"
+   "soon": "nexapair.in",
+   "regulation": {
+    "intro": "NexaPair is built around the rules that regulated firms in the UAE now work to. Each requirement maps to a module, a record and a piece of evidence.",
+    "items": [
+     {
+      "tag": "CBUAE · Regulation C 1/2026",
+      "title": "Operational Risk Management Regulation",
+      "body": "In force since 14 September 2026. Article 13 sets how a regulated firm manages its third parties: a written policy, a register, due diligence before and during the relationship, contracts, monitoring and a tested plan for exit.",
+      "refs": [
+       [
+        "Article 13.3",
+        "Due diligence",
+        "nexapair-due-diligence-questionnaire"
+       ],
+       [
+        "Articles 13.11–13.12",
+        "Exit planning",
+        "nexapair-exit-plan-guide"
+       ],
+       [
+        "Article 13",
+        "Readiness",
+        "nexapair-article-13-readiness-checklist"
+       ]
+      ]
+     },
+     {
+      "tag": "CBUAE · Regulation C 1/2026",
+      "title": "Incident notification",
+      "body": "Material events affecting Critical Operations must be notified to the CBUAE within 4 hours, followed by a summary report within 24 hours, and within 72 hours for high-risk incidents. NexaSentinel starts the clock when a vendor incident is logged.",
+      "refs": [
+       [
+        "Article 15",
+        "Playbook",
+        "nexapair-incident-notification-playbook"
+       ],
+       [
+        "Article 15",
+        "Template",
+        "nexapair-incident-notification-template"
+       ]
+      ]
+     },
+     {
+      "tag": "UAE VAT · FTA Decision No. 13 of 2026",
+      "title": "Verifying suppliers before input VAT is deducted",
+      "body": "In force from 1 October 2026. A business must verify its suppliers and their supplies, and keep the evidence, before it deducts input tax. NexaVatVeri carries these checks.",
+      "refs": [
+       [
+        "Article 54 (bis), VAT Law",
+        "NexaVatVeri",
+        "#nexavatveri"
+       ]
+      ]
+     }
+    ],
+    "note": "Regulatory summaries are for information and are not legal or tax advice. Read the instruments and take advice on your own facts; the official Arabic text prevails."
+   },
+   "vat": {
+    "name": "NexaVatVeri",
+    "title": "Verify the supplier and the supply before input VAT is deducted",
+    "lead": "UAE VAT has moved from checking the invoice to checking the business behind it. Article 54 (bis) of the VAT Law, added by Federal Decree-Law No. 16 of 2025, allows the Federal Tax Authority to deny input tax where a business knew, or should have known, that a supply was connected with tax evasion. FTA Decision No. 13 of 2026, in force from 1 October 2026, sets out the verification that shows a business took care.",
+    "why": "For finance and tax teams this turns supplier diligence into a condition of recovering input VAT. The question an auditor will ask is simple: what did you check, when, and who signed it off. NexaVatVeri, a NexaPair module, keeps that answer on one record.",
+    "steps": [
+     [
+      "user",
+      "Verify the supplier",
+      "Incorporation from official records, the authorised representative's identity and a real place of business; again if the supplier has not been verified in the past 12 months. Above AED 375,000 a year, a UAE bank account and a review of public information and reputation."
+     ],
+     [
+      "contract",
+      "Check the supply",
+      "Commercial reason, how and to whom payment is made, price against the market, whether the goods or services fit the supplier's licensed activity, the origin of goods and any intermediary's role."
+     ],
+     [
+      "risk",
+      "Resolve or document exceptions",
+      "Risk indicators, such as more than two changes of address or key staff in 12 months or trade out of proportion to the supplier's size, are explained and kept. Holds are released only after review, with a second person's approval."
+     ],
+     [
+      "report",
+      "Retain the evidence",
+      "A written verification policy naming who implements, reviews and supervises, and an evidence pack for each tax period with the checks, documents and decisions."
+     ]
+    ],
+    "bands": [
+     [
+      "Below AED 10,000",
+      "per supply, excluding VAT, may be set aside, unless supplies from that supplier exceed AED 100,000 over 12 months"
+     ],
+     [
+      "Above AED 100,000",
+      "over the past or next 12 months: every supply is verified"
+     ],
+     [
+      "Above AED 375,000",
+      "enhanced supplier checks: bank account, public information and reputation"
+     ]
+    ],
+    "next": "Next on the horizon: under Ministerial Decisions No. 243 and 244 of 2025, e-invoicing becomes mandatory for businesses with revenue of AED 50 million or more from 1 January 2027, and for other businesses from 1 July 2027. Clean, verified supplier records make that move easier.",
+    "sources": [
+     [
+      "PwC Middle East: FTA Decision No. 13 of 2026",
+      "https://www.pwc.com/m1/en/services/tax/middle-east-tax-news-alerts/2026/fta-decision-no-13-of-2026-on-verification-of-supplies-before-input-tax-deduction.html"
+     ],
+     [
+      "Baker McKenzie: FTA introduces new input tax obligations",
+      "https://www.bakermckenzie.com/en/insight/publications/2026/09/united-arab-emirates-fta-introduces-new-input-tax-obligations"
+     ],
+     [
+      "Grant Thornton UAE: e-invoicing, phased rollout",
+      "https://www.grantthornton.ae/insights/articles2/e-invoicing-in-the-uae-legal-foundations-phased-rollout-and-strategic-implications/"
+     ]
+    ]
+   }
   },
   {
    "id": "docuvow",
@@ -1342,5 +1456,151 @@
    "We start paddling",
    "Kick-off with your team and an agreed date for the first read-out."
   ]
+ ],
+ "resources": [
+  {
+   "id": "nexapair-platform-brochure",
+   "tool": "nexapair",
+   "type": "Brochure",
+   "code": "NP-BR-2026-01",
+   "title": "Every third party, verified and in view",
+   "desc": "The NexaPair platform for UAE institutions: verify the companies you depend on, find the links nobody declared, monitor them between reviews and keep the evidence a regulator expects.",
+   "regs": [
+    "CBUAE C 1/2026"
+   ],
+   "pages": 18,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-platform-brochure.pdf",
+   "thumb": "/resources/nexapair/nexapair-platform-brochure.webp",
+   "cluster": "technology-ai"
+  },
+  {
+   "id": "nexapair-article-13-made-practical",
+   "tool": "nexapair",
+   "type": "White paper",
+   "code": "NP-WP-2026-01",
+   "title": "Article 13, made practical",
+   "desc": "A field guide to third-party risk management under the Central Bank of the UAE's Operational Risk Management Regulation, C 1/2026.",
+   "regs": [
+    "CBUAE C 1/2026 · Article 13"
+   ],
+   "pages": 14,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-article-13-made-practical.pdf",
+   "thumb": "/resources/nexapair/nexapair-article-13-made-practical.webp",
+   "cluster": "technology-ai"
+  },
+  {
+   "id": "nexapair-security-white-paper",
+   "tool": "nexapair",
+   "type": "White paper",
+   "code": "NP-WP-2026-02",
+   "title": "Security, as it stands today",
+   "desc": "What is true of NexaPair's security now, control by control, each marked Live, Roadmap or To be confirmed.",
+   "regs": [
+    "Information security"
+   ],
+   "pages": 8,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-security-white-paper.pdf",
+   "thumb": "/resources/nexapair/nexapair-security-white-paper.webp",
+   "cluster": "technology-ai"
+  },
+  {
+   "id": "nexapair-article-13-readiness-checklist",
+   "tool": "nexapair",
+   "type": "Checklist",
+   "code": "NP-TK-2026-01",
+   "title": "Article 13 readiness checklist",
+   "desc": "Nineteen requirements of CBUAE Regulation C 1/2026, each with a readiness question, the evidence to keep and a suggested owner.",
+   "regs": [
+    "CBUAE C 1/2026 · Article 13"
+   ],
+   "pages": 8,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-article-13-readiness-checklist.pdf",
+   "thumb": "/resources/nexapair/nexapair-article-13-readiness-checklist.webp",
+   "cluster": "technology-ai"
+  },
+  {
+   "id": "nexapair-due-diligence-questionnaire",
+   "tool": "nexapair",
+   "type": "Questionnaire",
+   "code": "NP-TK-2026-02",
+   "title": "Third-party due diligence questionnaire",
+   "desc": "For suppliers and service providers of UAE and Indian financial institutions.",
+   "regs": [
+    "CBUAE C 1/2026 · Article 13.3"
+   ],
+   "pages": 8,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-due-diligence-questionnaire.pdf",
+   "thumb": "/resources/nexapair/nexapair-due-diligence-questionnaire.webp",
+   "cluster": "technology-ai"
+  },
+  {
+   "id": "nexapair-incident-notification-playbook",
+   "tool": "nexapair",
+   "type": "Playbook",
+   "code": "NP-TK-2026-04",
+   "title": "Third-party incident notification playbook",
+   "desc": "What to do, and what to send, when an incident at a third party affects a Critical Operation.",
+   "regs": [
+    "CBUAE C 1/2026 · Article 15"
+   ],
+   "pages": 8,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-incident-notification-playbook.pdf",
+   "thumb": "/resources/nexapair/nexapair-incident-notification-playbook.webp",
+   "cluster": "technology-ai"
+  },
+  {
+   "id": "nexapair-incident-notification-template",
+   "tool": "nexapair",
+   "type": "Template",
+   "code": "NP-TPL-2026-04",
+   "title": "Third-party incident notification template",
+   "desc": "A ready-to-complete notice for incidents at a third party that affect a Critical Operation.",
+   "regs": [
+    "CBUAE C 1/2026 · Article 15"
+   ],
+   "pages": 6,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-incident-notification-template.pdf",
+   "thumb": "/resources/nexapair/nexapair-incident-notification-template.webp",
+   "cluster": "technology-ai"
+  },
+  {
+   "id": "nexapair-exit-plan-guide",
+   "tool": "nexapair",
+   "type": "Toolkit",
+   "code": "NP-TK-2026-03",
+   "title": "Third-party exit plan",
+   "desc": "How to write one exit plan per material or critical arrangement, and what it must cover.",
+   "regs": [
+    "CBUAE C 1/2026 · Articles 13.11–13.12"
+   ],
+   "pages": 5,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-exit-plan-guide.pdf",
+   "thumb": "/resources/nexapair/nexapair-exit-plan-guide.webp",
+   "cluster": "technology-ai"
+  },
+  {
+   "id": "nexapair-exit-plan-template",
+   "tool": "nexapair",
+   "type": "Template",
+   "code": "NP-TPL-2026-03",
+   "title": "Third-party exit plan template",
+   "desc": "The exit plan as a form to complete for each material or critical arrangement.",
+   "regs": [
+    "CBUAE C 1/2026 · Articles 13.11–13.12"
+   ],
+   "pages": 5,
+   "date": "2026-11",
+   "file": "/resources/nexapair/nexapair-exit-plan-template.pdf",
+   "thumb": "/resources/nexapair/nexapair-exit-plan-template.webp",
+   "cluster": "technology-ai"
+  }
  ]
 }

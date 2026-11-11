@@ -56,6 +56,19 @@ function acard(a) {
     <div class="body"><div class="meta"><b>${esc(a.section)}</b><span>${a.mins} min read</span></div>
     <h3>${esc(a.title)}</h3><p>${esc(a.dek)}</p></div></a>`;
 }
+// One pattern per content type (Guidelines 07 · Website · Insights), so a reader can tell types apart at a glance.
+const TYPE_PAT = { Magazine: "01-confluence", Article: "05-wake-lines", "White paper": "11-chart-contours", Brochure: "03-delta", Checklist: "07-k-lattice", Questionnaire: "07-k-lattice", Playbook: "10-soundings", Toolkit: "07-k-lattice", Template: "08-pinstripe" };
+const TYPE_GROUP = { Magazine: "Confluence", Article: "Articles", "White paper": "White papers", Brochure: "Brochures", Checklist: "Toolkits and templates", Questionnaire: "Toolkits and templates", Playbook: "Toolkits and templates", Toolkit: "Toolkits and templates", Template: "Toolkits and templates" };
+const ctl = (t) => `<span class="ctl"><i></i>${esc(t)}</span>`;
+function rcard(r) {
+  const tool = (DATA.tools || []).find((t) => t.id === r.tool);
+  return `<a class="rcard" href="${esc(r.file)}" target="_blank" rel="noopener" data-group="${esc(TYPE_GROUP[r.type] || "Toolkits and templates")}" data-cluster="${esc(r.cluster || "")}" data-q="${esc((r.title + " " + r.desc + " " + r.regs.join(" ") + " " + (tool ? tool.name : "")).toLowerCase())}">
+    <figure style="--pt:url('/assets/patterns/${TYPE_PAT[r.type] || "07-k-lattice"}-tonal-light.svg')"><img src="${esc(r.thumb)}" alt="" loading="lazy" width="210" height="297"></figure>
+    <div class="body">${ctl(r.type)}<h3>${esc(r.title)}</h3><p>${esc(r.desc)}</p>
+    <div class="rregs">${r.regs.map((x) => `<em>${esc(x)}</em>`).join("")}</div>
+    <div class="rmeta"><span>${tool ? esc(tool.name) + " · " : ""}PDF · ${r.pages} pages</span><span>${esc(r.code)} ${ic("external-link")}</span></div></div></a>`;
+}
+
 function crumbs(items) {
   return `<nav class="crumbs" aria-label="Breadcrumb"><a href="#home">Home</a>${items.map((i) => `${ic("chevron-right")}${i[1] ? `<a href="#${i[1]}">${esc(i[0])}</a>` : `<span aria-current="page">${esc(i[0])}</span>`}`).join("")}</nav>`;
 }
@@ -309,16 +322,47 @@ P.tool = (t) => {
   <div class="sec-head"><div><span class="eyebrow">Modules</span><h2>${t.modules.length} modules, one platform</h2><p class="lead">Start with the modules you need and add the rest as the programme grows. Every module shares the same records, permissions and reporting.</p></div></div>
   <div class="modgrid" style="--n:${t.modules.length % 3 === 0 ? 3 : 4}">${t.modules.map((m) => `<article class="svc-card${m[2].startsWith("[") ? " ph" : ""}">${ic(m[0])}<h3>${esc(m[1])}</h3><p>${esc(m[2])}</p></article>`).join("")}</div>
 </div></section>
+${t.vat ? vatSection(t) : ""}
+${t.regulation ? regSection(t) : ""}
 <section class="sec"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">How it works</span><h2>Software, with Kayak's people behind it</h2></div></div>
   ${strokes(t.how.map((h) => ["", h[0], h[1]]))}
 </div></section>
+${resSection(t)}
 <section class="sec tight alt"><div class="wrap" style="display:grid;gap:40px">
   <div><span class="eyebrow">Backed by our services</span><div class="chips" style="margin-top:14px">${t.clusters.map((id) => `<a class="chip" href="#${id}" style="--c:${C[id].color}"><i></i>${esc(C[id].name)}</a>`).join("")}</div></div>
   <div><span class="eyebrow">Other Kayak tools</span><div style="margin-top:14px">${toolsGrid(other, true)}</div></div>
 </div></section>
 ${ctaBand(`See ${t.name} in action`, t.id, "Request a demo")}`;
 };
+
+function vatSection(t) {
+  const v = t.vat;
+  return `<section class="sec vat" id="nexavatveri" style="--c:${t.color}"><div class="wrap">
+  <div class="vat-head"><div>${ctl("New module")}<h2><span>${esc(v.name)}</span> ${esc(v.title)}</h2><p class="lead">${esc(v.lead)}</p><p>${esc(v.why)}</p></div>
+    <aside class="vat-bands"><span class="eyebrow">The thresholds that decide the depth of checks</span>${v.bands.map((b, i) => `<div class="${i === 2 ? "hi" : ""}"><b>${esc(b[0])}</b><span>${esc(b[1])}</span></div>`).join("")}</aside></div>
+  <ol class="vat-steps">${v.steps.map((s2, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i>${ic(s2[0])}<h3>${esc(s2[1])}</h3><p>${esc(s2[2])}</p></li>`).join("")}</ol>
+  <p class="vat-next">${ic("timeline")} ${esc(v.next)}</p>
+  <div class="vat-foot"><a class="btn btn-primary" href="#contact" data-cluster="${t.id}">Ask for a ${esc(v.name)} walkthrough ${arrow}</a><p class="small">Summary for information, not tax advice. Sources: ${v.sources.map((x) => `<a href="${esc(x[1])}" target="_blank" rel="noopener noreferrer">${esc(x[0])}</a>`).join("; ")}.</p></div>
+</div></section>`;
+}
+function regSection(t) {
+  const g = t.regulation, R = Object.fromEntries((DATA.resources || []).map((r) => [r.id, r]));
+  return `<section class="sec alt" id="regulation"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Regulation</span><h2>Built around the rules you are examined on</h2><p class="lead">${esc(g.intro)}</p></div></div>
+  <div class="regs">${g.items.map((it) => `<article><span class="rtag">${esc(it.tag)}</span><h3>${esc(it.title)}</h3><p>${esc(it.body)}</p>
+    <ul>${it.refs.map(([a, l, id]) => { const r = R[id]; const href = r ? r.file : id; return `<li><a href="${esc(href)}"${r ? ' target="_blank" rel="noopener"' : ""}><b>${esc(a)}</b><span>${esc(l)}${r ? ` · ${esc(r.type)}, PDF` : ""}</span>${ic("arrow-right")}</a></li>`; }).join("")}</ul></article>`).join("")}</div>
+  <p class="small" style="margin-top:18px">${esc(g.note)}</p>
+</div></section>`;
+}
+function resSection(t) {
+  const list = (DATA.resources || []).filter((r) => r.tool === t.id);
+  if (!list.length) return "";
+  return `<section class="sec" id="resources"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Resource library</span><h2>White papers, toolkits and templates</h2><p class="lead">Free to download and use. Each one is published by ${esc(t.name)} and Kayak Strategic Advisors and maps to a named requirement.</p></div><a class="textlink" href="#insights" data-f="Toolkits and templates">All insights ${arrow}</a></div>
+  <div class="rgrid">${list.map(rcard).join("")}</div>
+</div></section>`;
+}
 
 P.tools = () => `
 <section class="phero colored" style="--c:${C["technology-ai"].color};--p:var(--pc-technology-ai);--ps:var(--ps-technology-ai)"><div class="wrap">
@@ -348,28 +392,50 @@ ${ctaBand("Discuss your sector with us")}`;
 
 P.insights = () => {
   const cs = A["growth-and-risk"];
-  const rest = DATA.articles.filter((a) => a.id !== cs.id && a.id !== "why-confluence");
-  const secs = [...new Set(rest.map((a) => a.section))];
+  const cf = DATA.confluence || {};
+  const items = [
+    { kind: "issue" },
+    ...DATA.articles.filter((a) => a.id !== "why-confluence").map((a) => ({ kind: "article", a })),
+    ...(DATA.resources || []).map((r) => ({ kind: "res", r })),
+  ];
+  const groups = ["Confluence", "Articles", "White papers", "Toolkits and templates", "Brochures"];
+  const count = (g) => items.filter((x) => (x.kind === "issue" ? "Confluence" : x.kind === "article" ? "Articles" : TYPE_GROUP[x.r.type]) === g).length;
+  const card = (x) => x.kind === "issue"
+    ? `<a class="icard" href="${MAG()}" data-group="Confluence" data-cluster="" data-q="confluence magazine ${esc((cf.coverTitle || "") + " " + (cf.coverDek || "")).toLowerCase()}"><div class="icov">${magCover(false).replace(/^\s*<a /, "<span ").replace(/<\/a>\s*$/, "</span>").replace(/ href="[^"]*"/, "").replace(/ aria-label="[^"]*"/, ' aria-hidden="true"')}</div><div class="body">${ctl("Magazine")}<h3>Confluence, ${esc(cf.month || "")}: ${esc(cf.coverTitle || "")}</h3><p>${esc(cf.coverDek || "")}</p><div class="rmeta"><span>${esc(cf.issue || "")} · 26 pages</span><span>Open the magazine ${arrow}</span></div></div></a>`
+    : x.kind === "article" ? acard(x.a).replace('class="acard"', `class="acard" data-group="Articles" data-q="${esc((x.a.title + " " + x.a.dek + " " + x.a.section).toLowerCase())}"`) : rcard(x.r);
   return `
-<section class="deep issue-hero"><div class="wrap">
-  <div>${crumbs([["Insights"]]).replace('class="crumbs"', 'class="crumbs" style="color:var(--on-deep-muted)"')}
-    <div class="masthead" style="margin-top:22px">CONFLUENCE</div>
-    <p class="masthead-sub">The Kayak monthly on strategy, risk and the decisions between them.</p>
-    <div class="issue-meta"><span>Issue 01</span><span>November 2026</span><span>First Tuesday, monthly</span></div></div>
-  <div class="ih-right">${magCover(true)}<p style="margin:18px 0 6px"><a class="btn btn-saffron" href="${MAG()}">Open the magazine ${arrow}</a></p><p style="color:var(--on-deep-muted);margin:12px 0 12px">Each issue covers the 25th of one month to the 25th of the next. Free to clients and subscribers.</p>${subscribeForm("sub-ins")}</div>
+<section class="ins-hero" style="--pt:url('/assets/patterns/09-current-brand-dark.svg')"><div class="wrap">
+  <div class="ih-l">${crumbs([["Insights"]]).replace('class="crumbs"', 'class="crumbs" style="color:var(--on-deep-muted)"')}
+    <span class="ih-eye">Confluence · ${esc(cf.issue || "Issue 01")} · ${esc(cf.month || "")}</span>
+    <h1>${esc(cf.coverTitle || "Confluence")}<span>: the month in review</span></h1>
+    <p class="lead">${esc(cf.coverDek || "")} Covering ${esc(cf.period || "")}.</p>
+    <div class="ih-ctas"><a class="btn btn-saffron" href="${MAG()}">Open the magazine ${arrow}</a><a class="btn btn-ghost" style="color:#fff" href="#insight-${cs.id}">Read the cover story</a></div>
+    ${cf.coverLines ? `<ul class="ih-lines">${cf.coverLines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}</div>
+  <div class="ih-r">${magCover(true)}</div>
 </div></section>
 <section class="sec"><div class="wrap">
-  <a class="cover-story" href="#insight-${cs.id}">${PH("insights") ? `<div class="cover photo" style="background-image:url('${PH("insights")}')" aria-hidden="true"><span class="ct">Cover story · Issue 01</span></div>` : cover(null, "Cover story · Issue 01", "navigation")}<div class="body"><div class="meta"><b>Cover Story</b><span>${cs.mins} min read</span></div><h2>${esc(cs.title)}</h2><p>${esc(cs.dek)}</p><span class="textlink">Read the cover story ${arrow}</span></div></a>
+  <div class="sec-head"><div><span class="eyebrow">Insights</span><h2>Latest thinking</h2><p class="lead">Our monthly magazine, articles, white papers and working toolkits, in one library. Filter by type or by the question you are working on.</p></div></div>
+  <div class="lib-bar">
+    <div class="filters" role="group" aria-label="Filter by type"><button class="fbtn" type="button" aria-pressed="true" data-g="">All <i>${items.length}</i></button>${groups.filter(count).map((g) => `<button class="fbtn" type="button" aria-pressed="false" data-g="${esc(g)}">${esc(g)} <i>${count(g)}</i></button>`).join("")}</div>
+    <div class="filter lib-q">${ic("search")}<label class="sr" for="libq">Search insights</label><input id="libq" type="search" placeholder="Search, for example Article 13 or GST" autocomplete="off"></div>
+  </div>
+  <div class="chips lib-topics" role="group" aria-label="Filter by topic"><button class="chip" type="button" data-t="" aria-pressed="true">All topics</button>${DATA.clusters.map((c) => `<button class="chip" type="button" data-t="${c.id}" aria-pressed="false" style="--c:${c.color}"><i></i>${esc(c.short || c.name)}</button>`).join("")}</div>
+  <div class="lib" id="lib">${items.map(card).join("")}</div>
+  <p class="noresults" id="nolib" hidden>Nothing matches that filter yet. Try another topic, or <a href="#contact">ask us directly</a>.</p>
 </div></section>
-<section class="sec" style="padding-top:0"><div class="wrap">
-  <div class="sec-head"><div><span class="eyebrow">In this issue</span><h2>A read across all six clusters</h2></div></div>
-  <div class="filters" role="group" aria-label="Filter articles"><button class="fbtn" type="button" aria-pressed="true" data-f="">All</button>${secs.map((s) => `<button class="fbtn" type="button" aria-pressed="false" data-f="${esc(s)}">${esc(s)}</button>`).join("")}</div>
-  <div class="agrid" id="agrid">${rest.map(acard).join("")}</div>
+${cf.exhibit ? `<section class="sec alt"><div class="wrap feat-ex">
+  <div><span class="eyebrow">Featured exhibit</span><h2>${esc(cf.exhibit.story)}</h2><p class="lead">${esc(cf.exhibit.dek)}</p><a class="textlink" href="${MAG()}#p${cf.exhibit.page}">See it in Confluence ${arrow}</a></div>
+  <div class="site-ex">${cf.exhibit.html}</div>
+</div></section>` : ""}
+<section class="sec"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">How we help</span><h2>Six clusters, one lead partner</h2></div><a class="textlink" href="#services">All services ${arrow}</a></div>
+  <div class="helprow">${DATA.clusters.map((c, i) => `<a href="#${c.id}" style="--c:${c.color}" class="${i ? "" : "first"}">${ic(c.icon)}<span>${esc(c.name)}</span></a>`).join("")}</div>
 </div></section>
 <section class="sec alt"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">In every issue</span><h2>Eleven sections, one shape each month</h2></div><a class="textlink" href="#insight-why-confluence">Why Confluence ${arrow}</a></div>
   <div class="every">${DATA.sections.map((s) => `<div><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div>`).join("")}</div>
-</div></section>`;
+</div></section>
+<section class="deep brief"><div class="wrap"><div><span class="eyebrow" style="color:#F5C46D">The Kayak Brief, monthly</span><h2>Confluence in your inbox on the first Tuesday</h2><p>Free to clients and subscribers. One email a month; unsubscribe at any time.</p></div>${subscribeForm("sub-ins")}</div></section>`;
 };
 
 P.article = (a) => {
@@ -651,10 +717,22 @@ function bindPage() {
     });
     $("#noind").hidden = any;
   });
-  $$(".fbtn").forEach((b) => b.addEventListener("click", () => {
-    $$(".fbtn").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-    $$("#agrid .acard").forEach((c) => { c.hidden = !!b.dataset.f && c.dataset.section !== b.dataset.f; });
-  }));
+  // Insights library: type, topic and search filters work together.
+  const lib = $("#lib");
+  if (lib) {
+    const st = { g: "", t: "", q: "" };
+    const run = () => {
+      let n = 0;
+      $$("#lib > a").forEach((c) => {
+        const hit = (!st.g || c.dataset.group === st.g) && (!st.t || c.dataset.cluster === st.t) && (!st.q || (c.dataset.q || c.textContent.toLowerCase()).includes(st.q));
+        c.hidden = !hit; if (hit) n++;
+      });
+      $("#nolib").hidden = n > 0;
+    };
+    $$(".lib-bar .fbtn").forEach((b) => b.addEventListener("click", () => { $$(".lib-bar .fbtn").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); st.g = b.dataset.g; run(); }));
+    $$(".lib-topics .chip").forEach((b) => b.addEventListener("click", () => { $$(".lib-topics .chip").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); st.t = b.dataset.t; run(); }));
+    $("#libq")?.addEventListener("input", (e) => { st.q = e.target.value.trim().toLowerCase(); run(); });
+  }
   $$(".js-form").forEach(bindForm);
 }
 
