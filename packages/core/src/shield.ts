@@ -13,7 +13,7 @@ import type { Context, MiddlewareHandler } from "hono";
 import { clientIp, rateLimit } from "./http";
 import { sendMail, mailHtml, type MailEnv } from "./mail";
 
-export type Site = "www" | "learn" | "internal";
+export type Site = "www" | "learn" | "internal" | "meet";
 export type Severity = "low" | "medium" | "high" | "critical";
 export interface SecurityEvent { kind: string; severity: Severity; detail?: unknown; path?: string; userId?: string | null }
 

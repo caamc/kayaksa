@@ -31,6 +31,7 @@ export function securityHeaders(opts: CspOptions & { noindex?: boolean; permissi
   const policy = csp(opts);
   return async (c, next) => {
     await next();
+    if (c.res.status === 101) return; // WebSocket upgrades must pass through untouched
     // Responses from the static-assets binding have immutable headers; copy before editing.
     c.res = new Response(c.res.body, c.res);
     const h = c.res.headers;

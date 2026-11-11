@@ -6,7 +6,7 @@ import { join, relative, extname, basename } from "node:path";
 const root = new URL("..", import.meta.url).pathname;
 const brand = join(root, "packages/brand");
 
-for (const app of ["internal", "learn", "www"]) {
+for (const app of ["internal", "learn", "www", "meet"]) {
   const shared = join(root, "apps", app, "public/_shared");
   rmSync(shared, { recursive: true, force: true });
   mkdirSync(shared, { recursive: true });
