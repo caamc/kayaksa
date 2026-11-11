@@ -19,6 +19,25 @@ export interface Story {
   questions: string[];
   postscript?: string;
   sources: [string, string][];
+  /** How the spread is composed; when absent, layouts rotate so no two spreads in a row look alike. */
+  layout?: "photo" | "pattern" | "exhibit" | "quote";
+  /** A line lifted from the perspective for pull-quote marks. Never a new claim. */
+  pull?: string;
+  /** One exhibit, built only from figures in this story's sources. */
+  exhibit?: Exhibit;
+}
+
+/** A KSA exhibit (Design & Visual Guidelines, 06): insight-first title, one saffron beacon, a source line. */
+export interface Exhibit {
+  kind: "column" | "bar" | "waffle" | "gauge" | "route" | "cards";
+  title: string; // the insight, as a sentence
+  unit: string; // measure, unit and period
+  data?: [string, number, string?][]; // label, value, display value
+  beacon?: number; // index of the one saffron mark
+  total?: number; // gauge: the whole
+  cards?: { tag: string; value: string; delta?: string; tone?: "good" | "bad"; vs?: string; bar?: number }[];
+  source: string;
+  note?: string;
 }
 
 export interface Edition {
@@ -106,6 +125,8 @@ export const EDITION: Edition = {
         { date: "Note", text: "The Council's recommendations take legal effect only through notifications, circulars or amendments to the law." },
       ],
       numbers: [["₹1 cr → ₹5 cr", "Prosecution threshold"], ["₹25,000 → ₹10,000", "Maximum general penalty"], ["90%", "Provisional refund for exporters"]],
+      layout: "photo",
+      exhibit: { kind: "cards", title: "The recommendations lower the cost of a mistake, not the duty to get it right", unit: "GST Council recommendations, 57th meeting, 8 October 2026", cards: [{ tag: "Prosecution threshold", value: "₹5 cr", delta: "▲ 5×", tone: "good", vs: "vs ₹1 crore today" }, { tag: "Maximum general penalty", value: "₹10,000", delta: "▼ 60%", tone: "good", vs: "vs ₹25,000 today" }, { tag: "Provisional refund", value: "90%", bar: 90, vs: "for zero-rated supplies and inverted duty, on risk assessment" }], source: "GST Council press release, 57th meeting; KSA analysis", note: "Recommendations take effect only once notified." },
       matters: [
         "The recommendations shift GST administration towards systems and speed. Lower penalties for prompt payment reward companies that can reconcile and respond quickly.",
         "Exporters and businesses with inverted duty structures stand to see working capital released sooner, once the changes are notified.",
@@ -138,6 +159,9 @@ export const EDITION: Edition = {
         { date: "13 Oct", text: "The Portfolio Managers Regulations, 2026 were reported as notified, with effect from 1 April 2027." },
       ],
       numbers: [["0.40 vs 0.60", "Stage factor before vs after a show-cause notice"], ["7 Nov 2026", "New settlement regulations take effect"], ["₹10 lakh", "Fast-track monetary threshold"]],
+      layout: "quote",
+      pull: "Good minutes protect directors more than a good outcome does.",
+      exhibit: { kind: "bar", title: "Settling before a show-cause notice carries a stage factor a third lower", unit: "Stage factor in SEBI's settlement formula", data: [["Before a show-cause notice", 0.4, "0.40"], ["After a show-cause notice", 0.6, "0.60"]], beacon: 0, source: "SEBI Settlement Regulations, 2026, as reported; KSA analysis" },
       matters: [
         "Settlement becomes more predictable and potentially cheaper the earlier it is pursued. That changes how listed companies and their officers respond to the first letter from the regulator.",
         "A settlement brings proceedings to a close without findings, but it is a public order and carries consequences that boards should weigh carefully.",
@@ -171,6 +195,8 @@ export const EDITION: Edition = {
         { date: "21 Oct", text: "The minutes of the October meeting were published. The next meeting is scheduled for 2–4 December 2026." },
       ],
       numbers: [["5.50%", "Repo rate"], ["5.2%", "CPI projection for 2026-27"], ["$100m → $5m", "Limit without underlying exposure"]],
+      layout: "pattern",
+      exhibit: { kind: "column", title: "Reserves gave back about $51 billion in four weeks from their record", unit: "Foreign exchange reserves, $ billion, 2026", data: [["Early Sep (record)", 785.7, "~785.7"], ["2 Oct", 734.6, "~734.6"]], beacon: 1, source: "Reports of RBI data; KSA analysis", note: "The 2 October figure is the reported record less the reported fall." },
       matters: [
         "Borrowers with floating-rate loans will see costs rise, and the RBI has signalled that further action could be a pause or another increase.",
         "Hedging rupee exposure may become costlier and more documentation-heavy, especially for companies that hedged dynamically or without a clearly matched exposure.",
@@ -202,6 +228,8 @@ export const EDITION: Edition = {
         { date: "8 Oct", text: "Among the larger transactions reported: Bank of America's $1.92 billion investment for a 50% stake in Jio Credit, Aditya Birla Renewables' $1.79 billion acquisition of Solenergi Power, and KKR's $1.4 billion acquisition of Medicover Hospitals India." },
       ],
       numbers: [["255", "M&A deals, July–September"], ["$4.2 bn", "Inbound M&A, 2.6× the previous quarter"], ["$9 bn", "Raised by 60 IPOs"]],
+      layout: "exhibit",
+      exhibit: { kind: "bar", title: "IPOs raised a record $9 billion, close behind private equity", unit: "Capital by route, $ billion, July–September 2026", data: [["M&A (255 deals)", 13.2, "13.2"], ["Private equity (353 deals)", 9.9, "9.9"], ["IPOs (60)", 9, "9.0"], ["QIPs (28)", 4.8, "4.8"]], beacon: 2, source: "Grant Thornton Bharat Dealtracker, as reported by Business Standard" },
       matters: [
         "The market is broadening: more mid-sized and domestic deals, more foreign buyers, and public markets competing with private capital as a source of funding.",
         "For owners, that means more options and more scrutiny. Buyers and investors with choices diligence harder.",
@@ -232,6 +260,8 @@ export const EDITION: Edition = {
         { date: "Timeline", text: "Allotment was expected on 26 October and listing on NSE and BSE on 28 October, both tentative at the time of the offer." },
       ],
       numbers: [["₹30,213 cr", "Issue size"], ["100%", "Fresh issue, no offer for sale"], ["12", "Shares per lot"]],
+      layout: "photo",
+      exhibit: { kind: "route", title: "From the first bid to listing in about a week", unit: "Jio Platforms IPO timetable, October 2026", data: [["21 Oct", 0, "Issue opens"], ["23 Oct", 0, "Issue closes"], ["26 Oct", 0, "Allotment (tentative)"], ["28 Oct", 0, "Listing on NSE and BSE (tentative)"]], beacon: 3, source: "Groww: Jio Platforms IPO dates, price band and details" },
       matters: [
         "A fresh issue used to reduce debt is a clear and simple story for investors. Clarity about the use of proceeds is one of the things public market investors examine most closely.",
         "Large issues also test market depth. The preceding quarter, July to September, had already seen a record $9 billion raised through sixty IPOs.",
@@ -263,6 +293,8 @@ export const EDITION: Edition = {
         { date: "8 Oct", text: "Announced deals included a strategic partnership with Porsche AG with an agreement to acquire Porsche's MHP consulting subsidiary, subject to approvals, and the transition of Best Buy's India global capability centre to TCS as an AI capability centre." },
       ],
       numbers: [["$3 bn+", "Annualised AI revenue"], ["$9.6 bn", "Total contract value in the quarter"], ["24%", "Operating margin"]],
+      layout: "pattern",
+      exhibit: { kind: "waffle", title: "AI now earns more than one dollar in ten at TCS", unit: "Annualised AI revenue as a share of revenue, as reported, 100 squares", data: [["AI revenue", 10, "10%+"]], source: "TCS results for the quarter to 30 September 2026, as reported", note: "\"More than 10%\" as stated; the exact share was not disclosed." },
       matters: [
         "AI is being bought as a service line with measurable revenue, not only as a pilot. That changes what clients buy, how contracts are written and how suppliers are measured.",
         "Global capability centres are evolving too. Some are being handed to service providers to run and scale, particularly where AI skills are the bottleneck.",
@@ -293,6 +325,8 @@ export const EDITION: Edition = {
         { date: "8 Oct", text: "He also said government AI use may follow an empanelment process, with a demand estimate of 10,000 GPUs and a first tender for 5,000." },
       ],
       numbers: [["10,000", "AI compute units sought"], ["512", "Minimum units per data-centre cluster"], ["1 month", "Promised timeline for a consultation paper"]],
+      layout: "exhibit",
+      exhibit: { kind: "gauge", title: "The first tender covers half of the compute the government expects to need", unit: "AI compute units (GPUs): first tender against demand estimate", data: [["First tender", 5000, "5,000"]], total: 10000, source: "MediaNama: 10,000 GPUs for the IndiaAI Mission" },
       matters: [
         "The direction is towards accountability on the part of those who build and deploy AI, with particular attention to safety and synthetic media.",
         "Government demand for in-country AI compute, with strict data residency, will shape where and how AI workloads for public projects are hosted.",
@@ -323,6 +357,9 @@ export const EDITION: Edition = {
         { date: "Context", text: "Reports during the year indicated that the Data Protection Board's Chairperson and Members had not yet been appointed as of August 2026, and that a shorter timeline had been proposed but not notified." },
       ],
       numbers: [["13 Nov 2026", "Consent Manager registration"], ["13 May 2027", "Core duties begin"], ["Rule 7", "Breach reporting"]],
+      layout: "quote",
+      pull: "Discovering gaps in a rehearsal is far cheaper than discovering them in a real incident.",
+      exhibit: { kind: "route", title: "Six months separate the first switch from the main event", unit: "DPDP Rules, dates in force", data: [["13 Nov 2026", 0, "Consent Manager registration (Rule 4)"], ["13 May 2027", 0, "Core duties begin (Rules 3, 6–8, 10–14)"]], beacon: 1, source: "DPDP Rules, 2025, as notified" },
       matters: [
         "Six months is a short time to map personal data, rewrite notices, build consent and rights processes, and prepare for breach reporting.",
         "Most businesses do not need to register as Consent Managers, but many will need to work with them.",

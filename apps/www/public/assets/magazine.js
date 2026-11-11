@@ -69,7 +69,7 @@
       pg.style.removeProperty("--u");
       pi.classList.remove("more");
       let k = single && isPhone() ? 0 : 1; // phones keep comfortable type and scroll within the page
-      while (pi.scrollHeight > pi.clientHeight + 2 && k > 0.8) { k -= 0.02; pg.style.setProperty("--u", `${k.toFixed(2)}cqw`); }
+      while (pi.scrollHeight > pi.clientHeight + 2 && k > (pg.classList.contains("story-r") || pg.classList.contains("story-l") ? 0.74 : 0.8)) { k -= 0.02; pg.style.setProperty("--u", `${k.toFixed(2)}cqw`); }
       pi.classList.toggle("more", pi.scrollHeight > pi.clientHeight + 2);
       pi.onscroll = () => pi.classList.toggle("more", pi.scrollTop + pi.clientHeight < pi.scrollHeight - 4);
     }

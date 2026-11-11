@@ -145,7 +145,8 @@ Keep it to two magazine pages laid out as one spread: title in the form "${pick.
     for (const it of items.slice(0, section === "Deals" || section === "Technology" || section === "Regulatory" ? 2 : 1)) {
       const out = await claude(env, RULES, `Write one Confluence story for the ${section} section from these researched facts (use only these facts and sources; dates must be inside ${P.period}):
 ${JSON.stringify(it)}
-Return JSON: {"section":"${section}","kicker":"two or three words","title":"short, sharp headline","dek":"one or two sentences","facts":[{"date":"8 Oct","text":"..."}],"numbers":[["value","label"],["value","label"],["value","label"]],"matters":["...","..."],"cast":[["Name","role in this scenario"]],"scenario":["...","..."],"perspective":["In this scenario, our perspective is that …","...","..."],"questions":["...","...","..."],"sources":[["Title","https://..."]]}
+Return JSON: {"section":"${section}","kicker":"two or three words","title":"short, sharp headline","dek":"one or two sentences","facts":[{"date":"8 Oct","text":"..."}],"numbers":[["value","label"],["value","label"],["value","label"]],"matters":["...","..."],"cast":[["Name","role in this scenario"]],"scenario":["...","..."],"perspective":["In this scenario, our perspective is that …","...","..."],"questions":["...","...","..."],"sources":[["Title","https://..."]],"pull":"one sentence copied word for word from perspective","exhibit":{"kind":"column|bar|waffle|gauge|route|cards","title":"the insight as a full sentence","unit":"measure, unit and period","data":[["label",number,"display"]],"beacon":index of the one highlighted item,"total":number for gauge only,"source":"source title; KSA analysis if you calculated anything","note":"optional"}}
+The exhibit must use only figures stated in the facts and their sources: never estimate, never invent a series. column or bar for 2 to 5 comparable values; waffle for one share of 100; gauge for a part of a stated whole; route for 2 to 4 dated milestones (value 0, display = what happens); omit the exhibit if the facts do not support one.
 Length: facts 3-5 items, each under 60 words; perspective 3 paragraphs under 90 words each. The scenario uses only Relativity Index names and fictional companies.`, { maxTokens: 3000 });
       out.section = section;
       out.id = slug(out.title || section);
@@ -187,7 +188,7 @@ const CAST: [string, string][] = [
 function normaliseStory(s: any) {
   const arr = (v: any) => (Array.isArray(v) ? v : []);
   return { id: s.id, section: SECTIONS.includes(s.section) ? s.section : "Business", kicker: str(s.kicker, 40), title: str(s.title, 120), dek: str(s.dek, 400), image: s.image,
-    facts: arr(s.facts).slice(0, 6), numbers: arr(s.numbers).slice(0, 3), matters: arr(s.matters).slice(0, 2), cast: arr(s.cast).slice(0, 3),
+    pull: typeof s.pull === "string" ? s.pull.slice(0, 220) : undefined, exhibit: s.exhibit && typeof s.exhibit === "object" ? s.exhibit : undefined, facts: arr(s.facts).slice(0, 6), numbers: arr(s.numbers).slice(0, 3), matters: arr(s.matters).slice(0, 2), cast: arr(s.cast).slice(0, 3),
     scenario: arr(s.scenario).slice(0, 2), perspective: arr(s.perspective).slice(0, 3), questions: arr(s.questions).slice(0, 3), sources: arr(s.sources).slice(0, 4) };
 }
 
