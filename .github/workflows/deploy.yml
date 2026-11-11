@@ -140,8 +140,13 @@ jobs:
           CONTACT_PHONE: ${{ secrets.CONTACT_PHONE }}
         run: |
           set -eo pipefail
-          npx wrangler vectorize list --json 2>/dev/null | jq -e '.[] | select(.name=="kay-memory")' >/dev/null || npx wrangler vectorize create kay-memory --dimensions=1024 --metric=cosine
-          if ! npx wrangler deploy -c apps/www/wrangler.jsonc 2>&1 | tee /tmp/d.log; then
+          CFG=apps/www/wrangler.jsonc
+          # Kay's answer memory uses Vectorize and Workers AI when the token allows; otherwise it falls back to word matching.
+          if ! { npx wrangler vectorize list --json 2>/dev/null | jq -e '.[] | select(.name=="kay-memory")' >/dev/null || npx wrangler vectorize create kay-memory --dimensions=1024 --metric=cosine; }; then
+            echo "::warning::The Cloudflare token cannot use Vectorize, so Kay's answer memory uses word matching. Add 'Vectorize: Edit' and 'Workers AI: Read' to the token to switch on meaning-based matching."
+            grep -v '"ai": {\|"vectorize":' apps/www/wrangler.jsonc > apps/www/wrangler.deploy.jsonc; CFG=apps/www/wrangler.deploy.jsonc
+          fi
+          if ! npx wrangler deploy -c $CFG 2>&1 | tee /tmp/d.log; then
             if grep -q 100117 /tmp/d.log; then
               echo "::warning::The site is published, but www.kayaksa.com and kayaksa.com still point to the old website. Remove their A/CNAME records in Cloudflare DNS (keep MX and TXT), then run this workflow again."
               echo "**www.kayaksa.com still points to the old website.** Remove the A/CNAME records for www and the root (keep MX and TXT email records) and run again." >> "$GITHUB_STEP_SUMMARY"

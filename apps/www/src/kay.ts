@@ -160,8 +160,27 @@ function isSmallTalk(q: string, turns: number) {
 }
 
 /** Looks up the answer memory (Workers AI embeddings + Vectorize). */
+const STOP = new Set("a an the is are was were be to of in on for and or with at by from about what whats how who whom which does do did can could would should will your you i me my we our us it its this that there please tell kayak kayaks ksa".split(" "));
+const toks = (t: string) => new Set(t.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter((w) => w.length > 1 && !STOP.has(w)).map((w) => w.replace(/(ing|es|s)$/, "")));
+/** Without embeddings: word-overlap match against approved answers (works until Vectorize is enabled). */
+async function recallLexical(env: Env, q: string) {
+  const qt = toks(q);
+  if (qt.size < 1) return null;
+  const rows = await env.DB.prepare("SELECT id, question, answer, voice_answer FROM kay_memory WHERE status = 'approved' LIMIT 500").all<any>();
+  let best: any = null, score = 0;
+  for (const r of rows.results) {
+    const rt = toks(r.question);
+    const inter = [...qt].filter((w) => rt.has(w)).length;
+    const s = inter / new Set([...qt, ...rt]).size;
+    if (s > score) { score = s; best = r; }
+  }
+  if (!best || score < 0.6) return null;
+  env.DB.prepare("UPDATE kay_memory SET hits = hits + 1, last_hit = ? WHERE id = ?").bind(new Date().toISOString(), best.id).run().catch(() => {});
+  return { answer: best.answer, voice: best.voice_answer || undefined };
+}
+
 async function recall(env: Env, q: string): Promise<{ answer: string; voice?: string } | null> {
-  if (!env.AI || !env.VEC) return null;
+  if (!env.AI || !env.VEC) return recallLexical(env, q);
   const emb: any = await env.AI.run("@cf/baai/bge-m3" as any, { text: [q] } as any);
   const vec = emb?.data?.[0];
   if (!vec) return null;
