@@ -768,3 +768,10 @@ main:focus{outline:none}
 .mc-mast{font-size:10.4cqw!important}.mc-issue{top:calc(11.5% + 12.4cqw)}
 .mc-mast{font-size:9.4cqw!important;left:7%;right:7%;text-align:left}
 .hx-in{padding-block:110px 96px}@media (max-width:760px){.hx-in{padding-block:96px 72px}}
+.aff-grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.aff{display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--saffron);padding:30px 28px}
+.aff-logo{height:92px;display:flex;align-items:center;padding:14px 18px;background:#fff;border:1px solid var(--line)}
+.aff-logo img{max-height:62px;max-width:100%;width:auto;display:block}
+.aff h3{margin:0;font-size:var(--step1)}
+.aff p{margin:0;color:var(--muted);line-height:1.65}
+.aff .textlink{margin-top:auto}

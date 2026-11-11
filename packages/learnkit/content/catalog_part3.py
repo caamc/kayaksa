@@ -159,11 +159,11 @@ COURSES.append(C("kayak-who-we-are", "Who We Are: Kayak Strategic Advisors", "ka
 
 ### The group
 
-Anuj Matushankar Choudhary is the founder and a director of all three Kayak companies:
+Kayak works alongside three affiliate entities:
 
-- **Kayak Strategic Advisors Private Limited:** advisory.
-- **Kayak Innovations (OPC) Private Limited:** products and new ventures.
-- **Kayak Technology Solutions Private Limited:** technology.
+- **Kayak Innovations (OPC) Private Limited:** holds the intellectual property in all Kayak technology solutions.
+- **Brand Defence & Integrity™:** the brand belongs to Kayak's leadership and is currently used by Brand Defence Consulting Private Limited (Brand Defence India), known for market intelligence and intellectual-property work.
+- **Kayak Technology Solutions** (a partnership firm): develops and markets the Kayak Group's SaaS solutions, led by Tan.ai, the group's CTO.
 
 We work from **Mumbai** and **Thane**.
 """),

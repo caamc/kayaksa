@@ -5,7 +5,7 @@ const W = 336, H = 192, UNIT_MM = 25.4 / 96;
 const COMPANY = {
   ksa: { label: "Kayak Strategic Advisors", legal: "Kayak Strategic Advisors Private Limited", descriptor: "STRATEGIC ADVISORS", under: "stem" },
   innovations: { label: "Kayak Innovations", legal: "Kayak Innovations (OPC) Private Limited", descriptor: "INNOVATIONS", under: "spark" },
-  technology: { label: "Kayak Technology Solutions", legal: "Kayak Technology Solutions Private Limited", descriptor: "TECHNOLOGY SOLUTIONS", under: "build" },
+  technology: { label: "Kayak Technology Solutions", legal: "Kayak Technology Solutions", descriptor: "TECHNOLOGY SOLUTIONS", under: "build" },
   group: { label: "Kayak Group (all three companies)", legal: "Kayak Group", descriptor: "GROUP", under: "stem" },
 };
 const DEFAULTS = {

@@ -403,6 +403,22 @@ P.about = () => `
   <div class="sec-head"><div><span class="eyebrow">Our standards</span><h2>Discretion is part of the work</h2><p class="lead">These standards apply to every engagement, from the first call.</p></div></div>
   <div class="standards">${DATA.standards.map((s) => `<article>${ic(s[0])}<h3>${esc(s[1])}</h3><p>${esc(s[2])}</p></article>`).join("")}</div>
 </div></section>
+<section class="sec affiliates" id="affiliates"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Affiliate entities</span><h2>One course, three specialist crews</h2><p class="lead">Kayak works alongside three affiliates connected through common leadership. Each brings a depth that would be hard to build inside a single firm, and each answers to the same standards of independence, confidentiality and evidence.</p></div></div>
+  <div class="aff-grid">
+    <article class="aff"><div class="aff-logo"><img src="/assets/kayak-innovations.svg" alt="Kayak Innovations" loading="lazy"></div>
+      <span class="eyebrow">Intellectual property</span><h3>Kayak Innovations (OPC) Private Limited</h3>
+      <p>The custodian of Kayak's intellectual property. Kayak Innovations holds the IP in every Kayak solution, so that what we build from our advisory work is protected, owned in India and available to clients for the long term.</p></article>
+    <article class="aff"><div class="aff-logo"><img src="/assets/affiliates/bdi-logo.svg" alt="Brand Defence &amp; Integrity" loading="lazy"></div>
+      <span class="eyebrow">Market intelligence and IPR</span><h3>Brand Defence &amp; Integrity™</h3>
+      <p>The Brand Defence &amp; Integrity™ name belongs to Kayak's leadership and is currently used by Brand Defence Consulting Private Limited, also known as Brand Defence India. The practice excels in market intelligence and intellectual-property matters.</p>
+      <a class="textlink" href="https://www.bdiglobe.com" target="_blank" rel="noopener">www.bdiglobe.com ${arrow}</a></article>
+    <article class="aff"><div class="aff-logo"><img src="/assets/kayak-technology-solutions.svg" alt="Kayak Technology Solutions" loading="lazy"></div>
+      <span class="eyebrow">Technology and SaaS</span><h3>Kayak Technology Solutions</h3>
+      <p>A partnership firm that develops and markets the SaaS solutions offered by the Kayak Group: thought, designed and developed in India for the world. Kayak Technology Solutions is led by Tan.ai, who also serves as Chief Technology Officer for the entire group.</p>
+      <a class="textlink" href="https://tanai.online" target="_blank" rel="noopener">tanai.online ${arrow}</a></article>
+  </div>
+</div></section>
 <section class="sec"><div class="wrap"><div class="sec-head"><div><span class="eyebrow">Our approach</span><h2>Four strokes, from first look to lasting result</h2></div></div>${strokes()}</div></section>
 ${FLAGS.leadership ? `<section class="sec alt" id="leadership"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Leadership</span><h2>The people you will work with</h2><p class="lead">Every engagement is led by a partner who stays with it from scoping to result.</p></div></div>
@@ -488,7 +504,7 @@ function buildMenus() {
     <div class="mega-col"><h4><a href="#insights">In this issue</a></h4><ul>${DATA.articles.filter((a) => a.cluster).slice(0, 6).map((a) => `<li><a href="#insight-${a.id}">${esc(a.section)}: ${esc(a.title)}</a></li>`).join("")}</ul></div>
     <div class="mega-col"><h4><a href="#insights">Subscribe</a></h4><ul><li><a href="#insights">Free to clients and subscribers</a></li><li><a href="#insights">First Tuesday of every month</a></li></ul></div></div></div>`;
   $("#m-about").innerHTML = `<div class="wrap"><div class="mega-intro"><span class="eyebrow">About us</span><h3>Two paddlers. One course.</h3><p>Independent, senior-led advice, working beside our clients like two kayakers moving as one.</p><a class="btn btn-primary" href="#about">About Kayak ${arrow}</a></div>
-    <div class="mega-cols"><div class="mega-col"><h4><a href="#about">Who we are</a></h4><ul><li><a href="#about">Our story and name</a></li><li><a href="#about" data-scroll="values">Values</a></li><li><a href="#about" data-scroll="standards">Standards</a></li></ul></div>
+    <div class="mega-cols"><div class="mega-col"><h4><a href="#about">Who we are</a></h4><ul><li><a href="#about">Our story and name</a></li><li><a href="#about" data-scroll="values">Values</a></li><li><a href="#about" data-scroll="standards">Standards</a></li><li><a href="#about" data-scroll="affiliates">Affiliate entities</a></li></ul></div>
     ${FLAGS.leadership ? `<div class="mega-col"><h4><a href="#about" data-scroll="leadership">Leadership</a></h4><ul><li><a href="#about" data-scroll="leadership">The people you will work with</a></li></ul></div>` : `<div class="mega-col"><h4><a href="#about" data-scroll="standards">How we work</a></h4><ul><li><a href="#about" data-scroll="standards">Our standards</a></li><li><a href="#services">Our services</a></li></ul></div>`}
     <div class="mega-col"><h4><a href="#careers">Careers</a></h4><ul><li><a href="#careers">Why join Kayak</a></li><li><a href="#careers" data-scroll="apply">Founding team</a></li><li><a href="#contact">Contact us</a></li></ul></div></div></div>`;
   $("#f-services").innerHTML = DATA.clusters.map((c) => `<li><a href="#${c.id}">${esc(c.name)}</a></li>`).join("");

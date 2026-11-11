@@ -1,0 +1,4 @@
+-- Kayak Technology Solutions is a partnership firm; Brand Defence & Integrity is an affiliate.
+UPDATE partners SET name = 'Kayak Technology Solutions', notes = 'Partnership firm that develops and markets the Kayak Group''s SaaS solutions. Led by Tan.ai, CTO for the group.' WHERE id = 'kayak-technology-solutions';
+INSERT OR IGNORE INTO partners (id, name, kind, status, sectors, services, city, country, website, notes, created_at, updated_at)
+VALUES ('brand-defence-integrity', 'Brand Defence & Integrity™', 'Affiliate', 'active', '[]', '["Market intelligence","IPR matters","Brand protection"]', 'Mumbai', 'India', 'https://www.bdiglobe.com', 'The Brand Defence & Integrity™ name belongs to Kayak''s leadership and is currently used by Brand Defence Consulting Private Limited (Brand Defence India).', datetime('now'), datetime('now'));

@@ -99,7 +99,7 @@ function render(path: string, data: any): PageMeta {
   if ((m = p.match(/^\/solutions\/([\w-]+)$/)) && T(m[1])) {
     const t = T(m[1]);
     return { status: 200, title: `${t.name}: ${t.kind}`, desc: (t.line || "").slice(0, 300), ssr: `<h1>${esc(t.name)}</h1><p><b>${esc(t.kind)}.</b> ${esc(t.intro || t.line)}</p><ul>${(t.modules || []).map((x: any) => `<li><b>${esc(x[1])}</b>: ${esc(String(x[2]).replace(/^\[Planned\]\s*/, "Planned: "))}</li>`).join("")}</ul>`,
-      ld: { "@context": "https://schema.org", "@type": "SoftwareApplication", name: t.name, applicationCategory: "BusinessApplication", description: t.line, publisher: { "@type": "Organization", name: "Kayak Technology Solutions Private Limited" } } };
+      ld: { "@context": "https://schema.org", "@type": "SoftwareApplication", name: t.name, applicationCategory: "BusinessApplication", description: t.line, publisher: { "@type": "Organization", name: "Kayak Technology Solutions" } } };
   }
   if ((m = p.match(/^\/insights\/([\w-]+)$/)) && A(m[1])) {
     const a = A(m[1]);
@@ -116,7 +116,7 @@ function render(path: string, data: any): PageMeta {
     if (key === "solutions") extra = `<ul>${data.tools.map((t: any) => `<li><a href="/solutions/${t.id}">${esc(t.name)}</a>: ${esc(t.line)}</li>`).join("")}</ul>`;
     if (key === "industries") extra = data.groups.map((g: any) => `<h2>${esc(g.name)}</h2><p>${g.members.map((x: any) => esc(x.name)).join(", ")}</p>`).join("");
     if (key === "services") extra += SV.map((v) => `<p><a href="/services/${v.cluster}/${v.slug}">${esc(v.name)}</a></p>`).join("");
-    if (key === "about") extra = `<h2>Values</h2><ul>${data.values.map((v: any) => `<li><b>${esc(v[1])}</b>: ${esc(v[2])}</li>`).join("")}</ul><h2>Promises</h2><ul>${data.promises.map((v: any) => `<li><b>${esc(v[0])}</b>: ${esc(v[1])}</li>`).join("")}</ul>`;
+    if (key === "about") extra = `<h2>Values</h2><ul>${data.values.map((v: any) => `<li><b>${esc(v[1])}</b>: ${esc(v[2])}</li>`).join("")}</ul><h2>Promises</h2><ul>${data.promises.map((v: any) => `<li><b>${esc(v[0])}</b>: ${esc(v[1])}</li>`).join("")}</ul><h2>Affiliate entities</h2><ul><li><b>Kayak Innovations (OPC) Private Limited</b>: holds the intellectual property in every Kayak solution.</li><li><b>Brand Defence &amp; Integrity™</b>: the name belongs to Kayak's leadership and is currently used by Brand Defence Consulting Private Limited (Brand Defence India), known for market intelligence and IPR matters. <a href="https://www.bdiglobe.com">www.bdiglobe.com</a></li><li><b>Kayak Technology Solutions</b>: a partnership firm that develops and markets the Kayak Group's SaaS solutions, led by Tan.ai, CTO for the group.</li></ul>`;
     return { status: 200, title, desc, ssr: `<h1>${esc(title)}</h1><p>${esc(desc)}</p>${extra}` };
   }
   return { status: 404, title: "Page not found", desc: "The page you were looking for has moved or does not exist.", ssr: `<h1>Page not found</h1><p><a href="/">Go to the home page</a></p>` };
@@ -143,7 +143,7 @@ ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replac
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=120, must-revalidate" },
   });
 }
-const VERSION = "2026-11-11d";
+const VERSION = "2026-11-11e";
 
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);
@@ -269,6 +269,18 @@ app.route("/api/kay", kayApi(siteData));
 app.get("/api/health", (c) => c.json({ ok: true, site: "www", kay: !!(c.env.ANTHROPIC_API_KEY || c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY || c.env.XAI_API_KEY), voice: !!(c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY) }));
 app.all("/api/*", (c) => c.json({ error: "Not found." }, 404));
 
+// Brand Defence & Integrity's official logo, served from its own website and cached at the edge.
+app.get("/assets/affiliates/bdi-logo.svg", async (c) => {
+  const cache = (caches as any).default as Cache;
+  const key = new Request("https://www.kayaksa.com/assets/affiliates/bdi-logo.svg");
+  const hit = await cache.match(key);
+  if (hit) return hit;
+  const r = await fetch("https://www.bdiglobe.com/brand/bdi-logo.svg", { cf: { cacheTtl: 86400 } } as any);
+  if (!r.ok) return c.text("Not found", 404);
+  const out = new Response(await r.text(), { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'" } });
+  c.executionCtx.waitUntil(cache.put(key, out.clone()));
+  return out;
+});
 app.get("/tools", (c) => c.redirect("/solutions", 301));
 app.get("/tools/:id", (c) => c.redirect(`/solutions/${c.req.param("id")}`, 301));
 
@@ -289,7 +301,7 @@ app.get("/llms.txt", async (c) => {
     `## Services in detail`, ...SV.map((x) => `- [${x.name}](${base}/services/${x.cluster}/${x.slug}): ${x.summary}`), ``,
     `## Kayak Solutions (Thought, Designed and Developed in India for the World)`, ...d.tools.map((x: any) => `- [${x.name}](${base}/solutions/${x.id}): ${x.kind}. ${x.line}`), ``,
     `## Confluence (monthly insights)`, ...d.articles.map((x: any) => `- [${x.title}](${base}/insights/${x.id}): ${x.dek || ""}`), ``,
-    `## About`, `- [About us](${base}/about)`, `- [Contact](${base}/contact)`, `- [Kayak Learn: free courses with certificates](https://learn.kayaksa.com)`, `- Group companies: Kayak Innovations (OPC) Private Limited; Kayak Technology Solutions Private Limited.`];
+    `## About`, `- [About us](${base}/about)`, `- [Contact](${base}/contact)`, `- [Kayak Learn: free courses with certificates](https://learn.kayaksa.com)`, `- Affiliates: Kayak Innovations (OPC) Private Limited (holds the IP of Kayak's solutions); Brand Defence & Integrity™ (www.bdiglobe.com); Kayak Technology Solutions, a partnership firm that develops and markets Kayak's SaaS solutions, led by Tan.ai (https://tanai.online), CTO for the group.`];
   return c.text(t.join("\n"), 200, { "Cache-Control": "public, max-age=3600" });
 });
 
