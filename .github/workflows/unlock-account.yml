@@ -1,0 +1,47 @@
+# Break-glass: unlocks one Kayak Internal account after it was locked for failed sign-in attempts.
+# Run it from Actions → "Unlock an internal account" → Run workflow. Only people with write access to
+# this repository can run it. It first lists the account's recent sign-in failures (time, IP, device)
+# so you can tell a mistyped password from an attack, then clears the lock. The password and the
+# authenticator are not changed, and the unlock is written to the audit log.
+name: Unlock an internal account
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Work email of the locked account"
+        required: true
+permissions:
+  contents: read
+concurrency: { group: unlock-account, cancel-in-progress: false }
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+jobs:
+  unlock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci --no-audit --no-fund
+      - name: Check the input
+        env: { EMAIL: "${{ inputs.email }}" }
+        run: |
+          E=$(printf '%s' "$EMAIL" | tr 'A-Z' 'a-z' | tr -d ' ')
+          if ! printf '%s' "$E" | grep -Eq '^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'; then echo "Not a valid email address."; exit 1; fi
+          echo "E=$E" >> "$GITHUB_ENV"
+      - name: Point at the internal database
+        run: |
+          ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name=="kayaksa-internal") | .uuid')
+          [ -n "$ID" ] || { echo "Database kayaksa-internal not found."; exit 1; }
+          printf '{"name":"unlock","d1_databases":[{"binding":"DB","database_name":"kayaksa-internal","database_id":"%s"}]}' "$ID" > /tmp/w.json
+      - name: Recent sign-in failures for this account (last 24 hours)
+        run: |
+          npx wrangler d1 execute kayaksa-internal --remote -c /tmp/w.json --json --command "SELECT e.at, e.kind, e.ip, substr(e.fp,1,10) AS device, substr(e.ua,1,60) AS browser FROM security_events e JOIN users u ON u.id = e.user_id WHERE lower(u.email) = '${E}' AND e.kind LIKE 'auth.%' AND e.at > datetime('now','-1 day') ORDER BY e.at DESC LIMIT 25" > /tmp/ev.json
+          { echo "### Sign-in failures for ${E}, last 24 hours"; echo; echo "| Time (UTC) | Event | IP | Device | Browser |"; echo "|---|---|---|---|---|"; jq -r '.[0].results[] | "| \(.at) | \(.kind) | \(.ip) | \(.device) | \(.browser) |"' /tmp/ev.json; echo; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Clear the lock
+        run: |
+          npx wrangler d1 execute kayaksa-internal --remote -c /tmp/w.json --json --command "UPDATE users SET failed = 0, locked_until = NULL WHERE lower(email) = '${E}'; INSERT INTO audit_log (at, user_id, action, detail) SELECT datetime('now'), id, 'auth.unlocked', 'Unlocked by the Unlock workflow, run ${{ github.run_id }} by ${{ github.actor }}' FROM users WHERE lower(email) = '${E}'; SELECT email, failed, locked_until FROM users WHERE lower(email) = '${E}'" > /tmp/u.json
+          N=$(jq '[.[] | .results[]? | select(.email != null)] | length' /tmp/u.json)
+          if [ "$N" = "0" ]; then echo "No account with that email." | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; fi
+          echo "Unlocked ${E}. Sign in again with your password and authenticator code." | tee -a "$GITHUB_STEP_SUMMARY"
