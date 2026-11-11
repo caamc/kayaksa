@@ -2,6 +2,7 @@
 // Pages are rendered on the server (titles, descriptions, structured data and readable content
 // for search engines and AI assistants), then the browser app takes over for smooth navigation.
 import { shield, securityEvent, auditFull, pruneSecurity } from "../../../packages/core/src/shield";
+import { magazinePage, LATEST, EDITIONS } from "./magazine";
 import { Hono } from "hono";
 import { securityHeaders, sameOrigin, HttpError, str, email as cleanEmail, rateLimit, clientIp } from "../../../packages/core/src/http";
 import { randomToken, sha256hex } from "../../../packages/core/src/crypto";
@@ -114,7 +115,7 @@ function render(path: string, data: any): PageMeta {
     const [title, desc] = STATIC_PAGES[key];
     let extra = "";
     if (key === "services") extra = `<ul>${data.clusters.map((c: any) => `<li><a href="/services/${c.id}">${esc(c.name)}</a>: ${esc(c.line || "")}</li>`).join("")}</ul>`;
-    if (key === "insights") extra = `<ul>${data.articles.map((a: any) => `<li><a href="/insights/${a.id}">${esc(a.title)}</a>: ${esc(a.dek || "")}</li>`).join("")}</ul>`;
+    if (key === "insights") extra = `<p><a href="/confluence/${LATEST}">Open the latest issue of Confluence, the magazine</a></p><ul>${data.articles.map((a: any) => `<li><a href="/insights/${a.id}">${esc(a.title)}</a>: ${esc(a.dek || "")}</li>`).join("")}</ul>`;
     if (key === "solutions") extra = `<ul>${data.tools.map((t: any) => `<li><a href="/solutions/${t.id}">${esc(t.name)}</a>: ${esc(t.line)}</li>`).join("")}</ul>`;
     if (key === "industries") extra = data.groups.map((g: any) => `<h2>${esc(g.name)}</h2><p>${g.members.map((x: any) => esc(x.name)).join(", ")}</p>`).join("");
     if (key === "services") extra += SV.map((v) => `<p><a href="/services/${v.cluster}/${v.slug}">${esc(v.name)}</a></p>`).join("");
@@ -145,7 +146,7 @@ ${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replac
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=120, must-revalidate" },
   });
 }
-const VERSION = "2026-11-11g";
+const VERSION = "2026-11-11h";
 
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);
@@ -291,6 +292,14 @@ app.get("/tools", (c) => c.redirect("/solutions", 301));
 app.get("/tools/:id", (c) => c.redirect(`/solutions/${c.req.param("id")}`, 301));
 
 // ------------------------------------------------------------------ SEO and AI discoverability
+// Confluence, the magazine: one page per edition, read as a book.
+app.get("/confluence", (c) => c.redirect(`/confluence/${LATEST}`, 302));
+app.get("/confluence/:id", (c) => {
+  const m = magazinePage(c.req.param("id"), site(c));
+  if (!m) return c.redirect(`/confluence/${LATEST}`, 302);
+  return c.html(m.html, 200, { "Cache-Control": "public, max-age=300" });
+});
+
 // The cluster was renamed from "Tax & Regulatory" to "Tax, Legal & Regulatory" in November 2026.
 app.get("/services/tax-regulatory", (c) => c.redirect("/services/tax-legal-regulatory", 301));
 app.get("/services/tax-regulatory/:slug", (c) => c.redirect(`/services/tax-legal-regulatory/${c.req.param("slug")}`, 301));
@@ -298,7 +307,7 @@ app.get("/robots.txt", (c) => c.text(`# Search engines and AI assistants are wel
 app.get("/sitemap.xml", async (c) => {
   const data = await siteData(c);
   const base = site(c);
-  const paths = ["/", ...Object.keys(STATIC_PAGES).map((k) => `/${k}`), ...data.clusters.map((x: any) => `/services/${x.id}`), ...SV.map((x) => `/services/${x.cluster}/${x.slug}`), ...data.tools.map((x: any) => `/solutions/${x.id}`), ...data.articles.map((x: any) => `/insights/${x.id}`)];
+  const paths = ["/", ...Object.keys(STATIC_PAGES).map((k) => `/${k}`), ...data.clusters.map((x: any) => `/services/${x.id}`), ...SV.map((x) => `/services/${x.cluster}/${x.slug}`), ...data.tools.map((x: any) => `/solutions/${x.id}`), ...data.articles.map((x: any) => `/insights/${x.id}`), ...Object.keys(EDITIONS).map((id) => `/confluence/${id}`)];
   return c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((p) => `<url><loc>${base}${p}</loc></url>`).join("")}</urlset>`, 200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" });
 });
 // A plain-text summary for AI assistants (https://llmstxt.org), kept in step with the site.

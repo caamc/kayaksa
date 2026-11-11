@@ -70,7 +70,7 @@ const subscribeForm = (id) => `<form class="subscribe js-form" id="${id}" novali
 const HERO = [
   { img: "kayak", pos: "78% 45%", eyebrow: "Kayak Strategic Advisors", h: "Clear advice for <em>consequential</em> decisions", p: "Strategy, deals, regulation and resilience for India's boards, promoters and investors. Independent, senior-led and built to be carried out.", cta: ["Explore our services", "services"], alt: ["Talk to us", "contact"] },
   { img: "boardroom", pos: "62% 50%", eyebrow: "For boards and promoters", h: "The questions that keep a board <em>awake</em>, answered plainly", p: "One lead partner, every discipline at one table: growth and protection decided together, never in separate rooms.", cta: ["How we work", "about"], alt: ["Start a confidential conversation", "contact"] },
-  { img: "confluence", pos: "68% 50%", eyebrow: "Confluence · Issue 01", h: "Growth and risk are <em>one</em> decision", p: "Our monthly on strategy, risk and the decisions between them. The cover story: why the companies that move well through rough water treat them as one conversation.", cta: ["Read the cover story", "insight-growth-and-risk"], alt: ["All of Confluence", "insights"] },
+  { img: "confluence", pos: "68% 50%", eyebrow: "Confluence · Issue 01 · November 2026", h: "<em>Calibrated</em>: the month in review", p: "Our monthly magazine on the regulatory, business, deals and technology landscape, with Kayak's perspective. This issue covers 25 September to 25 October 2026.", cta: ["Open the magazine", "/confluence/2026-11"], alt: ["All of Confluence", "insights"] },
   { img: "mumbai", pos: "80% 50%", eyebrow: "Mumbai · Thane · the world", h: "Rooted in India. <em>Ready</em> for the world.", p: "Wide industry and sector exposure at home, an International Desk for cross-border work, and solutions thought, designed and developed in India for the world.", cta: ["Kayak Solutions", "tools"], alt: ["International Desk", "international-desk"] },
 ];
 const heroCarousel = () => `
@@ -82,7 +82,7 @@ const heroCarousel = () => `
       <span class="eyebrow">${x.eyebrow}</span>
       <${i ? "h2" : "h1"} class="hx-h">${x.h}</${i ? "h2" : "h1"}>
       <p class="lead">${esc(x.p)}</p>
-      <div class="ctas"><a class="btn btn-saffron" href="#${x.cta[1]}" ${i ? 'tabindex="-1"' : ""}>${esc(x.cta[0])} ${arrow}</a><a class="btn btn-ghost light" href="#${x.alt[1]}" ${i ? 'tabindex="-1"' : ""}>${esc(x.alt[0])}</a></div>
+      <div class="ctas"><a class="btn btn-saffron" href="${x.cta[1].startsWith("/") ? x.cta[1] : "#" + x.cta[1]}" ${i ? 'tabindex="-1"' : ""}>${esc(x.cta[0])} ${arrow}</a><a class="btn btn-ghost light" href="#${x.alt[1]}" ${i ? 'tabindex="-1"' : ""}>${esc(x.alt[0])}</a></div>
     </div></div>
   </div>`).join("")}
   <svg class="hx-mark" viewBox="-4 -4 100 108" aria-hidden="true"><path fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path fill="#F3F7F6" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/></svg>
@@ -107,18 +107,19 @@ function armHero() {
 }
 
 /* ---------- Confluence cover: full-bleed photograph with Kayak tints ---------- */
+const MAG = "/confluence/2026-11";
 const magCover = (big = false) => `
-<a class="mcover${big ? " big" : ""}" href="#insight-growth-and-risk" aria-label="Confluence, Issue 01, November 2026: Growth and risk are one decision">
+<a class="mcover${big ? " big" : ""}" href="${MAG}" aria-label="Open Confluence, Issue 01, November 2026: Calibrated. Covering 25 September to 25 October 2026">
   <img src="/assets/hero/cover-01-${big ? "1024" : "640"}.webp" alt="" loading="lazy" decoding="async">
   <span class="mc-tint" aria-hidden="true"></span>
   <span class="mc-top"><svg class="mc-wm" viewBox="0 0 416 100" aria-hidden="true"><use href="#logo-wm"/></svg><span class="mc-by">A Kayak Strategic Advisors publication</span></span>
   <span class="mc-mast">CONFLUENCE</span>
-  <span class="mc-issue"><span>Issue 01</span><span>November 2026</span><span>Mumbai</span></span>
+  <span class="mc-issue"><span>Issue 01</span><span>November 2026</span><span>25 Sep – 25 Oct</span></span>
   <span class="mc-lines">
     <span class="mc-kicker">Cover story</span>
-    <span class="mc-head">Growth and risk are one decision</span>
-    <span class="mc-dek">Why the companies that move well through rough water treat them as one conversation</span>
-    <span class="mc-more"><span>Diligence is the decision now</span><span>Data protection is a board question</span><span>Five questions before you fund AI</span></span>
+    <span class="mc-head">Calibrated</span>
+    <span class="mc-dek">The month money got dearer and the rulebook got kinder</span>
+    <span class="mc-more"><span>GST's lighter hand</span><span>Settling with SEBI before the notice</span><span>A record IPO month</span></span>
   </span>
   <svg class="mc-mark" viewBox="-4 -4 100 108" aria-hidden="true"><path fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/><path fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/><path fill="#F3F7F6" d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/></svg>
 </a>`;
@@ -346,7 +347,7 @@ P.insights = () => {
     <div class="masthead" style="margin-top:22px">CONFLUENCE</div>
     <p class="masthead-sub">The Kayak monthly on strategy, risk and the decisions between them.</p>
     <div class="issue-meta"><span>Issue 01</span><span>November 2026</span><span>First Tuesday, monthly</span></div></div>
-  <div class="ih-right">${magCover(true)}<p style="color:var(--on-deep-muted);margin:22px 0 12px">Free to clients and subscribers, on the first Tuesday of every month.</p>${subscribeForm("sub-ins")}</div>
+  <div class="ih-right">${magCover(true)}<p style="margin:18px 0 6px"><a class="btn btn-saffron" href="${MAG}">Open the magazine ${arrow}</a></p><p style="color:var(--on-deep-muted);margin:12px 0 12px">Each issue covers the 25th of one month to the 25th of the next. Free to clients and subscribers.</p>${subscribeForm("sub-ins")}</div>
 </div></section>
 <section class="sec"><div class="wrap">
   <a class="cover-story" href="#insight-${cs.id}">${PH("insights") ? `<div class="cover photo" style="background-image:url('${PH("insights")}')" aria-hidden="true"><span class="ct">Cover story · Issue 01</span></div>` : cover(null, "Cover story · Issue 01", "navigation")}<div class="body"><div class="meta"><b>Cover Story</b><span>${cs.mins} min read</span></div><h2>${esc(cs.title)}</h2><p>${esc(cs.dek)}</p><span class="textlink">Read the cover story ${arrow}</span></div></a>
