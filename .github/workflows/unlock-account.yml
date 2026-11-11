@@ -30,6 +30,10 @@ jobs:
           E=$(printf '%s' "$EMAIL" | tr 'A-Z' 'a-z' | tr -d ' ')
           if ! printf '%s' "$E" | grep -Eq '^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'; then echo "Not a valid email address."; exit 1; fi
           echo "E=$E" >> "$GITHUB_ENV"
+      - name: Use the account that owns kayaksa.com
+        run: |
+          ACC=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=kayaksa.com" | jq -r '.result[0].account.id // empty')
+          if [ -n "$ACC" ]; then echo "::add-mask::$ACC"; echo "CLOUDFLARE_ACCOUNT_ID=$ACC" >> "$GITHUB_ENV"; fi
       - name: Point at the internal database
         run: |
           ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name=="kayaksa-internal") | .uuid')
