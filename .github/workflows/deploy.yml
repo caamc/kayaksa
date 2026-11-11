@@ -66,8 +66,16 @@ jobs:
           [ "$V" = "active" ] || V=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/verify" | jq -r '.result.status // "invalid"')
           echo "Token status: $V"
           [ "$V" = "active" ] || { echo "::error::The Cloudflare API token is not active."; exit 1; }
-          ZONE=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME" | jq -r '.result[0].id // empty')
+          ZJ=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME")
+          ZONE=$(echo "$ZJ" | jq -r '.result[0].id // empty')
           [ -n "$ZONE" ] || { echo "::error::The token cannot see the $ZONE_NAME zone. Give it Zone: Read, DNS: Edit and Workers Routes: Edit for kayaksa.com."; exit 1; }
+          # Use the account that owns kayaksa.com, whatever the CLOUDFLARE_ACCOUNT_ID secret says.
+          ACC=$(echo "$ZJ" | jq -r '.result[0].account.id // empty')
+          if [ -n "$ACC" ] && [ "$ACC" != "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Note: the CLOUDFLARE_ACCOUNT_ID secret does not match the account that owns $ZONE_NAME; using the zone's account." >> "$GITHUB_STEP_SUMMARY"
+            echo "::add-mask::$ACC"
+            echo "CLOUDFLARE_ACCOUNT_ID=$ACC" >> "$GITHUB_ENV"
+          fi
           echo "zone=$ZONE" >> "$GITHUB_OUTPUT"
           echo "Zone $ZONE_NAME found." >> "$GITHUB_STEP_SUMMARY"
 
@@ -77,9 +85,10 @@ jobs:
           ensure() { # name app binding placeholder
             ID=$(npx wrangler d1 list --json | jq -r --arg n "$1" '.[] | select(.name==$n) | .uuid')
             if [ -z "$ID" ]; then npx wrangler d1 create "$1" --location apac >/dev/null; ID=$(npx wrangler d1 list --json | jq -r --arg n "$1" '.[] | select(.name==$n) | .uuid'); echo "Created database $1" >> "$GITHUB_STEP_SUMMARY"; fi
+            [ -n "$ID" ] || { echo "::error::Could not create or find the D1 database $1. The token needs Account: D1 Edit."; exit 1; }
             echo "$ID"
           }
-          WWW=$(ensure kayaksa-www); LEARN=$(ensure kayaksa-learn); INTERNAL=$(ensure kayaksa-internal)
+          WWW=$(ensure kayaksa-www) || exit 1; LEARN=$(ensure kayaksa-learn) || exit 1; INTERNAL=$(ensure kayaksa-internal) || exit 1
           sed -i "s/00000000-0000-0000-0000-000000000002/$WWW/" apps/www/wrangler.jsonc apps/internal/wrangler.jsonc
           sed -i "s/00000000-0000-0000-0000-000000000001/$LEARN/" apps/learn/wrangler.jsonc apps/internal/wrangler.jsonc
           sed -i "s/00000000-0000-0000-0000-000000000000/$INTERNAL/" apps/internal/wrangler.jsonc
