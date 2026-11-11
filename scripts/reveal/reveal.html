@@ -1,0 +1,63 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Archivo;src:url(../../brand-assets/04_Fonts/Archivo/Static/Archivo-SemiBold.ttf);font-weight:600}
+@font-face{font-family:Archivo;src:url(../../brand-assets/04_Fonts/Archivo/Static/Archivo-Medium.ttf);font-weight:500}
+@font-face{font-family:SS4;src:url(../../brand-assets/04_Fonts/Source_Serif_4/Static/SourceSerif4-Italic.ttf);font-style:italic}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden}
+body{background:radial-gradient(ellipse 70% 60% at 50% 46%,#ffffff 0,#F4F6F6 60%,#E9EEEF 100%);font-family:Archivo,Arial,sans-serif}
+.stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0}
+svg.logo{width:1040px;height:auto;overflow:visible}
+.rule{width:150px;height:8px;background:#EE9B1E;margin-top:46px;transform-origin:center}
+.tag{margin-top:34px;font:italic 46px/1.25 SS4,Georgia,serif;color:#3E5563;text-align:center;letter-spacing:.2px}
+.foot{position:absolute;bottom:56px;left:0;right:0;text-align:center;font:600 18px Archivo;letter-spacing:6px;color:#8B9A9C}
+.reg{position:absolute;width:26px;height:26px;border-color:#D4DEE2;border-style:solid;border-width:0}
+.reg.tl{top:54px;left:54px;border-top-width:2px;border-left-width:2px}.reg.tr{top:54px;right:54px;border-top-width:2px;border-right-width:2px}
+.reg.bl{bottom:54px;left:54px;border-bottom-width:2px;border-left-width:2px}.reg.br{bottom:54px;right:54px;border-bottom-width:2px;border-right-width:2px}
+</style></head><body>
+<i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i>
+<div class="stage"><div id="mount"></div><div class="rule"></div><div class="tag" id="tag"></div></div>
+<div class="foot" id="foot"></div>
+<script>
+const Q = new URLSearchParams(location.search);
+const ENT = {
+  ksa: { center: '<path d="M32 51 L46 70 L60 51 L60 100 L32 100 Z"/>', extra: "", desc: "STRATEGIC ADVISORS", tag: "Two paddlers. One course.", foot: "KAYAK GROUP" },
+  ki: { center: '<path d="M46 67 L61 82 L46 97 L31 82 Z"/>', extra: "", desc: "INNOVATIONS", tag: "The custodian of Kayak’s intellectual property.", foot: "A KAYAK GROUP COMPANY" },
+  kts: { center: '<path d="M32 74 H60 V100 H32 Z"/>', extra: '<path fill="#17807E" d="M42 63 H50 V71 H42 Z"/>', desc: "TECH SOLUTIONS", tag: "SaaS, designed and developed in India for the world.", foot: "A KAYAK GROUP COMPANY" },
+}[Q.get("e") || "ksa"];
+const K = "M0 0 H28 V38.7 L52 0 H82 L50.1 51.5 L84 100 H54 L36 74.2 L28 87.1 V100 H0 Z", A = "M0 100 L31 0 L59 0 L90 100 L61 100 L45 44 L29 100 Z";
+document.getElementById("mount").innerHTML = `<svg class="logo" viewBox="-10 -40 436 190">
+ <defs><clipPath id="c"><rect x="-10" y="0" width="436" height="101"/></clipPath></defs>
+ <g clip-path="url(#c)" fill="#0E2F3C">
+  <g class="l" data-d="-1"><path d="${K}"/></g><g class="l" data-d="-1" transform="translate(92 0)"><path d="${A}"/></g>
+  <g class="l" data-d="1" transform="translate(232 0)"><path d="${A}"/></g><g class="l" data-d="1" transform="translate(332 0)"><path d="${K}"/></g>
+ </g>
+ <g transform="translate(161 0)">
+  <g class="stem" fill="#0E2F3C">${ENT.center}${ENT.extra}</g>
+  <path class="b1" fill="#17807E" d="M0 0 L30 0 L44 26.25 L44 59.3 Z"/>
+  <path class="b2" fill="#EE9B1E" d="M92 0 L62 0 L48 26.25 L48 59.3 Z"/>
+ </g>
+ <text class="desc" x="208" y="136" text-anchor="middle" fill="#3E5563" font-family="Archivo" font-weight="600" font-size="15" letter-spacing="9">${ENT.desc}</text>
+</svg>`;
+document.getElementById("tag").textContent = ENT.tag;
+document.getElementById("foot").textContent = ENT.foot;
+const E = "cubic-bezier(.2,.75,.15,1)", an = [];
+const a = (el, kf, delay, dur, easing = E) => an.push(el.animate(kf, { delay, duration: dur, easing, fill: "both" }));
+const $ = (s) => document.querySelector(s);
+// The two blades: the client's and Kayak's, sweeping in and converging on one stem.
+a($(".b1"), [{ transform: "translate(-260px,-150px) rotate(-38deg)", opacity: 0 }, { opacity: 1, offset: .3 }, { transform: "none", opacity: 1 }], 150, 1100);
+a($(".b2"), [{ transform: "translate(260px,-150px) rotate(38deg)", opacity: 0 }, { opacity: 1, offset: .3 }, { transform: "none", opacity: 1 }], 250, 1100);
+for (const b of [".b1", ".b2"]) $(b).style.transformBox = "fill-box", $(b).style.transformOrigin = "50% 100%";
+$(".stem").style.transformBox = "fill-box"; $(".stem").style.transformOrigin = "50% 100%";
+a($(".stem"), [{ transform: "translateY(60px) scaleY(.2)", opacity: 0 }, { transform: "none", opacity: 1 }], 1050, 650);
+document.querySelectorAll(".l").forEach((g, i) => {
+  const d = +g.dataset.d, base = g.getAttribute("transform") || "", p = g.firstElementChild;
+  a(p, [{ transform: `translate(${-d * 18}px,112px)`, opacity: 0 }, { transform: "none", opacity: 1 }], 1350 + Math.abs(i - 1.5) * 120, 750);
+});
+a($(".desc"), [{ opacity: 0, letterSpacing: "26px" }, { opacity: 1, letterSpacing: "9px" }], 2150, 900);
+a($(".rule"), [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], 2600, 600);
+a($("#tag"), [{ opacity: 0, transform: "translateY(18px)" }, { opacity: 1, transform: "none" }], 2900, 700);
+a($("#foot"), [{ opacity: 0 }, { opacity: 1 }], 3300, 700);
+a(document.querySelectorAll(".reg")[0].parentNode, [{ opacity: 1 }, { opacity: 1 }], 0, 10);
+an.forEach((x) => x.pause());
+window.seek = (ms) => an.forEach((x) => (x.currentTime = ms));
+seek(0);
+</script></body></html>

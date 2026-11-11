@@ -45,14 +45,18 @@ function coverStyle(cid) {
   const pid = c ? c.id : "ksa";
   return `--c:${c ? c.color : "#0E2F3C"};--p:var(--pc-${pid});--ps:var(--ps-${pid})`;
 }
-function cover(cid, label, iconId, extra = "") {
+// Covers: a photograph when we have one for the slot (brand manual p.18-19: natural colour, a
+// Deep Current scrim under type, wake lines on hover), otherwise the cluster pattern.
+function cover(cid, label, iconId, extra = "", slot = "") {
   const c = cid ? C[cid] : null;
-  return `<div class="cover ${extra}" style="${coverStyle(cid)}" aria-hidden="true"><span class="ct">${esc(label)}</span>${ic(iconId || (c ? c.icon : "navigation"), "ico ci")}</div>`;
+  const ph = (slot && PH(slot)) || (cid && PH(cid));
+  const img = ph ? `<img class="cph" src="${ph}" srcset="${ph.replace("-1536.", "-960.")} 960w, ${ph} 1536w" sizes="(max-width:760px) 100vw, 33vw" alt="" loading="lazy" decoding="async"><i class="wake"></i>` : "";
+  return `<div class="cover ${extra}${ph ? " has-ph" : ""}" style="${coverStyle(cid)}${ph ? `;--photo:url('${ph}')` : ""}" aria-hidden="true">${img}<span class="ct">${esc(label)}</span>${ic(iconId || (c ? c.icon : "navigation"), "ico ci")}</div>`;
 }
 const artIcon = (a) => (a.cluster ? C[a.cluster].icon : a.id === "why-confluence" ? "report" : "navigation");
 function acard(a) {
   return `<a class="acard" href="#insight-${a.id}" data-cluster="${a.cluster || ""}" data-section="${esc(a.section)}">
-    ${cover(a.cluster, a.section, artIcon(a))}
+    ${cover(a.cluster, a.section, artIcon(a), "", a.id)}
     <div class="body"><div class="meta"><b>${esc(a.section)}</b><span>${a.mins} min read</span></div>
     <h3>${esc(a.title)}</h3><p>${esc(a.dek)}</p></div></a>`;
 }
@@ -154,7 +158,7 @@ P.home = () => {
   return `
 ${heroCarousel()}
 <section class="featured"><div class="wrap"><div class="grid">
-  ${feat.map((a) => `<a class="feat" href="#insight-${a.id}">${cover(a.cluster, "Confluence · " + a.section, artIcon(a))}<div class="body"><div class="meta"><b>${esc(a.section)}</b><span>${a.mins} min read</span></div><h3>${esc(a.title)}</h3><p>${esc(a.dek)}</p></div></a>`).join("")}
+  ${feat.map((a) => `<a class="feat" href="#insight-${a.id}">${cover(a.cluster, "Confluence · " + a.section, artIcon(a), "", a.id)}<div class="body"><div class="meta"><b>${esc(a.section)}</b><span>${a.mins} min read</span></div><h3>${esc(a.title)}</h3><p>${esc(a.dek)}</p></div></a>`).join("")}
 </div></div></section>
 
 <section class="sec"><div class="wrap">
@@ -449,7 +453,7 @@ P.article = (a) => {
   <h1>${esc(a.title)}</h1><p class="dek">${esc(a.dek)}</p>
   <div class="byline"><span>Confluence · Issue 01</span><span>${a.mins} min read</span>${c ? `<a class="chip" href="#${c.id}" style="--c:${c.color}"><i></i>${esc(c.name)}</a>` : `<span>Kayak Strategic Advisors</span>`}</div>
 </div></header>
-<div class="art-cover">${cover(a.cluster, a.section, artIcon(a))}</div>
+<div class="art-cover">${cover(a.cluster, a.section, artIcon(a), "blade", a.id)}</div>
 <div class="wrap prose">${body}</div>
 <div class="wrap" style="max-width:calc(68ch + 2*var(--gut))"><div class="share"><button class="btn btn-ghost" type="button" data-copy-link="insight-${a.id}">${ic("share")} Copy link</button><a class="btn btn-primary" href="#contact" data-cluster="${a.cluster || ""}">Discuss this with us ${arrow}</a></div></div>
 </article>
@@ -484,14 +488,14 @@ P.about = () => `
 <section class="sec affiliates" id="affiliates"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Affiliate entities</span><h2>One course, three specialist crews</h2><p class="lead">Kayak works alongside three affiliates connected through common leadership. Each brings a depth that would be hard to build inside a single firm, and each answers to the same standards of independence, confidentiality and evidence.</p></div></div>
   <div class="aff-grid">
-    <article class="aff"><div class="aff-logo"><img src="/assets/kayak-innovations.svg" alt="Kayak Innovations" loading="lazy"></div>
+    <article class="aff">${revealFig("ki", "Kayak Innovations")}
       <span class="eyebrow">Intellectual property</span><h3>Kayak Innovations (OPC) Private Limited</h3>
       <p>The custodian of Kayak's intellectual property. Kayak Innovations holds the IP in every Kayak solution, so that what we build from our advisory work is protected, owned in India and available to clients for the long term.</p></article>
-    <article class="aff"><div class="aff-logo"><img src="/assets/affiliates/bdi-logo.svg" alt="Brand Defence &amp; Integrity" loading="lazy"></div>
+    <article class="aff">${revealFig("bdi", "Brand Defence &amp; Integrity", "/assets/affiliates/bdi-logo.svg")}
       <span class="eyebrow">Market intelligence and IPR</span><h3>Brand Defence &amp; Integrity™</h3>
       <p>The Brand Defence &amp; Integrity™ name belongs to Kayak's leadership and is currently used by Brand Defence Consulting Private Limited, also known as Brand Defence India. The practice excels in market intelligence and intellectual-property matters.</p>
       <a class="textlink" href="https://www.bdiglobe.com" target="_blank" rel="noopener">www.bdiglobe.com ${arrow}</a></article>
-    <article class="aff"><div class="aff-logo"><img src="/assets/kayak-technology-solutions.svg" alt="Kayak Technology Solutions" loading="lazy"></div>
+    <article class="aff">${revealFig("kts", "Kayak Technology Solutions")}
       <span class="eyebrow">Technology and SaaS</span><h3>Kayak Technology Solutions</h3>
       <p>A partnership firm that develops and markets the SaaS solutions offered by the Kayak Group: thought, designed and developed in India for the world. Kayak Technology Solutions is led by Tan.ai, who also serves as Chief Technology Officer for the entire group.</p>
       <a class="textlink" href="https://tanai.online" target="_blank" rel="noopener">tanai.online ${arrow}</a></article>
@@ -665,6 +669,7 @@ function route() {
   bindPage();
   applyPhotos(key);
   armLogos();
+  armReveals();
   afterRoute(key);
   if (pendingScroll && document.getElementById(pendingScroll)) {
     const el = document.getElementById(pendingScroll); pendingScroll = null;
@@ -686,6 +691,29 @@ function applyPhotos(key) {
   if (hero && slot && PH(slot)) { hero.classList.add("has-photo"); hero.style.setProperty("--photo", `url('${PH(slot)}')`); }
   const mag = $("#main .mag-cover");
   if (mag && PH("insights")) { mag.classList.add("has-photo"); mag.style.setProperty("--photo", `url('${PH("insights")}')`); }
+}
+// Logo reveals: each affiliate's reveal film plays once when its card comes into view and then
+// holds on the finished logo. Where we only hold the partner's live logo (BDI), the same reveal is
+// drawn in CSS around it. Reduced-motion visitors see the finished logo.
+function revealFig(id, alt, img) {
+  const replay = `<button type="button" class="rv-replay" data-rv-replay aria-label="Replay the ${alt} logo reveal">${ic("timeline")}</button>`;
+  if (img) return `<figure class="rv rv--live" data-rv><div class="rv-live"><i class="rv-b1"></i><i class="rv-b2"></i><img src="${img}" alt="${alt}" loading="lazy"></div>${replay}</figure>`;
+  return `<figure class="rv" data-rv><video muted playsinline preload="none" poster="/assets/reveal/${id}.webp" aria-label="${alt} logo reveal"><source src="/assets/reveal/${id}.webm" type="video/webm"><source src="/assets/reveal/${id}.mp4" type="video/mp4"></video>${replay}</figure>`;
+}
+function playReveal(fig) {
+  if (!fig || matchMedia("(prefers-reduced-motion: reduce)").matches) { fig?.classList.add("done"); return; }
+  const v = $("video", fig);
+  if (v) { try { v.currentTime = 0; } catch {} v.play().catch(() => fig.classList.add("done")); return; }
+  fig.classList.remove("play"); void fig.offsetWidth; fig.classList.add("play");
+}
+let rvObs;
+function armReveals() {
+  rvObs?.disconnect();
+  const figs = $$("#main [data-rv]");
+  if (!figs.length) return;
+  if (!("IntersectionObserver" in window)) { figs.forEach((f) => f.classList.add("done")); return; }
+  rvObs = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { playReveal(e.target); rvObs.unobserve(e.target); } }), { threshold: 0.45 });
+  figs.forEach((f) => rvObs.observe(f));
 }
 function playLogo(svg) {
   if (!svg || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -882,6 +910,7 @@ document.addEventListener("click", (e) => {
   if (a.dataset.mega) { e.preventDefault(); openMega(a); return; }
   if (a.dataset.scroll) pendingScroll = a.dataset.scroll;
   if (a.dataset.cluster !== undefined && (a.dataset.route || (a.getAttribute("href") || "").slice(1)) === "contact") pendingCluster = a.dataset.cluster || null;
+  if (a.hasAttribute("data-rv-replay")) { playReveal(a.closest("[data-rv]")); return; }
   if (a.hasAttribute("data-replay")) { playLogo(a.closest(".tplate").querySelector(".lgo")); return; }
   if (a.dataset.copy) { copy(a.dataset.copy); return; }
   if (a.dataset.copyLink) { copy("https://www.kayaksa.com" + keyToPath(a.dataset.copyLink)); return; }
