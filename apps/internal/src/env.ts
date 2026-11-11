@@ -5,6 +5,7 @@ import type { SessionConfig } from "../../../packages/core/src/session";
 
 export interface Env extends AiEnv, MailEnv {
   DB: D1Database;
+  LEARN_DB?: D1Database; // learn.kayaksa.com, for public certificate verification and learner statistics
   BRAND: R2Bucket;
   ASSETS: Fetcher;
   AUTH_ENCRYPTION_KEY: string;

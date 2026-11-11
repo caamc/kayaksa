@@ -128,7 +128,8 @@ async function lessonPage(main, cid, lid, opts) {
   $("#done")?.addEventListener("click", async (e) => {
     setBusy(e.currentTarget, true, "Saving…");
     try {
-      await api(`${opts.apiBase}/progress`, { body: { courseId: cid, lessonId: lid } });
+      const r = await api(`${opts.apiBase}/progress`, { body: { courseId: cid, lessonId: lid } });
+      if (r.issued?.length) { toast(`Certificate earned: ${r.issued.map((x) => x.title).join(", ")}. Find it in My certificates.`, "ok", 8000); ME = null; location.hash = L(opts, "certificates"); return; }
       location.hash = next ? L(opts, "course", cid, "lesson", next.id) : L(opts, "course", cid, "quiz");
     } catch (err) { toast(err.message, "err"); setBusy(e.currentTarget, false); }
   });
@@ -156,7 +157,7 @@ async function quizPage(main, cid, opts) {
       const cert = r.issued?.find((x) => x.kind === "course");
       const pathCert = r.issued?.find((x) => x.kind === "path");
       $("#res").innerHTML = `<div class="note ${r.passed ? "ok" : "warn"} stack-sm"><h3>${r.passed ? "You passed" : "Not this time"}: ${r.score}% (${r.right} of ${r.total})</h3>
-        ${r.passed ? (r.lessonsOutstanding ? `<p>Complete every lesson to receive your certificate.</p>` : cert ? `<p>Your certificate of participation is ready.</p><a class="btn btn-primary btn-sm" href="${opts.apiBase}/certificates/${cert.id}/pdf">${ico("download")} Download certificate</a>` : `<p>You already hold the certificate for this course.</p>`) : `<p>You need ${quiz.pass}%. Review the explanations above and try again.</p>`}
+        ${r.passed ? (r.lessonsOutstanding ? `<p>Complete every lesson to receive your certificate.</p>` : r.verifyEmail ? `<p>Confirm your email address to receive your certificate. We have sent you a link; your certificate is issued as soon as you confirm.</p>` : cert ? `<p>Your certificate of participation is ready.</p><a class="btn btn-primary btn-sm" href="${opts.apiBase}/certificates/${cert.id}/pdf">${ico("download")} Download certificate</a>` : `<p>You already hold the certificate for this course.</p>`) : `<p>You need ${quiz.pass}%. Review the explanations above and try again.</p>`}
         ${pathCert ? `<p>${ico("award")} You also completed the learning path <b>${esc(pathCert.title)}</b>. <a href="${opts.apiBase}/certificates/${pathCert.id}/pdf">Download the path certificate</a>.</p>` : ""}</div>`;
       $("#res").scrollIntoView({ behavior: "smooth" });
       me(opts.apiBase, true);

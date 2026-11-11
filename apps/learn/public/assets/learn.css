@@ -1,0 +1,27 @@
+/* learn.kayaksa.com shell */
+body{background:var(--bg)}
+.lhead{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:18px;flex-wrap:wrap;min-height:64px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:31;background:var(--surface)}
+.lhead .ksa-logo img{display:block}
+.lnav{display:flex;gap:4px;flex-wrap:wrap}
+.lnav a{padding:8px 10px;color:var(--fg);text-decoration:none;font:600 .92rem var(--sans)}
+.lnav a:hover,.lnav a[aria-current="page"]{color:var(--accent)}
+.lacts{margin-left:auto;display:flex;gap:8px;align-items:center}
+.lmain{min-width:0;padding-block:32px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.lmain:focus{outline:none}
+.lfoot{border-top:1px solid var(--line);background:var(--surface);padding-block:28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));color:var(--muted);font-size:.88rem}
+.lfoot .page{gap:10px}
+.lhero{position:relative;overflow:hidden;background:var(--deep-current);color:#F3F7F6;padding:clamp(28px,5vw,56px);clip-path:polygon(0 0,100% 0,100% calc(100% - 28px),calc(100% - 28px) 100%,0 100%)}
+.lhero h1{color:#fff;font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.04;max-width:16ch;text-wrap:balance}
+.lhero p{color:#CDE8E3;max-width:60ch}
+.lhero .mark{position:absolute;right:-40px;bottom:-60px;width:min(380px,60vw);opacity:.13}
+.lhero .stats{display:flex;flex-wrap:wrap;gap:28px;margin-top:8px}
+.lhero .stats b{display:block;font:800 1.9rem/1 var(--display);color:#F5C46D}
+.lhero .stats span{font-size:.82rem;color:#A9C0C6;letter-spacing:.06em;text-transform:uppercase}
+.verify-card{max-width:680px;border:1px solid var(--line);background:var(--surface);padding:32px;border-top:6px solid var(--accent)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;margin:0}
+.kv dt{color:var(--muted);font-size:.86rem}.kv dd{margin:0}
+.auth-dlg .field{margin-bottom:12px}
+.prose{max-width:760px;font-family:var(--serif);font-size:1.04rem;line-height:1.7}
+.prose h2{font-family:var(--display);font-size:1.2rem;margin-top:24px}
+.btn-accent{background:var(--saffron);color:#0E2F3C;border-color:var(--saffron)}.btn-accent:hover{filter:brightness(1.06);color:#0E2F3C}

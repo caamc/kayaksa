@@ -1,1 +1,2184 @@
-{"topics":[],"paths":[],"courses":[],"bytes":[]}
+{
+ "version": "2026.11",
+ "topics": [
+  {
+   "id": "ethics",
+   "name": "Ethics & Integrity",
+   "color": "#0B5654",
+   "blurb": "Doing the right thing when no rule tells you what to do."
+  },
+  {
+   "id": "compliance",
+   "name": "Compliance",
+   "color": "#2D6A9F",
+   "blurb": "The Indian and global rules that shape everyday business."
+  },
+  {
+   "id": "risk",
+   "name": "Risk",
+   "color": "#9C630E",
+   "blurb": "Seeing what could go wrong early enough to act."
+  },
+  {
+   "id": "governance",
+   "name": "Governance",
+   "color": "#5E4B78",
+   "blurb": "How boards and leaders steer and oversee a company."
+  },
+  {
+   "id": "ai",
+   "name": "Responsible AI",
+   "color": "#17807E",
+   "blurb": "Using AI well: its power, its limits and its rules."
+  },
+  {
+   "id": "kayak",
+   "name": "Kayak induction",
+   "color": "#0E2F3C",
+   "blurb": "How we work at Kayak Strategic Advisors."
+  }
+ ],
+ "paths": [
+  {
+   "id": "ethics-integrity",
+   "title": "Ethics and Integrity at Work",
+   "topic": "ethics",
+   "color": "#0B5654",
+   "audience": "public",
+   "summary": "Make sound ethical decisions, speak up with confidence and handle conflicts of interest, gifts and hospitality properly.",
+   "courses": [
+    "ethics-foundations",
+    "speak-up",
+    "conflicts-gifts"
+   ],
+   "minutes": 74
+  },
+  {
+   "id": "compliance-india",
+   "title": "Compliance Essentials for India",
+   "topic": "compliance",
+   "color": "#2D6A9F",
+   "audience": "public",
+   "summary": "Anti-bribery and corruption, personal data protection under the DPDP Act, and preventing sexual harassment at the workplace.",
+   "courses": [
+    "anti-bribery",
+    "data-protection",
+    "posh"
+   ],
+   "minutes": 78
+  },
+  {
+   "id": "risk-fundamentals",
+   "title": "Risk Management Fundamentals",
+   "topic": "risk",
+   "color": "#9C630E",
+   "audience": "public",
+   "summary": "Build and run a risk framework, manage third parties across their lifecycle and understand how fraud happens and is stopped.",
+   "courses": [
+    "erm-basics",
+    "third-party-risk",
+    "fraud-risk"
+   ],
+   "minutes": 76
+  },
+  {
+   "id": "governance-boards",
+   "title": "Corporate Governance for Boards and Leaders",
+   "topic": "governance",
+   "color": "#5E4B78",
+   "audience": "public",
+   "summary": "Directors' duties, the audit committee and internal financial controls, and related-party transactions under Indian law.",
+   "courses": [
+    "board-essentials",
+    "audit-committee",
+    "related-parties"
+   ],
+   "minutes": 75
+  },
+  {
+   "id": "responsible-ai",
+   "title": "Responsible AI",
+   "topic": "ai",
+   "color": "#17807E",
+   "audience": "public",
+   "summary": "How generative AI works and fails, the frameworks that govern AI risk, and how to use AI safely at work.",
+   "courses": [
+    "ai-foundations",
+    "ai-governance",
+    "ai-at-work"
+   ],
+   "minutes": 74
+  },
+  {
+   "id": "kayak-induction",
+   "title": "Kayak Induction",
+   "topic": "kayak",
+   "color": "#0E2F3C",
+   "audience": "internal",
+   "summary": "Who we are, how we protect client confidences, how we keep our independence and quality, and how we speak and look as Kayak.",
+   "courses": [
+    "kayak-who-we-are",
+    "kayak-confidentiality",
+    "kayak-independence-quality",
+    "kayak-brand-voice"
+   ],
+   "minutes": 89
+  }
+ ],
+ "courses": [
+  {
+   "id": "ethics-foundations",
+   "title": "Ethical Decision-Making at Work",
+   "topic": "ethics",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "A practical way to recognise an ethical issue, think it through and act on it, even under pressure.",
+   "outcomes": [
+    "Recognise when a business decision has an ethical dimension",
+    "Apply a five-step test to a grey-area decision",
+    "Explain why pressure and rationalisation lead good people to bad choices"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Why ethics is a business skill",
+     "minutes": 6,
+     "body": "Most ethical failures at work are not committed by bad people. They are committed by ordinary people under pressure: a target to hit, a client to keep, a manager to please. The decisions rarely look like \"steal or don't steal\". They look like \"round this number up\", \"don't mention that clause yet\" or \"let's not put that in writing\".\n\nEthics at work is therefore less about knowing right from wrong in the abstract, and more about **noticing** that a decision has an ethical side, and having a habit for thinking it through.\n\n### What is at stake\n\n- **Trust.** Clients, regulators and colleagues give us latitude because they believe we will act properly when no one is watching.\n- **Legal exposure.** Many ethical lapses are also offences: misstatement, bribery, data misuse, harassment.\n- **Your own name.** Careers outlast employers. A reputation for integrity travels with you.\n\n> A useful rule: if you would be uncomfortable explaining a decision to your family, your regulator or a journalist, stop and think again."
+    },
+    {
+     "id": "l2",
+     "title": "A five-step test for grey areas",
+     "minutes": 7,
+     "body": "When something feels uncomfortable, slow down and work through five questions.\n\n1. **What exactly is the issue?** State it plainly in one sentence. Vague unease becomes clearer once it has a name.\n2. **Who is affected?** List the people and organisations who gain or lose: client, colleagues, the public, the firm, you.\n3. **What do the rules say?** Law, regulation, contract, company policy, professional standards. If a rule clearly answers the question, follow it.\n4. **What are the options?** There are almost always more than two. Could you disclose, delay, escalate, or do part of what was asked?\n5. **Could you defend it in the open?** Imagine the decision, and your reasons, printed on the front page tomorrow.\n\nIf you are still unsure after the five steps, **ask before you act**. Talk to your manager, a senior colleague, compliance or legal. Asking is a sign of judgement, not weakness."
+    },
+    {
+     "id": "l3",
+     "title": "Pressure, rationalisation and how to resist them",
+     "minutes": 7,
+     "body": "People who cross the line usually tell themselves a story first. Researchers call this **rationalisation**, and the stories are remarkably similar:\n\n- \"Everyone does it.\" — Common is not the same as acceptable.\n- \"It's only temporary; I'll fix it next quarter.\" — Temporary fixes have a way of becoming permanent.\n- \"No one is really harmed.\" — Ask who would be harmed if the facts came out.\n- \"I was told to.\" — Instructions do not transfer responsibility for an unlawful act.\n- \"It's for the good of the company.\" — Companies are rarely helped by misconduct once it surfaces.\n\n### Building resistance\n\n- **Decide in advance.** Know your red lines before the pressure arrives.\n- **Use the pause.** \"Let me come back to you this afternoon\" buys time to think and to ask.\n- **Put it in writing.** Requests that cannot survive being written down usually should not be done.\n- **Find allies.** You are rarely the only person uncomfortable. Raising concerns together is easier and more effective."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "A colleague says 'everyone in the industry rounds these numbers up'. This is an example of:",
+      "options": [
+       "A sound business judgement",
+       "Rationalisation",
+       "A legal defence",
+       "Materiality"
+      ],
+      "answer": 1,
+      "why": "Saying 'everyone does it' is a classic rationalisation. How common a practice is does not make it acceptable."
+     },
+     {
+      "q": "What is the first step of the five-step test?",
+      "options": [
+       "Ask your manager",
+       "State the issue plainly",
+       "Check the policy",
+       "Pick the cheapest option"
+      ],
+      "answer": 1,
+      "why": "Naming the issue in one sentence turns vague unease into something you can reason about."
+     },
+     {
+      "q": "If a rule clearly answers the question, you should:",
+      "options": [
+       "Follow the rule",
+       "Weigh the rule against the target",
+       "Ask the client",
+       "Do what peers do"
+      ],
+      "answer": 0,
+      "why": "Where law, regulation or policy is clear, the decision is made for you."
+     },
+     {
+      "q": "Which is the best response to an uncomfortable request with a short deadline?",
+      "options": [
+       "Do it and raise it later",
+       "Refuse without explanation",
+       "Ask for time and seek advice before acting",
+       "Do half of it"
+      ],
+      "answer": 2,
+      "why": "Buying a little time to think and ask is almost always possible and leads to better decisions."
+     },
+     {
+      "q": "Being told to do something by a senior person:",
+      "options": [
+       "Transfers responsibility to them",
+       "Does not make an unlawful act acceptable",
+       "Is a full defence",
+       "Means you need not record it"
+      ],
+      "answer": 1,
+      "why": "Instructions do not make misconduct lawful, and you remain responsible for your own actions."
+     }
+    ]
+   }
+  },
+  {
+   "id": "speak-up",
+   "title": "Speaking Up and Whistleblowing",
+   "topic": "ethics",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "Why speaking up matters, the channels available in Indian companies, how reports are handled and how reporters are protected.",
+   "outcomes": [
+    "Explain the purpose of a speak-up programme and vigil mechanism",
+    "Know what to report, how and to whom",
+    "Describe how good organisations investigate and protect reporters"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Why speaking up matters",
+     "minutes": 6,
+     "body": "Most serious misconduct is known to someone inside the organisation long before it becomes a crisis. Fraud examiners consistently find that **tips are the most common way fraud is detected**, ahead of internal audit and management review. An organisation that makes it easy and safe to speak up finds problems early, while they are still small.\n\nSpeaking up is not disloyalty. It is how an organisation protects its people, its customers and its reputation.\n\n### What to raise\n\n- Suspected fraud, bribery or financial misstatement\n- Breaches of law, regulation or company policy\n- Harassment, discrimination or retaliation\n- Risks to health, safety or the environment\n- Misuse of confidential or personal data\n- Conflicts of interest that have not been declared\n\nYou do not need proof. You need a **genuine, reasonable concern**. It is the organisation's job to investigate."
+    },
+    {
+     "id": "l2",
+     "title": "Channels and the law in India",
+     "minutes": 7,
+     "body": "In India, the **Companies Act, 2013** (section 177(9) and (10)) requires listed companies, and certain others such as those that accept public deposits or borrow above set limits, to establish a **vigil mechanism** for directors and employees to report genuine concerns. The mechanism must protect against victimisation and allow direct access to the chair of the audit committee in appropriate cases.\n\nFor listed entities, **SEBI's Listing Obligations and Disclosure Requirements Regulations, 2015** (regulation 22) require a vigil mechanism and its disclosure on the website and in the board's report.\n\nInternationally, **ISO 37002:2021** sets out good practice for whistleblowing management systems: trust, impartiality and protection.\n\n### Typical channels\n\n- Your manager or another senior leader you trust\n- Compliance, legal, HR or internal audit\n- An ethics hotline or web portal, often run by an independent provider, that allows **anonymous** reports\n- The chair of the audit committee, for serious matters or concerns about senior management"
+    },
+    {
+     "id": "l3",
+     "title": "What happens after a report",
+     "minutes": 7,
+     "body": "A well-run programme handles every report in the same disciplined way.\n\n1. **Acknowledge** receipt, and give an anonymous reporter a way to follow up.\n2. **Triage** the report: what is alleged, how serious, who should investigate and whether anyone is conflicted.\n3. **Investigate** independently, gathering documents and data first and interviewing in a planned order.\n4. **Conclude** with findings based on evidence, not rumour, and decide on action.\n5. **Close the loop** with the reporter as far as confidentiality allows, and fix the control weakness that allowed the problem.\n\n### Protection from retaliation\n\nRetaliation, such as demotion, exclusion, threats or dismissal because someone raised a concern in good faith, is itself serious misconduct. Good organisations treat it as a disciplinary matter and monitor reporters' treatment for months after a case closes.\n\nA report made in good faith that turns out to be mistaken is never misconduct. Deliberately false reports are."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Which is most often the way fraud is first detected?",
+      "options": [
+       "External audit",
+       "Tips from people",
+       "Management review",
+       "Data analytics"
+      ],
+      "answer": 1,
+      "why": "Studies by fraud examiners consistently find tips are the most common detection method."
+     },
+     {
+      "q": "To raise a concern, you need:",
+      "options": [
+       "Documentary proof",
+       "A genuine, reasonable concern",
+       "Two witnesses",
+       "Your manager's permission"
+      ],
+      "answer": 1,
+      "why": "You do not need proof; investigating is the organisation's job."
+     },
+     {
+      "q": "Under the Companies Act, 2013 a vigil mechanism must allow, in appropriate cases, direct access to:",
+      "options": [
+       "The statutory auditor",
+       "The chair of the audit committee",
+       "The Registrar of Companies",
+       "The police"
+      ],
+      "answer": 1,
+      "why": "Section 177(10) provides for direct access to the audit committee chair in appropriate or exceptional cases."
+     },
+     {
+      "q": "Which international standard covers whistleblowing management systems?",
+      "options": [
+       "ISO 27001",
+       "ISO 9001",
+       "ISO 37002",
+       "ISO 31000"
+      ],
+      "answer": 2,
+      "why": "ISO 37002:2021 gives guidance on whistleblowing management systems."
+     },
+     {
+      "q": "A good-faith report that turns out to be mistaken is:",
+      "options": [
+       "Misconduct",
+       "Not misconduct",
+       "Grounds for dismissal",
+       "A criminal offence"
+      ],
+      "answer": 1,
+      "why": "Only deliberately false reports are misconduct. Protecting good-faith reporters keeps the channel open."
+     }
+    ]
+   }
+  },
+  {
+   "id": "conflicts-gifts",
+   "title": "Conflicts of Interest, Gifts and Hospitality",
+   "topic": "ethics",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "Spot, declare and manage conflicts of interest, and judge when gifts and hospitality are acceptable.",
+   "outcomes": [
+    "Identify actual, potential and perceived conflicts of interest",
+    "Declare and manage a conflict correctly",
+    "Apply the test for acceptable gifts and hospitality"
+   ],
+   "minutes": 24,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "What a conflict of interest is",
+     "minutes": 6,
+     "body": "A **conflict of interest** arises when a personal interest could influence, or appear to influence, the decisions you make for your employer or client.\n\n- **Actual:** you are deciding on a contract with a company your spouse owns.\n- **Potential:** you hold shares in a supplier that may bid next year.\n- **Perceived:** you are close friends with a candidate you are interviewing.\n\nHaving a conflict is normal; everyone has relationships and interests. The problem is a conflict that is **hidden** or **unmanaged**.\n\n### Common sources\n\n- Family members or close friends at suppliers, customers or competitors\n- Shareholdings, directorships or other paid work\n- Outside business interests and side ventures\n- Personal relationships within a reporting line\n\nFor directors of Indian companies, **section 184 of the Companies Act, 2013** requires disclosure of interest in other entities and of interest in contracts the company enters into, and the interested director must not take part in the discussion or vote."
+    },
+    {
+     "id": "l2",
+     "title": "Declare, then manage",
+     "minutes": 6,
+     "body": "The single most important step is to **declare early and in writing**, usually to your manager and through the organisation's register or declaration form. Declare when you first become aware of the conflict, and update the declaration when circumstances change.\n\nOnce declared, the organisation decides how to manage it. Typical measures are:\n\n- **Recusal:** you take no part in the decision or the process.\n- **Reassignment:** someone else handles the relationship.\n- **Additional review:** a second person approves your work.\n- **Divestment:** you give up the interest, in more serious cases.\n\n> If in doubt, declare. A declared conflict that turns out to be minor costs nothing. An undeclared one can end a career."
+    },
+    {
+     "id": "l3",
+     "title": "Gifts and hospitality: the test",
+     "minutes": 7,
+     "body": "Gifts and hospitality build relationships, but they can also be used to buy influence. A modest lunch is courtesy; an expensive holiday during a tender is something else.\n\nAsk four questions before giving or accepting:\n\n1. **Purpose:** is it a genuine courtesy, or is it meant to influence a decision?\n2. **Timing:** is a decision, tender, audit or negotiation pending? Gifts at such times are rarely appropriate.\n3. **Value and frequency:** would a reasonable observer think it lavish or too frequent?\n4. **Transparency:** would you be comfortable recording it in the gifts register and telling your manager?\n\n### Hard lines\n\n- **Never** give or accept cash or cash equivalents such as gift cards or vouchers.\n- **Never** offer anything of value to a public official to influence an official act. Under the Prevention of Corruption Act, 1988 this can be a criminal offence, for the individual and the company.\n- **Record** everything above your organisation's threshold, whether accepted or declined."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "You hold shares in a company that may bid for a contract next year. This is:",
+      "options": [
+       "Not a conflict",
+       "A potential conflict",
+       "Only a perceived conflict",
+       "Insider trading"
+      ],
+      "answer": 1,
+      "why": "A future bid creates a potential conflict that should be declared now."
+     },
+     {
+      "q": "The most important first step with a conflict is to:",
+      "options": [
+       "Sell your interest",
+       "Declare it early in writing",
+       "Keep it confidential",
+       "Ask the other party"
+      ],
+      "answer": 1,
+      "why": "Early written declaration lets the organisation manage the conflict properly."
+     },
+     {
+      "q": "Which gift should never be accepted?",
+      "options": [
+       "A branded notebook",
+       "A modest working lunch",
+       "A ₹10,000 shopping voucher",
+       "A festive box of sweets of modest value"
+      ],
+      "answer": 2,
+      "why": "Vouchers and gift cards are cash equivalents and should never be accepted."
+     },
+     {
+      "q": "A supplier invites you to an expensive resort weekend while its tender is being evaluated. You should:",
+      "options": [
+       "Accept if your manager agrees",
+       "Decline and record the offer",
+       "Accept but pay for your own meals",
+       "Accept after the tender closes"
+      ],
+      "answer": 1,
+      "why": "Hospitality during a pending decision is inappropriate; declining and recording protects everyone."
+     },
+     {
+      "q": "Section 184 of the Companies Act, 2013 requires an interested director to:",
+      "options": [
+       "Resign",
+       "Disclose the interest and not participate in the decision",
+       "Inform SEBI",
+       "Seek shareholder approval"
+      ],
+      "answer": 1,
+      "why": "Section 184 requires disclosure and that the interested director not take part in the discussion or vote."
+     }
+    ]
+   }
+  },
+  {
+   "id": "anti-bribery",
+   "title": "Anti-Bribery and Anti-Corruption",
+   "topic": "compliance",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "How bribery laws in India and abroad apply to companies and individuals, the red flags and the 'adequate procedures' that protect an organisation.",
+   "outcomes": [
+    "Explain the main offences under India's Prevention of Corruption Act and key foreign laws",
+    "Recognise bribery red flags, including through third parties",
+    "Describe the controls that make up adequate procedures"
+   ],
+   "minutes": 27,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "The laws that matter",
+     "minutes": 8,
+     "body": "**India: the Prevention of Corruption Act, 1988 (PCA)**, as amended in 2018:\n\n- **Giving** an undue advantage to a public servant is an offence (section 8), not only receiving one.\n- A **commercial organisation** commits an offence if any person associated with it, such as an employee, agent or distributor, gives or promises an undue advantage to a public servant to obtain or retain business (section 9).\n- The organisation's main defence is to prove it had **adequate procedures** in place to prevent such conduct.\n- Where an offence is committed with the consent or connivance of a director, manager or other officer, **that individual is also liable** (section 10).\n\n**Abroad**, two laws reach Indian companies with international links:\n\n- The **US Foreign Corrupt Practices Act (FCPA)** prohibits bribing foreign officials and requires accurate books and records for issuers.\n- The **UK Bribery Act 2010** covers private-sector bribery as well as public officials, and its **section 7 \"failure to prevent\"** offence makes a company liable for bribery by associated persons unless it had adequate procedures."
+    },
+    {
+     "id": "l2",
+     "title": "Red flags, especially through third parties",
+     "minutes": 7,
+     "body": "Most large bribery cases involve an **intermediary**: an agent, consultant, distributor, customs broker or \"facilitator\". The company never hands over cash directly; someone else does it on its behalf.\n\nWatch for:\n\n- Commissions or fees that are unusually high for the service described\n- Requests for payment in cash, to a third country or to a different entity\n- A third party recommended by the official who will decide on your matter\n- Vague invoices: \"consultancy\", \"liaison\", \"miscellaneous expenses\"\n- Reluctance to sign anti-bribery clauses or to allow audit rights\n- Close family or business links between the third party and officials\n\n**Facilitation payments**, small payments to speed up routine government action, are bribes under Indian law and the UK Bribery Act. Treat them as prohibited."
+    },
+    {
+     "id": "l3",
+     "title": "Adequate procedures in practice",
+     "minutes": 7,
+     "body": "Regulators and courts look for a programme that is real, risk-based and working. The core elements are consistent across the PCA guidance, UK guidance and FCPA practice:\n\n1. **Top-level commitment:** the board and leaders set the tone and act on it.\n2. **Risk assessment:** where, with whom and through whom bribery could happen.\n3. **Policies and procedures:** gifts and hospitality, donations, sponsorships, facilitation payments, books and records.\n4. **Third-party due diligence:** checks proportionate to risk before engagement, contractual protections, monitoring.\n5. **Training and communication** tailored to roles at risk.\n6. **Speak-up channels** and prompt investigation of concerns.\n7. **Monitoring and review:** testing, audit and improvement over time.\n\n> A policy on paper, with no due diligence, training or monitoring behind it, will not be treated as adequate."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Under the PCA as amended in 2018, a commercial organisation's main defence to section 9 is:",
+      "options": [
+       "The bribe was small",
+       "It had adequate procedures to prevent bribery",
+       "The employee acted alone",
+       "The public servant asked for it"
+      ],
+      "answer": 1,
+      "why": "Section 9 allows the organisation to prove it had adequate procedures in place."
+     },
+     {
+      "q": "Which law contains the 'failure to prevent bribery' offence in section 7?",
+      "options": [
+       "FCPA",
+       "UK Bribery Act 2010",
+       "PMLA",
+       "Companies Act, 2013"
+      ],
+      "answer": 1,
+      "why": "Section 7 of the UK Bribery Act 2010 is the failure-to-prevent offence."
+     },
+     {
+      "q": "Small payments to speed up routine government actions are:",
+      "options": [
+       "Allowed under Indian law",
+       "Bribes and should be treated as prohibited",
+       "Allowed if recorded",
+       "Allowed below ₹5,000"
+      ],
+      "answer": 1,
+      "why": "Facilitation payments are bribes under the PCA and the UK Bribery Act."
+     },
+     {
+      "q": "Which is a red flag with an agent?",
+      "options": [
+       "A clear scope of work",
+       "Payment requested to a bank account in a third country",
+       "Agreement to audit rights",
+       "A fee in line with the market"
+      ],
+      "answer": 1,
+      "why": "Payments routed to unrelated places or entities are a classic warning sign."
+     },
+     {
+      "q": "Which is NOT one of the core elements of adequate procedures?",
+      "options": [
+       "Risk assessment",
+       "Third-party due diligence",
+       "Guaranteed sales targets",
+       "Training"
+      ],
+      "answer": 2,
+      "why": "Sales targets are not an anti-bribery control; the others are core elements."
+     }
+    ]
+   }
+  },
+  {
+   "id": "data-protection",
+   "title": "Personal Data Protection under the DPDP Act",
+   "topic": "compliance",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "The Digital Personal Data Protection Act, 2023 and its Rules: what data fiduciaries must do, individuals' rights, breaches and penalties.",
+   "outcomes": [
+    "Explain the key roles and obligations under the DPDP Act, 2023",
+    "Describe valid consent and notice, and individuals' rights",
+    "Know what to do when personal data is breached"
+   ],
+   "minutes": 26,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "The Act in one page",
+     "minutes": 7,
+     "body": "The **Digital Personal Data Protection Act, 2023 (DPDP Act)** governs the processing of **digital personal data** in India, and of data processed outside India in connection with offering goods or services to people in India. The **Digital Personal Data Protection Rules, 2025** were notified in November 2025, with most obligations phased in over the following eighteen months.\n\n### Key roles\n\n- **Data principal:** the individual the data is about.\n- **Data fiduciary:** the organisation that decides why and how data is processed. It carries the obligations.\n- **Data processor:** processes data on the fiduciary's behalf under a contract.\n- **Significant data fiduciary:** a fiduciary notified by the government because of the volume or sensitivity of its data, with extra duties such as a Data Protection Officer in India, independent data audits and impact assessments.\n- **Data Protection Board of India:** the regulator that inquires into breaches and imposes penalties."
+    },
+    {
+     "id": "l2",
+     "title": "Consent, notice and legitimate uses",
+     "minutes": 7,
+     "body": "Personal data may be processed for a lawful purpose either with **consent** or for certain **legitimate uses** set out in the Act (for example, where an individual voluntarily provides data for a specified purpose, for employment purposes, or to comply with law).\n\n**Valid consent** must be free, specific, informed, unconditional and unambiguous, given by a clear affirmative action, and limited to the data necessary for the purpose. It must be **as easy to withdraw as to give**.\n\nEach request for consent must be accompanied by a **notice** in clear and plain language, available in English and the languages of the Eighth Schedule, describing the data, the purpose, and how to exercise rights and complain to the Board.\n\n### Children and people with disabilities\n\nProcessing a child's data (under 18) requires **verifiable consent of a parent or lawful guardian**, and tracking, behavioural monitoring and targeted advertising directed at children are prohibited, subject to limited exemptions in the Rules.\n\n### Individuals' rights\n\nData principals can **access** information about their data, seek **correction and erasure**, use **grievance redressal**, and **nominate** someone to exercise their rights on death or incapacity."
+    },
+    {
+     "id": "l3",
+     "title": "Security, breaches and penalties",
+     "minutes": 7,
+     "body": "A data fiduciary must take **reasonable security safeguards** to prevent personal data breaches, such as encryption, access control, logging and monitoring, and must ensure its processors do the same.\n\n### When a breach happens\n\nThe fiduciary must notify **the Data Protection Board and each affected data principal**. The Rules require prompt intimation to affected individuals, describing the breach, its likely consequences, the steps taken and what they can do, and a fuller report to the Board within **72 hours** of becoming aware, unless the Board allows longer.\n\n### Retention\n\nData must be **erased** once the purpose is served or consent is withdrawn, unless law requires it to be kept. The Rules set retention periods for certain large platforms.\n\n### Penalties\n\nThe Board can impose financial penalties up to **₹250 crore** for failing to take reasonable security safeguards, and up to **₹200 crore** for failing to notify a breach or meet obligations relating to children, with other breaches attracting penalties up to ₹50 crore.\n\n> Practical rule: collect only what you need, keep it only as long as you need it, protect it while you have it, and tell people promptly if it is compromised."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Who carries the main obligations under the DPDP Act?",
+      "options": [
+       "The data principal",
+       "The data fiduciary",
+       "The Data Protection Board",
+       "The data processor alone"
+      ],
+      "answer": 1,
+      "why": "The data fiduciary decides the purpose and means of processing and carries the obligations."
+     },
+     {
+      "q": "Valid consent under the DPDP Act must be:",
+      "options": [
+       "Implied from silence",
+       "Free, specific, informed, unconditional and unambiguous",
+       "Bundled with the terms of service",
+       "Permanent once given"
+      ],
+      "answer": 1,
+      "why": "These are the statutory qualities of valid consent, and withdrawal must be as easy as giving it."
+     },
+     {
+      "q": "Processing a child's personal data requires:",
+      "options": [
+       "No special steps",
+       "Verifiable consent of a parent or lawful guardian",
+       "Approval from the Board",
+       "Consent from the child only"
+      ],
+      "answer": 1,
+      "why": "The Act requires verifiable parental or guardian consent for children's data."
+     },
+     {
+      "q": "After a personal data breach, the fiduciary must notify:",
+      "options": [
+       "Only the police",
+       "The Board and each affected data principal",
+       "Only the processor",
+       "No one if the data was encrypted"
+      ],
+      "answer": 1,
+      "why": "The Act requires notice to both the Board and affected individuals."
+     },
+     {
+      "q": "The maximum penalty for failing to take reasonable security safeguards is up to:",
+      "options": [
+       "₹50 lakh",
+       "₹5 crore",
+       "₹250 crore",
+       "There is no penalty"
+      ],
+      "answer": 2,
+      "why": "The Schedule to the Act provides for penalties up to ₹250 crore for this breach."
+     }
+    ]
+   }
+  },
+  {
+   "id": "posh",
+   "title": "Preventing Sexual Harassment at the Workplace (POSH)",
+   "topic": "compliance",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "The Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013: what harassment is, the Internal Committee, and how complaints are handled.",
+   "outcomes": [
+    "Recognise conduct that amounts to sexual harassment under the POSH Act",
+    "Explain the role and composition of the Internal Committee",
+    "Describe the complaint and inquiry process and timelines"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "What the law covers",
+     "minutes": 7,
+     "body": "The **Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013** (the POSH Act) protects women at the workplace. Many Indian organisations adopt **gender-neutral policies** that extend the same protection and process to everyone; check your own policy.\n\n**Sexual harassment** includes unwelcome acts or behaviour, whether direct or implied, such as:\n\n- physical contact and advances\n- a demand or request for sexual favours\n- sexually coloured remarks\n- showing pornography\n- any other unwelcome physical, verbal or non-verbal conduct of a sexual nature\n\nIt also covers circumstances such as an implied promise of preferential treatment, a threat about employment status, or creating an intimidating, hostile or offensive work environment.\n\nThe **workplace** is defined widely: it includes any place visited by the employee during employment, including transport provided by the employer, client sites, off-site events and, in practice, digital spaces such as messaging and video calls.\n\n> What matters is how the conduct is **received**, not what was intended."
+    },
+    {
+     "id": "l2",
+     "title": "The Internal Committee",
+     "minutes": 6,
+     "body": "Every employer with **ten or more employees** must constitute an **Internal Committee (IC)** at each office or administrative unit.\n\n- **Presiding Officer:** a woman employed at a senior level.\n- At least **two members** from among employees committed to the cause of women or with experience in social work or legal knowledge.\n- **One external member** from an NGO or association committed to the cause of women, or a person familiar with issues of sexual harassment.\n- At least **half** the members must be women.\n\nMembers hold office for up to three years. Where an employer has fewer than ten employees, or the complaint is against the employer, complaints go to the **Local Committee** constituted by the District Officer.\n\n### Employer duties\n\nDisplay the consequences of sexual harassment and the IC's details at the workplace, run awareness programmes, help the IC with inquiries, treat harassment as misconduct under service rules, and include the number of cases in the **annual report**."
+    },
+    {
+     "id": "l3",
+     "title": "Complaints, inquiry and outcomes",
+     "minutes": 7,
+     "body": "1. **Complaint:** in writing to the IC within **three months** of the incident (or the last incident in a series). The IC can extend this by a further three months for sufficient reasons. The IC must help a complainant who cannot write.\n2. **Conciliation:** at the complainant's request only, and never with a monetary settlement.\n3. **Inquiry:** conducted following the principles of natural justice, and completed within **90 days**.\n4. **Report:** the IC gives its findings to the employer within **10 days** of completing the inquiry.\n5. **Action:** the employer acts on the recommendations within **60 days**. Action may include disciplinary measures under service rules and deductions from salary towards compensation.\n\n### Confidentiality and retaliation\n\nThe identity of the complainant, respondent and witnesses, and the contents of the inquiry, are confidential; breaches can attract a penalty. Victimising a complainant or witness is itself misconduct.\n\nNon-compliance by an employer, such as failing to constitute an IC, can attract a fine of up to **₹50,000**, higher penalties for repeat offences, and cancellation of licences."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Under the POSH Act, what matters most in deciding whether conduct is harassment?",
+      "options": [
+       "The intention of the person",
+       "How the conduct is received",
+       "Whether it happened in the office building",
+       "Whether there were witnesses"
+      ],
+      "answer": 1,
+      "why": "Harassment is about unwelcome conduct; how it is received matters more than intent."
+     },
+     {
+      "q": "An Internal Committee is required where an employer has at least:",
+      "options": [
+       "5 employees",
+       "10 employees",
+       "20 employees",
+       "50 employees"
+      ],
+      "answer": 1,
+      "why": "The Act requires an IC at every office with ten or more employees."
+     },
+     {
+      "q": "The Presiding Officer of the IC must be:",
+      "options": [
+       "Any senior manager",
+       "A woman employed at a senior level",
+       "An external lawyer",
+       "The HR head"
+      ],
+      "answer": 1,
+      "why": "The Act requires a woman employed at a senior level."
+     },
+     {
+      "q": "Within what period should a complaint normally be made?",
+      "options": [
+       "One month",
+       "Three months, extendable by three months",
+       "One year",
+       "No time limit"
+      ],
+      "answer": 1,
+      "why": "Three months from the incident, which the IC can extend by up to three more months."
+     },
+     {
+      "q": "Conciliation under the POSH Act:",
+      "options": [
+       "Is mandatory",
+       "Can include a monetary settlement",
+       "Is only at the complainant's request and cannot involve money",
+       "Replaces the inquiry in all cases"
+      ],
+      "answer": 2,
+      "why": "Conciliation is optional, at the complainant's request, and no monetary settlement can be the basis."
+     }
+    ]
+   }
+  },
+  {
+   "id": "erm-basics",
+   "title": "Enterprise Risk Management Essentials",
+   "topic": "risk",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "What enterprise risk management is, the COSO and ISO 31000 frameworks, and how to identify, assess and respond to risk.",
+   "outcomes": [
+    "Explain the purpose of ERM and the two leading frameworks",
+    "Identify and assess risks using likelihood and impact",
+    "Choose a risk response and set key risk indicators"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "What ERM is for",
+     "minutes": 6,
+     "body": "Every organisation takes risks to create value: entering a market, launching a product, hiring, borrowing. **Enterprise risk management (ERM)** is the discipline of understanding those risks across the whole organisation, so that leaders take the right risks deliberately and avoid the wrong ones.\n\nERM is not about eliminating risk. It is about **risk-informed decisions** and **no surprises** for the board.\n\n### The two leading frameworks\n\n- **COSO ERM: Integrating with Strategy and Performance (2017)** links risk to strategy and performance through five components: governance and culture; strategy and objective-setting; performance; review and revision; information, communication and reporting.\n- **ISO 31000:2018 Risk management – Guidelines** sets out principles, a framework and a process: establish scope and context, identify, analyse and evaluate risk, treat it, and monitor, review, record and report, with communication and consultation throughout.\n\nIn India, the **Companies Act, 2013** requires the board's report to include a statement on the development and implementation of a risk management policy (section 134(3)(n)), and **SEBI LODR regulation 21** requires the top 1,000 listed entities by market capitalisation to have a **Risk Management Committee**."
+    },
+    {
+     "id": "l2",
+     "title": "Identify and assess",
+     "minutes": 7,
+     "body": "### Identify\n\nGood risk identification is structured, not a brainstorm alone. Use several lenses:\n\n- **Objectives:** for each strategic objective, what could stop us achieving it?\n- **Categories:** strategic, operational, financial, compliance, technology and cyber, people, reputation, ESG.\n- **Sources:** incidents, near misses, audit findings, regulatory changes, industry events.\n\nWrite each risk as **cause → event → consequence**: \"Because we rely on one supplier (cause), a disruption at its plant (event) could halt production for weeks (consequence).\" This makes the risk testable and the controls obvious.\n\n### Assess\n\nRate each risk on **likelihood** and **impact**, usually on a 1–5 scale with clear descriptions, and plot it on a heat map.\n\n- **Inherent risk:** before considering controls.\n- **Residual risk:** after the controls that actually operate.\n\nCompare residual risk with the **risk appetite** the board has set: the amount and type of risk the organisation is willing to accept in pursuit of its objectives."
+    },
+    {
+     "id": "l3",
+     "title": "Respond and monitor",
+     "minutes": 7,
+     "body": "### Four responses\n\n1. **Avoid:** stop the activity that creates the risk.\n2. **Reduce:** add or strengthen controls to lower likelihood or impact.\n3. **Share or transfer:** insurance, contracts, joint ventures, outsourcing (the accountability usually stays with you).\n4. **Accept:** consciously retain the risk because it is within appetite or too costly to treat.\n\nEvery significant risk needs a named **risk owner**, a senior person accountable for managing it.\n\n### Key risk indicators\n\nA **key risk indicator (KRI)** is a metric that signals rising risk before it materialises, for example staff attrition in a critical team, days of inventory cover, overdue vendor reviews or system patch backlog. Set thresholds (green, amber, red) and escalate when they are breached.\n\n### Keep it alive\n\nReview the risk register at least quarterly, report the top risks to the board with trends, and re-assess after major events. A risk register that is updated once a year for the annual report is a compliance artefact, not risk management."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "The main purpose of ERM is to:",
+      "options": [
+       "Eliminate all risk",
+       "Enable risk-informed decisions across the organisation",
+       "Satisfy auditors",
+       "Buy insurance"
+      ],
+      "answer": 1,
+      "why": "ERM helps leaders take the right risks deliberately, not remove risk altogether."
+     },
+     {
+      "q": "Which standard provides risk management guidelines with principles, a framework and a process?",
+      "options": [
+       "ISO 9001",
+       "ISO 31000",
+       "ISO 14001",
+       "ISO 22301"
+      ],
+      "answer": 1,
+      "why": "ISO 31000:2018 is the international risk management guideline."
+     },
+     {
+      "q": "Residual risk is risk:",
+      "options": [
+       "Before any controls",
+       "After the controls that actually operate",
+       "That has been transferred",
+       "That has been avoided"
+      ],
+      "answer": 1,
+      "why": "Residual risk takes account of the controls in place and working."
+     },
+     {
+      "q": "Buying insurance is an example of which response?",
+      "options": [
+       "Avoid",
+       "Reduce",
+       "Share or transfer",
+       "Accept"
+      ],
+      "answer": 2,
+      "why": "Insurance shares the financial impact with another party."
+     },
+     {
+      "q": "Under SEBI LODR, a Risk Management Committee is required for:",
+      "options": [
+       "All companies",
+       "The top 1,000 listed entities by market capitalisation",
+       "Only banks",
+       "Only unlisted companies"
+      ],
+      "answer": 1,
+      "why": "Regulation 21 applies to the top 1,000 listed entities by market capitalisation."
+     }
+    ]
+   }
+  },
+  {
+   "id": "third-party-risk",
+   "title": "Third-Party Risk and Due Diligence",
+   "topic": "risk",
+   "level": "Intermediate",
+   "audience": "public",
+   "summary": "Managing the risks that come with suppliers, agents, distributors and partners, from onboarding to exit.",
+   "outcomes": [
+    "Explain why third parties are a leading source of risk",
+    "Apply risk-based due diligence and contract protections",
+    "Monitor third parties and act on red flags"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Why third parties matter",
+     "minutes": 6,
+     "body": "Organisations increasingly rely on others to do their work: suppliers, outsourcers, IT and cloud providers, agents, distributors, consultants and joint-venture partners. Each relationship extends what you can do, and each brings risk you are still accountable for.\n\n- **Bribery and corruption:** most major enforcement cases involve an intermediary.\n- **Data and cyber:** a vendor with access to your systems or data can become your breach. Under the DPDP Act the data fiduciary remains responsible for its processors.\n- **Operational resilience:** a single critical supplier failing can stop you.\n- **Sanctions and trade:** dealing with a sanctioned party, even indirectly, is a serious breach.\n- **Labour, human rights and ESG:** forced labour or unsafe conditions in the supply chain damage your reputation and may breach law in export markets.\n- **Reputation:** customers rarely distinguish between you and the company acting in your name."
+    },
+    {
+     "id": "l2",
+     "title": "Risk-based due diligence",
+     "minutes": 8,
+     "body": "Due diligence should be **proportionate**: a stationery supplier does not need the scrutiny of a customs agent dealing with officials.\n\n### Tier first\n\nClassify each third party by inherent risk using simple factors: the country, the service, interaction with government, access to data or systems, the value of the contract and how critical the service is.\n\n### Then check\n\n- **Identity and ownership:** registration, directors and **ultimate beneficial owners** (in India, MCA records, and significant beneficial ownership filings).\n- **Sanctions, watchlists and politically exposed persons.**\n- **Adverse media and litigation:** court records, regulatory actions, credible news.\n- **Financial health:** filings, credit reports, payment behaviour.\n- **Capability and references:** can it actually deliver what it promises?\n- **Compliance programme:** for higher tiers, its own anti-bribery, data protection and information security controls.\n\n### Protect in the contract\n\nAnti-bribery and compliance warranties, data protection and security clauses, **audit rights**, subcontracting controls, and the right to terminate for breach."
+    },
+    {
+     "id": "l3",
+     "title": "Monitor and exit",
+     "minutes": 6,
+     "body": "Due diligence at onboarding is a snapshot; risk changes. Good programmes:\n\n- **Re-screen** periodically, more often for high-risk tiers, and continuously for sanctions.\n- **Review performance and invoices:** unusual payments, new bank accounts, vague line items.\n- **Refresh** due diligence on triggers: change of ownership, adverse news, expansion of scope.\n- **Record** decisions and the reasons for accepting any residual risk.\n\n### Red flags during the relationship\n\n- Requests to change bank details by email (a common fraud tactic, always verify by phone using known numbers)\n- Requests for upfront or cash payments\n- Refusal to provide information or to allow audits\n- Sudden spikes in volume, discounts or rebates\n\n### Exit well\n\nPlan exit at the start: return or deletion of data, transfer of services, final payments and access removal."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Under the DPDP Act, when a vendor processes personal data on your behalf:",
+      "options": [
+       "The vendor alone is responsible",
+       "You remain responsible as data fiduciary",
+       "No one is responsible",
+       "Only the Board is responsible"
+      ],
+      "answer": 1,
+      "why": "The data fiduciary remains accountable for processing by its processors."
+     },
+     {
+      "q": "Third-party due diligence should be:",
+      "options": [
+       "The same for every supplier",
+       "Proportionate to the risk the third party presents",
+       "Done only after a problem",
+       "Left to procurement alone"
+      ],
+      "answer": 1,
+      "why": "Risk-based tiering focuses effort where the risk is."
+     },
+     {
+      "q": "Which contract term lets you verify a third party's compliance?",
+      "options": [
+       "Price escalation",
+       "Audit rights",
+       "Exclusivity",
+       "Force majeure"
+      ],
+      "answer": 1,
+      "why": "Audit rights let you inspect records and controls."
+     },
+     {
+      "q": "A supplier emails asking to change its bank account. You should:",
+      "options": [
+       "Update it at once",
+       "Verify by phone using a known number before changing",
+       "Reply to the email to confirm",
+       "Ignore it"
+      ],
+      "answer": 1,
+      "why": "Bank-detail change requests are a common fraud tactic and must be verified independently."
+     },
+     {
+      "q": "Ultimate beneficial owners are:",
+      "options": [
+       "The directors listed on the website",
+       "The natural persons who ultimately own or control the entity",
+       "The company's bankers",
+       "The auditors"
+      ],
+      "answer": 1,
+      "why": "UBOs are the individuals who ultimately own or control a company."
+     }
+    ]
+   }
+  },
+  {
+   "id": "fraud-risk",
+   "title": "Understanding and Preventing Fraud",
+   "topic": "risk",
+   "level": "Intermediate",
+   "audience": "public",
+   "summary": "How occupational fraud happens, the fraud triangle, common schemes and how organisations prevent and detect them.",
+   "outcomes": [
+    "Explain the fraud triangle and why it matters for prevention",
+    "Recognise common fraud schemes and behavioural red flags",
+    "Describe preventive and detective anti-fraud controls"
+   ],
+   "minutes": 26,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Why fraud happens",
+     "minutes": 6,
+     "body": "**Occupational fraud** is fraud committed by people against the organisation they work for. Global studies by fraud examiners estimate that organisations lose around **five per cent of revenue** to it each year, and that a typical scheme runs for over a year before it is caught.\n\n### The fraud triangle\n\nCriminologist Donald Cressey observed three conditions that are usually present:\n\n1. **Pressure:** a financial or personal need, or pressure to hit targets.\n2. **Opportunity:** weak controls, too much trust in one person, or lack of oversight.\n3. **Rationalisation:** a story that makes it feel acceptable (\"I'm only borrowing it\", \"they underpay me\").\n\nAn organisation cannot control people's pressures, and can only influence rationalisation through culture. It **can** control **opportunity**. That is where most prevention effort should go."
+    },
+    {
+     "id": "l2",
+     "title": "Common schemes and red flags",
+     "minutes": 8,
+     "body": "Fraud examiners group occupational fraud into three families:\n\n- **Asset misappropriation:** the most common. Examples: fake vendors, inflated or duplicate invoices, payroll ghosts, expense padding, inventory theft, skimming cash.\n- **Corruption:** bribery, kickbacks, undisclosed conflicts of interest and bid rigging.\n- **Financial statement fraud:** the least common but most costly. Examples: fictitious revenue, hidden liabilities, improper timing of revenue, manipulated provisions.\n\n### Behavioural red flags\n\nThe most commonly observed warning signs are:\n\n- living beyond one's means\n- financial difficulties\n- an unusually close relationship with a vendor or customer\n- control issues and unwillingness to share duties\n- reluctance to take leave\n- irritability, suspicion or defensiveness\n\nOne red flag proves nothing; patterns are what matter.\n\n### In India\n\nSection 447 of the **Companies Act, 2013** makes fraud an offence with imprisonment of six months to ten years, and auditors must report suspected fraud above prescribed thresholds to the Central Government under section 143(12)."
+    },
+    {
+     "id": "l3",
+     "title": "Prevent and detect",
+     "minutes": 7,
+     "body": "### Preventive controls\n\n- **Segregation of duties:** no single person should create a vendor, approve its invoice and release payment.\n- **Authorisation limits** and dual approval for payments.\n- **Vendor master controls:** independent verification of new vendors and bank details.\n- **Mandatory leave and job rotation** in sensitive roles.\n- **Tone from the top** and a clear code of conduct.\n\n### Detective controls\n\n- **Tips and speak-up channels:** the most common way fraud is detected.\n- **Data analytics:** duplicate payments, vendor-employee address matches, round-sum invoices, payments just below approval limits, weekend postings.\n- **Surprise audits and reconciliations.**\n- **Management review** of unusual trends.\n\n### If you suspect fraud\n\nDo not investigate on your own or confront the person. Preserve what you have, note what you saw and when, and report it through the speak-up channel or to compliance. Evidence handled badly can ruin an investigation."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Which element of the fraud triangle can an organisation most directly control?",
+      "options": [
+       "Pressure",
+       "Opportunity",
+       "Rationalisation",
+       "None of them"
+      ],
+      "answer": 1,
+      "why": "Controls remove or reduce the opportunity to commit fraud."
+     },
+     {
+      "q": "Which is the most common category of occupational fraud?",
+      "options": [
+       "Financial statement fraud",
+       "Asset misappropriation",
+       "Cyber extortion",
+       "Insider trading"
+      ],
+      "answer": 1,
+      "why": "Asset misappropriation is by far the most frequent, though usually less costly per case."
+     },
+     {
+      "q": "Segregation of duties means:",
+      "options": [
+       "Everyone does every task",
+       "No single person controls all stages of a transaction",
+       "Managers do all approvals",
+       "Duties are outsourced"
+      ],
+      "answer": 1,
+      "why": "Splitting duties stops one person from both committing and concealing fraud."
+     },
+     {
+      "q": "A data test for payments just below approval limits helps detect:",
+      "options": [
+       "Splitting to avoid approval",
+       "Late payments",
+       "Exchange losses",
+       "Tax errors"
+      ],
+      "answer": 0,
+      "why": "Clusters just below a limit can indicate transactions split to avoid higher approval."
+     },
+     {
+      "q": "If you suspect a colleague of fraud, you should first:",
+      "options": [
+       "Confront them",
+       "Investigate their emails yourself",
+       "Preserve what you have and report it through the proper channel",
+       "Tell the team"
+      ],
+      "answer": 2,
+      "why": "Untrained investigation or confrontation can destroy evidence and harm innocent people."
+     }
+    ]
+   }
+  },
+  {
+   "id": "board-essentials",
+   "title": "Directors' Duties and Board Effectiveness",
+   "topic": "governance",
+   "level": "Intermediate",
+   "audience": "public",
+   "summary": "The legal duties of directors under the Companies Act, 2013, the role of independent directors and what makes a board effective.",
+   "outcomes": [
+    "Explain the duties of directors under section 166",
+    "Describe the role and safeguards for independent directors",
+    "Recognise the practices of an effective board"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "The duties of a director",
+     "minutes": 7,
+     "body": "**Section 166 of the Companies Act, 2013** codifies directors' duties. A director must:\n\n1. Act in accordance with the company's **articles**.\n2. Act in **good faith** to promote the objects of the company for the benefit of its members as a whole, and in the best interests of the company, its employees, shareholders, the community and the protection of the environment.\n3. Exercise duties with **due and reasonable care, skill and diligence** and independent judgement.\n4. Not be involved in a situation with a **direct or indirect conflict** with the company's interests.\n5. Not achieve or attempt any **undue gain or advantage**, for themselves or relatives, partners or associates. Any such gain must be paid back to the company.\n6. Not **assign** their office.\n\nBreach can lead to a fine of ₹1 lakh to ₹5 lakh, alongside civil liability.\n\n> The duty in point 2 is notably broad: it expressly names employees, the community and the environment, not shareholders alone."
+    },
+    {
+     "id": "l2",
+     "title": "Independent directors",
+     "minutes": 6,
+     "body": "**Section 149** requires every listed public company to have at least **one-third** of its board as independent directors, and certain other public companies to have at least two. SEBI LODR regulation 17 sets higher requirements for some listed entities, for example **half** the board where the chair is an executive or a promoter-related person.\n\nIndependent directors must meet tests of independence, register in the **independent directors' databank** and follow the **Code for Independent Directors in Schedule IV**, which includes:\n\n- bringing objective judgement on strategy, performance, risk and key appointments\n- safeguarding the interests of all stakeholders, particularly minority shareholders\n- satisfying themselves on the integrity of financial information and the robustness of controls and risk management\n- reporting concerns about unethical behaviour, actual or suspected fraud or breaches of the code of conduct\n- meeting at least once a year **without** non-independent directors and management\n\nUnder section 149(12), an independent or non-executive director is liable only for acts of omission or commission that occurred **with their knowledge, attributable through board processes, and with their consent or connivance, or where they did not act diligently**."
+    },
+    {
+     "id": "l3",
+     "title": "What makes a board effective",
+     "minutes": 7,
+     "body": "Compliance with the law is the floor. Effective boards add value through how they work.\n\n- **The right mix:** skills, experience and diversity matched to the company's strategy and risks. Section 149(1) requires at least one woman director on the boards of listed and certain other companies.\n- **Good information:** papers that are concise, timely and decision-focused, with management's view, the options and the risks.\n- **Constructive challenge:** directors ask probing questions and expect clear answers; dissent is minuted.\n- **Time on what matters:** strategy, risk, culture, succession and capital allocation, not only compliance items.\n- **Strong committees:** audit, nomination and remuneration, stakeholders' relationship, CSR and risk, each with clear terms of reference.\n- **Annual evaluation** of the board, its committees and individual directors, as required for listed companies, with actions that follow.\n- **Culture from the top:** the board sets and monitors the organisation's ethics and holds leaders to account for them."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Which section of the Companies Act, 2013 codifies directors' duties?",
+      "options": [
+       "Section 134",
+       "Section 149",
+       "Section 166",
+       "Section 188"
+      ],
+      "answer": 2,
+      "why": "Section 166 sets out the duties of directors."
+     },
+     {
+      "q": "Under section 166, a director must act in the best interests of:",
+      "options": [
+       "Shareholders only",
+       "The company, its employees, shareholders, the community and the environment",
+       "The promoter",
+       "The chair"
+      ],
+      "answer": 1,
+      "why": "Section 166(2) is deliberately broad in the stakeholders it names."
+     },
+     {
+      "q": "A listed public company must have at least what proportion of independent directors under section 149?",
+      "options": [
+       "One-quarter",
+       "One-third",
+       "Half",
+       "Two-thirds"
+      ],
+      "answer": 1,
+      "why": "Section 149(4) requires at least one-third independent directors for listed public companies."
+     },
+     {
+      "q": "Independent directors must meet without non-independent directors and management at least:",
+      "options": [
+       "Monthly",
+       "Quarterly",
+       "Once a year",
+       "Never"
+      ],
+      "answer": 2,
+      "why": "Schedule IV requires at least one such separate meeting each year."
+     },
+     {
+      "q": "An undue gain made by a director in breach of section 166:",
+      "options": [
+       "Can be kept if disclosed",
+       "Must be paid to the company",
+       "Is taxed only",
+       "Goes to the government"
+      ],
+      "answer": 1,
+      "why": "Section 166(5) requires the director to pay an amount equal to the gain to the company."
+     }
+    ]
+   }
+  },
+  {
+   "id": "audit-committee",
+   "title": "The Audit Committee and Internal Financial Controls",
+   "topic": "governance",
+   "level": "Intermediate",
+   "audience": "public",
+   "summary": "The audit committee's role under the Companies Act and SEBI rules, internal financial controls and the directors' responsibility statement.",
+   "outcomes": [
+    "Explain the composition and role of the audit committee",
+    "Describe internal financial controls and who reports on them",
+    "Know the key questions an audit committee should ask"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Composition and role",
+     "minutes": 7,
+     "body": "**Section 177 of the Companies Act, 2013** requires listed companies and certain other public companies to constitute an **audit committee** of at least **three directors**, with **independent directors forming a majority**. Members, including the chair, must be able to read and understand financial statements. SEBI LODR regulation 18 adds that two-thirds must be independent and that the chair must be independent.\n\n### What the committee does\n\n- Recommends the appointment, remuneration and terms of the **auditors**, and reviews their independence and performance.\n- Examines the **financial statements** and the auditor's report.\n- Approves, and later modifies, **related-party transactions** (only independent directors vote on these).\n- Scrutinises inter-corporate loans and investments.\n- Evaluates **internal financial controls** and **risk management systems**.\n- Oversees the **vigil mechanism**.\n- Monitors end-use of funds raised through public offers.\n\nThe committee can call for the comments of auditors on internal control and has authority to investigate any matter within its remit, with access to outside professional advice."
+    },
+    {
+     "id": "l2",
+     "title": "Internal financial controls",
+     "minutes": 7,
+     "body": "**Internal financial controls (IFC)** are the policies and procedures that ensure the orderly and efficient conduct of the business, including adherence to policies, safeguarding of assets, prevention and detection of frauds and errors, accuracy and completeness of the accounting records, and timely preparation of reliable financial information.\n\n### Who is responsible for what\n\n- **The board:** under **section 134(5)(e)**, the directors' responsibility statement of a listed company must state that the directors have laid down internal financial controls, that they are adequate and that they were operating effectively.\n- **The auditor:** under **section 143(3)(i)**, the auditor must report on whether the company has adequate internal financial controls with reference to financial statements and on their operating effectiveness, subject to exemptions for certain small private companies.\n- **Independent directors:** must satisfy themselves that financial controls and risk management systems are robust and defensible.\n\n### What good looks like\n\nDocumented processes and risk-control matrices for key cycles (revenue, procurement, payroll, inventory, treasury, financial close), **IT general controls** over access and changes, management testing, and timely remediation of deficiencies."
+    },
+    {
+     "id": "l3",
+     "title": "Questions a good audit committee asks",
+     "minutes": 6,
+     "body": "- Where are the **areas of significant judgement** in these accounts, and how sensitive are the numbers to them?\n- What did the auditors **disagree** with management about, and how was it resolved?\n- What are the **control deficiencies** identified this year, who owns them and when will they be fixed?\n- Are there **unusual or year-end transactions**, or changes in accounting policies?\n- What **related-party transactions** are proposed, and are they on arm's length terms and in the ordinary course of business?\n- What has come through the **vigil mechanism**, how were cases handled, and were there any themes?\n- Is internal audit **independent**, adequately resourced and covering the highest risks?\n- Do we meet the auditors **without management** present at least once a year?\n\n> The committee's value lies in informed scepticism: asking the question nobody else in the room wants to ask."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Under section 177, an audit committee must have at least:",
+      "options": [
+       "Two directors",
+       "Three directors with a majority of independent directors",
+       "Five directors",
+       "Only independent directors"
+      ],
+      "answer": 1,
+      "why": "Section 177(2) requires a minimum of three directors with independent directors in the majority."
+     },
+     {
+      "q": "Which section requires the directors' responsibility statement to address internal financial controls for listed companies?",
+      "options": [
+       "Section 134(5)(e)",
+       "Section 166",
+       "Section 188",
+       "Section 447"
+      ],
+      "answer": 0,
+      "why": "Section 134(5)(e) covers IFC in the directors' responsibility statement."
+     },
+     {
+      "q": "Who reports on internal financial controls with reference to financial statements under section 143(3)(i)?",
+      "options": [
+       "The company secretary",
+       "The statutory auditor",
+       "SEBI",
+       "The internal auditor only"
+      ],
+      "answer": 1,
+      "why": "The statutory auditor reports on IFC over financial reporting under section 143(3)(i)."
+     },
+     {
+      "q": "Who may vote on related-party transactions in the audit committee?",
+      "options": [
+       "All members",
+       "Only independent directors",
+       "Only the chair",
+       "The CFO"
+      ],
+      "answer": 1,
+      "why": "Only independent directors on the audit committee approve related-party transactions."
+     },
+     {
+      "q": "Which is a strong practice for an audit committee?",
+      "options": [
+       "Meeting auditors only with management present",
+       "Meeting auditors without management at least once a year",
+       "Never challenging management",
+       "Delegating all reviews to the CFO"
+      ],
+      "answer": 1,
+      "why": "Private sessions allow auditors to raise concerns freely."
+     }
+    ]
+   }
+  },
+  {
+   "id": "related-parties",
+   "title": "Related-Party Transactions",
+   "topic": "governance",
+   "level": "Advanced",
+   "audience": "public",
+   "summary": "Identifying related parties, and the approval and disclosure rules under the Companies Act and SEBI LODR.",
+   "outcomes": [
+    "Identify related parties and related-party transactions",
+    "Apply the approval route under section 188 and LODR regulation 23",
+    "Recognise the risks and red flags in related-party dealings"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Who is a related party",
+     "minutes": 6,
+     "body": "Related-party transactions (RPTs) are not wrong in themselves; group companies trade with each other all the time. The risk is that they move value away from the company and its minority shareholders on terms that would not be agreed between independent parties.\n\nUnder **section 2(76) of the Companies Act, 2013**, related parties include, among others:\n\n- a director or key managerial personnel (KMP), or their **relative**\n- a firm in which a director, manager or their relative is a partner\n- a private company in which a director or manager or their relative is a member or director\n- a body corporate whose board or manager acts on the advice of a director or manager of the company\n- holding, subsidiary and associate companies, and fellow subsidiaries\n\n**SEBI LODR regulation 2(1)(zb)** widens this for listed companies to include, for example, any person or entity in the promoter group, and anyone holding **10 per cent or more** of the listed entity's equity (since April 2023)."
+    },
+    {
+     "id": "l2",
+     "title": "Approval and disclosure",
+     "minutes": 8,
+     "body": "### Companies Act, section 188\n\nSpecified contracts with related parties, such as sale or purchase of goods, property and services, leasing, appointment of agents and appointment to an office or place of profit, need **board approval** with interested directors abstaining. Where they exceed thresholds in the Companies (Meetings of Board and its Powers) Rules, 2014, they also need a **shareholders' resolution**, on which related parties cannot vote.\n\nThe key exemption: transactions in the **ordinary course of business** and on an **arm's length basis** do not need section 188 approval, but they still need **audit committee** approval under section 177 for companies that must have one.\n\n### SEBI LODR regulation 23 (listed companies)\n\n- **All** RPTs and subsequent material modifications need **prior audit committee approval**, with only independent directors voting. Omnibus approval for repetitive transactions is allowed within limits.\n- **Material RPTs**, those exceeding **₹1,000 crore or 10 per cent of annual consolidated turnover**, whichever is lower, need prior **shareholders' approval**, and related parties cannot vote in favour.\n- RPTs must be **disclosed** to the stock exchanges half-yearly in the prescribed format.\n\nThresholds and formats are periodically revised by SEBI; always check the current text."
+    },
+    {
+     "id": "l3",
+     "title": "Risks and red flags",
+     "minutes": 6,
+     "body": "- Prices or terms that differ from those offered to unrelated parties\n- Transactions with **newly formed** or thinly capitalised entities linked to promoters\n- Large **advances, loans or guarantees** to related entities without clear business purpose\n- Round-tripping: money that leaves through one related party and returns through another\n- **Splitting** transactions to stay below approval thresholds\n- Related parties that are **not disclosed** but surface through common addresses, directors or bank accounts\n\nInvestigators and auditors often uncover undisclosed related parties through **director network analysis**: mapping common directors, shareholders, addresses and contact details across companies in public registries.\n\n> A good test: would the board be comfortable explaining this transaction, its terms and its counterparty to minority shareholders and the regulator?"
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Related-party transactions are:",
+      "options": [
+       "Always prohibited",
+       "Permitted with proper approval and disclosure",
+       "Allowed only for private companies",
+       "Exempt from audit committee review"
+      ],
+      "answer": 1,
+      "why": "RPTs are common; the law controls them through approval and disclosure."
+     },
+     {
+      "q": "Under section 188, which transactions are exempt from board and shareholder approval?",
+      "options": [
+       "All transactions below ₹1 crore",
+       "Those in the ordinary course of business and at arm's length",
+       "All transactions with subsidiaries",
+       "None"
+      ],
+      "answer": 1,
+      "why": "Ordinary-course, arm's length transactions are exempt from section 188, though audit committee approval still applies."
+     },
+     {
+      "q": "Under LODR regulation 23, a material RPT exceeds:",
+      "options": [
+       "₹100 crore",
+       "₹1,000 crore or 10% of annual consolidated turnover, whichever is lower",
+       "5% of net worth",
+       "₹10 crore"
+      ],
+      "answer": 1,
+      "why": "This is the current materiality threshold for listed entities."
+     },
+     {
+      "q": "Who may vote on a shareholders' resolution approving a material RPT?",
+      "options": [
+       "All shareholders",
+       "Shareholders other than related parties voting in favour",
+       "Only promoters",
+       "Only independent directors"
+      ],
+      "answer": 1,
+      "why": "Related parties cannot vote to approve the transaction."
+     },
+     {
+      "q": "Which technique helps uncover undisclosed related parties?",
+      "options": [
+       "Director network analysis",
+       "Increasing sales targets",
+       "Reducing audit scope",
+       "Ignoring addresses"
+      ],
+      "answer": 0,
+      "why": "Mapping common directors, shareholders and addresses reveals hidden links."
+     }
+    ]
+   }
+  },
+  {
+   "id": "ai-foundations",
+   "title": "Generative AI: How It Works and Where It Fails",
+   "topic": "ai",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "A plain-English explanation of large language models, what they are good at, and the ways they go wrong.",
+   "outcomes": [
+    "Explain in plain terms how a large language model produces text",
+    "Recognise hallucination, bias and other failure modes",
+    "Write prompts that get reliable, checkable results"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "How a language model works",
+     "minutes": 7,
+     "body": "A **large language model (LLM)** is a system trained on vast amounts of text to predict what comes next. Given some words, it estimates which word (strictly, which *token*, a word or part of a word) is most likely to follow, adds it, and repeats. Trained at enormous scale and then refined with human feedback, this simple mechanism produces fluent writing, summaries, translations, code and analysis.\n\nThree things follow from how it works:\n\n- **It generates, it does not look up.** Unless connected to search or documents, a model answers from patterns learned in training, not from a database of facts.\n- **It has a knowledge cut-off.** It knows nothing after its training data ends unless given current information.\n- **It is probabilistic.** The same question can produce different answers; confident phrasing is not evidence of accuracy.\n\nModern assistants add tools: web search, document retrieval, calculators and code execution. These make answers far more reliable, **when** the model actually uses them and cites what it found."
+    },
+    {
+     "id": "l2",
+     "title": "Where AI goes wrong",
+     "minutes": 7,
+     "body": "- **Hallucination:** fluent, plausible statements that are false, including invented citations, case law, statistics and quotes. Courts in several countries have sanctioned lawyers for filing AI-invented case citations.\n- **Bias:** models reflect patterns in their training data and can reproduce stereotypes or treat groups unfairly, especially in hiring, lending or risk scoring.\n- **Outdated or missing context:** a model may not know recent law, your client's facts or your firm's policy.\n- **Over-agreement:** models tend to go along with the framing of a question. Ask \"why is this wrong?\" as well as \"why is this right?\".\n- **Prompt injection:** text hidden in a document or web page can try to instruct an AI to do something its user did not ask for.\n- **Data leakage:** anything you paste into a public AI tool may be stored or used to train future models, depending on the service's terms.\n\n> Treat AI output like a draft from a bright, fast, overconfident junior colleague: useful, but always reviewed."
+    },
+    {
+     "id": "l3",
+     "title": "Prompting for reliable results",
+     "minutes": 6,
+     "body": "1. **Give context and a role:** who the audience is, what the output is for, what good looks like.\n2. **Provide the source material** rather than relying on the model's memory, and ask it to answer only from that material.\n3. **Ask for structure:** headings, tables, numbered steps, a specific length.\n4. **Ask for sources and uncertainty:** \"Cite the paragraph you relied on\" and \"Say if you are not sure\".\n5. **Iterate:** refine the prompt, ask for alternatives, ask it to critique its own draft.\n6. **Verify:** check every fact, figure, name and citation against the original source before you rely on it.\n\nA good prompt is specific: *\"Summarise the attached audit report for a board audit committee in under 300 words. Use three headings: key findings, management response, open actions. Quote figures exactly as they appear. Flag anything you are unsure about.\"*"
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "A large language model produces text by:",
+      "options": [
+       "Looking up answers in a database",
+       "Predicting likely next tokens based on training",
+       "Copying web pages",
+       "Asking a human"
+      ],
+      "answer": 1,
+      "why": "LLMs generate text by repeatedly predicting the next token."
+     },
+     {
+      "q": "A fluent but false statement from an AI is called:",
+      "options": [
+       "Bias",
+       "Hallucination",
+       "Encryption",
+       "Overfitting"
+      ],
+      "answer": 1,
+      "why": "Hallucination is plausible-sounding but untrue output."
+     },
+     {
+      "q": "Which makes AI answers more reliable?",
+      "options": [
+       "Asking it to sound confident",
+       "Providing the source material and asking it to cite it",
+       "Using longer sentences",
+       "Avoiding any instructions"
+      ],
+      "answer": 1,
+      "why": "Grounding the model in sources and asking for citations reduces hallucination."
+     },
+     {
+      "q": "Hidden text in a document that tries to instruct an AI is known as:",
+      "options": [
+       "Phishing",
+       "Prompt injection",
+       "Tokenisation",
+       "Fine-tuning"
+      ],
+      "answer": 1,
+      "why": "Prompt injection uses content to try to redirect an AI's behaviour."
+     },
+     {
+      "q": "The right attitude to AI output is to treat it as:",
+      "options": [
+       "Final and authoritative",
+       "A draft to be reviewed and verified",
+       "Legally binding",
+       "Always wrong"
+      ],
+      "answer": 1,
+      "why": "AI output is useful but must be checked before you rely on it."
+     }
+    ]
+   }
+  },
+  {
+   "id": "ai-governance",
+   "title": "AI Risk and Governance Frameworks",
+   "topic": "ai",
+   "level": "Intermediate",
+   "audience": "public",
+   "summary": "The frameworks organisations use to govern AI: NIST AI RMF, ISO/IEC 42001, the EU AI Act and India's approach.",
+   "outcomes": [
+    "Describe the main AI governance frameworks and what they require",
+    "Classify AI uses by risk",
+    "Outline the components of an AI governance programme"
+   ],
+   "minutes": 25,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "The frameworks",
+     "minutes": 8,
+     "body": "- **NIST AI Risk Management Framework (AI RMF 1.0, 2023):** a voluntary US framework built around four functions: **Govern, Map, Measure, Manage**. A Generative AI Profile (2024) adds risks specific to generative AI.\n- **ISO/IEC 42001:2023:** the first certifiable international **AI management system** standard. Like ISO 27001 for security, it sets requirements for policy, roles, risk and impact assessment, controls, monitoring and continual improvement.\n- **EU AI Act (Regulation (EU) 2024/1689):** the first comprehensive AI law. It entered into force on 1 August 2024 and applies in stages: prohibited practices and AI literacy from February 2025, general-purpose AI obligations from August 2025, and most high-risk obligations from August 2026 onwards, with some later dates and proposed adjustments. It reaches organisations outside the EU whose AI systems or outputs are used in the EU.\n- **India:** there is no AI-specific statute yet. The government's **India AI Governance Guidelines (November 2025)** favour a principles-based, sector-led approach using existing laws, such as the **IT Act, 2000**, the **DPDP Act, 2023** and consumer protection law, alongside rules on deepfakes and synthetic content under the IT Rules. Sector regulators such as the RBI and SEBI have issued their own guidance on AI use."
+    },
+    {
+     "id": "l2",
+     "title": "Classifying AI risk",
+     "minutes": 6,
+     "body": "The EU AI Act's tiers are a useful way to think about risk, even outside Europe:\n\n- **Unacceptable (prohibited):** for example social scoring by public authorities, manipulative techniques that cause harm, untargeted scraping of facial images, and emotion recognition at work or in education (with narrow exceptions).\n- **High risk:** AI used in areas such as employment and worker management, credit scoring, access to essential services, education, critical infrastructure, law enforcement and justice. These need risk management, data governance, documentation, human oversight, accuracy and robustness, and registration.\n- **Limited risk (transparency):** chatbots must disclose that users are dealing with AI, and AI-generated or manipulated content such as deepfakes must be labelled.\n- **Minimal risk:** most other uses, such as spam filters or AI in games.\n\nInside an organisation, a simple test helps: **what decision does this AI influence, about whom, and what happens if it is wrong?**"
+    },
+    {
+     "id": "l3",
+     "title": "Building an AI governance programme",
+     "minutes": 6,
+     "body": "1. **Inventory:** know every AI system you build, buy or use, including AI features inside existing software.\n2. **Policy and accountability:** an acceptable-use policy, a named owner for each system and an oversight forum.\n3. **Risk and impact assessment** before deployment, proportionate to risk: purpose, data, affected people, fairness, security, explainability and legal requirements.\n4. **Data governance:** lawful basis for training and input data, confidentiality and retention.\n5. **Human oversight:** a person can understand, challenge and override significant outputs.\n6. **Testing and monitoring:** accuracy, bias, robustness and drift, before and after go-live.\n7. **Transparency:** tell people when they are interacting with AI or when AI shaped a decision about them.\n8. **Vendor management:** contractual terms on data use, security, audit and incident notice.\n9. **Literacy:** train staff on what AI can and cannot do, as the EU AI Act now requires of providers and deployers."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "The four functions of the NIST AI RMF are:",
+      "options": [
+       "Plan, Do, Check, Act",
+       "Govern, Map, Measure, Manage",
+       "Identify, Protect, Detect, Respond",
+       "Assess, Approve, Audit, Archive"
+      ],
+      "answer": 1,
+      "why": "NIST AI RMF is organised around Govern, Map, Measure and Manage."
+     },
+     {
+      "q": "Which is a certifiable AI management system standard?",
+      "options": [
+       "ISO/IEC 42001",
+       "ISO 9001",
+       "NIST CSF",
+       "ISO 37001"
+      ],
+      "answer": 0,
+      "why": "ISO/IEC 42001:2023 sets certifiable requirements for an AI management system."
+     },
+     {
+      "q": "Under the EU AI Act, AI used to screen job applicants is:",
+      "options": [
+       "Minimal risk",
+       "High risk",
+       "Prohibited",
+       "Exempt"
+      ],
+      "answer": 1,
+      "why": "Employment and worker management uses are high-risk."
+     },
+     {
+      "q": "Under the EU AI Act, a chatbot must:",
+      "options": [
+       "Never be used",
+       "Disclose that the user is interacting with AI",
+       "Be registered as high-risk",
+       "Use only EU data"
+      ],
+      "answer": 1,
+      "why": "Chatbots carry transparency obligations."
+     },
+     {
+      "q": "India's approach to AI governance is currently:",
+      "options": [
+       "A single AI statute",
+       "Principles-based and sector-led, using existing laws",
+       "A total ban on generative AI",
+       "Identical to the EU AI Act"
+      ],
+      "answer": 1,
+      "why": "India's 2025 guidelines rely on existing laws and sector regulators rather than a new AI statute."
+     }
+    ]
+   }
+  },
+  {
+   "id": "ai-at-work",
+   "title": "Using AI Safely at Work",
+   "topic": "ai",
+   "level": "Foundation",
+   "audience": "public",
+   "summary": "Practical rules for using AI tools at work: protecting confidential data, checking outputs, disclosing AI use and spotting deepfakes.",
+   "outcomes": [
+    "Decide what information can and cannot go into an AI tool",
+    "Review AI output to a professional standard",
+    "Recognise AI-enabled fraud such as deepfakes and voice cloning"
+   ],
+   "minutes": 24,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "What goes in, and what does not",
+     "minutes": 6,
+     "body": "The most common AI risk at work is not a rogue machine. It is a person pasting the wrong thing into the wrong tool.\n\n**Use only tools your organisation has approved**, and know which ones are approved for which data. Enterprise versions usually contract not to train on your data; free consumer versions often do not offer that protection.\n\n**Never paste into an unapproved tool:**\n\n- client names, matters or confidential documents\n- personal data: names with contact details, ID numbers, health or financial data\n- passwords, API keys or access tokens\n- unpublished financial results, deal information or anything price-sensitive\n- source code or trade secrets\n\nIf you must use AI on sensitive material, use the approved enterprise tool, remove identifiers where you can, and share the minimum needed."
+    },
+    {
+     "id": "l2",
+     "title": "Checking and owning the output",
+     "minutes": 6,
+     "body": "You are responsible for anything you send, sign or file, however it was drafted.\n\n- **Verify facts, figures and citations** against original sources. Never cite a case, statute or report you have not seen.\n- **Check the reasoning,** not just the wording. Does the conclusion follow from the facts?\n- **Look for what is missing:** risks, caveats, alternative views.\n- **Keep your judgement:** AI can draft and analyse; professional conclusions are yours.\n- **Disclose AI use** where your client, regulator, publisher or court expects it.\n- **Respect intellectual property:** do not ask AI to reproduce copyrighted works or others' branding.\n\n> A practical rule: if you could not defend a sentence without saying \"the AI wrote it\", rewrite it or remove it."
+    },
+    {
+     "id": "l3",
+     "title": "Deepfakes and AI-enabled fraud",
+     "minutes": 7,
+     "body": "AI makes impersonation cheap. Criminals now use **cloned voices** and **deepfake video** to pose as executives, suppliers or family members. In one widely reported 2024 case, an employee in Hong Kong transferred about US$25 million after a video call in which every other participant was a deepfake of a colleague.\n\n### Warning signs\n\n- Urgency and secrecy: \"this must be done in the next hour, don't tell anyone\"\n- A request to bypass normal approval or payment processes\n- A new channel: a personal number, a new messaging account, an unexpected video link\n- Small glitches: lip-sync slightly off, odd lighting, unnatural blinking, flat voice tone\n\n### What to do\n\n- **Verify through a separate, known channel:** call back on a number you already have.\n- **Use a code word** or a question only the real person could answer for high-value requests.\n- **Never let urgency override process.** Real leaders will wait the five minutes it takes to verify.\n- **Report** attempts to your security or compliance team, even if you did not fall for them."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Which is safe to paste into an unapproved free AI tool?",
+      "options": [
+       "A client's draft contract",
+       "A colleague's PAN number",
+       "A general question about grammar with no confidential content",
+       "Your API key"
+      ],
+      "answer": 2,
+      "why": "Only non-confidential, non-personal content belongs in unapproved tools."
+     },
+     {
+      "q": "If AI drafts a report that you send to a client, who is responsible for it?",
+      "options": [
+       "The AI vendor",
+       "You",
+       "No one",
+       "The client"
+      ],
+      "answer": 1,
+      "why": "You remain responsible for anything you send or sign."
+     },
+     {
+      "q": "An AI cites a court case you cannot find. You should:",
+      "options": [
+       "Cite it anyway",
+       "Remove it unless you can verify it from the original source",
+       "Ask the AI if it is real and trust the answer",
+       "Change the case name"
+      ],
+      "answer": 1,
+      "why": "Never rely on a citation you have not verified yourself."
+     },
+     {
+      "q": "The best defence against a deepfake call asking for an urgent payment is to:",
+      "options": [
+       "Pay quickly",
+       "Verify through a separate, known channel",
+       "Ask the caller to confirm by email",
+       "Record the call"
+      ],
+      "answer": 1,
+      "why": "Independent verification on a known channel defeats impersonation."
+     },
+     {
+      "q": "Enterprise AI tools approved by your organisation usually:",
+      "options": [
+       "Train on all your data",
+       "Contract not to train on your data and provide stronger protection",
+       "Have no terms",
+       "Are always free"
+      ],
+      "answer": 1,
+      "why": "Approved enterprise tools generally carry contractual data protections."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kayak-who-we-are",
+   "title": "Who We Are: Kayak Strategic Advisors",
+   "topic": "kayak",
+   "level": "Induction",
+   "audience": "internal",
+   "summary": "Our purpose, our values of Balance, Clarity and Direction, the promises we make to clients and the group we belong to.",
+   "outcomes": [
+    "Explain Kayak's purpose and values",
+    "State the five promises we make to every client",
+    "Describe the Kayak group and our practice areas"
+   ],
+   "minutes": 23,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Our purpose and values",
+     "minutes": 6,
+     "body": "**Kayak Strategic Advisors Private Limited** helps organisations make sound decisions in difficult water: governance, risk, integrity, crisis and growth. We are named after the kayak because it is the craft of moving forward with control in conditions you cannot command.\n\n### Our values\n\n- **Balance.** We weigh every side before we advise. Steady judgement, not drama.\n- **Clarity.** We make complex matters understandable and say plainly what we think.\n- **Direction.** Advice must lead somewhere. We give clients a course they can follow.\n\n### The group\n\nAnuj Matushankar Choudhary is the founder and a director of all three Kayak companies:\n\n- **Kayak Strategic Advisors Private Limited:** advisory.\n- **Kayak Innovations (OPC) Private Limited:** products and new ventures.\n- **Kayak Technology Solutions Private Limited:** technology.\n\nWe work from **Mumbai** and **Thane**."
+    },
+    {
+     "id": "l2",
+     "title": "Our five promises",
+     "minutes": 6,
+     "body": "Every client engagement is held to five promises. They are on our website, so clients can hold us to them.\n\n1. **Independent by design.** Our advice is not shaped by who pays for the next engagement. We decline work that would compromise our independence.\n2. **Senior-led.** Experienced people lead every engagement and are present in it, not just at the pitch.\n3. **Evidence before opinion.** We form conclusions from facts we can show, and say how sure we are.\n4. **Plain English.** We write so a busy director can understand the point in one reading.\n5. **Built to be carried out.** Recommendations come with the practical steps, owners and sequence to implement them.\n\nWhen you are unsure how to handle a situation, ask which answer best keeps these promises."
+    },
+    {
+     "id": "l3",
+     "title": "What we do",
+     "minutes": 6,
+     "body": "Our work is organised into six practice clusters, serving clients across more than forty sectors:\n\n- **Strategy, Deal & Transactions:** growth and market-entry strategy, M&A advisory, commercial, financial and integrity due diligence, valuation support and post-deal integration.\n- **Tax & Regulatory:** direct tax, GST and transfer pricing; SEBI, RBI, FEMA and Companies Act compliance; DPDP readiness; ESG and BRSR reporting.\n- **Crisis & Resilience:** enterprise and third-party risk, conduct forensics, brand and marketplace integrity, IP enforcement support with counsel, expert witness and arbitration support, and crisis management.\n- **Technology & AI:** digital and data strategy, AI adoption and governance, analytics, cyber-risk assessment and technology due diligence.\n- **Managed Services:** compliance calendars, virtual CFO, HR and payroll compliance, brand monitoring and due diligence as a service.\n- **International Desk:** India entry, outbound expansion, cross-border structuring, FDI, ODI and FEMA support, and international background checks.\n\nWe also build our own products, including **NexaPair**, **SayUsNow**, **SeeCounter** and **DocuVow**.\n\n> Know the practice areas well enough to recognise when a client problem belongs to a colleague's team, and introduce them."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Kayak's three values are:",
+      "options": [
+       "Speed, Scale, Success",
+       "Balance, Clarity, Direction",
+       "Trust, Teamwork, Talent",
+       "Integrity, Innovation, Impact"
+      ],
+      "answer": 1,
+      "why": "Balance, Clarity and Direction are Kayak's values."
+     },
+     {
+      "q": "'Evidence before opinion' means:",
+      "options": [
+       "Opinions are never given",
+       "Conclusions are formed from facts we can show",
+       "Clients supply all evidence",
+       "Opinions come first"
+      ],
+      "answer": 1,
+      "why": "We reach conclusions from demonstrable facts and say how sure we are."
+     },
+     {
+      "q": "Which is one of the five promises?",
+      "options": [
+       "Lowest price",
+       "Senior-led",
+       "Fastest delivery",
+       "Unlimited revisions"
+      ],
+      "answer": 1,
+      "why": "Senior-led is one of our five promises."
+     },
+     {
+      "q": "Kayak's offices are in:",
+      "options": [
+       "Delhi and Pune",
+       "Mumbai and Thane",
+       "Bengaluru and Chennai",
+       "Dubai and Mumbai"
+      ],
+      "answer": 1,
+      "why": "We work from Mumbai and Thane."
+     },
+     {
+      "q": "If a client problem belongs to another practice, you should:",
+      "options": [
+       "Handle it yourself anyway",
+       "Introduce the right colleague",
+       "Ignore it",
+       "Refer it to a competitor"
+      ],
+      "answer": 1,
+      "why": "Knowing the practices lets you connect clients with the right team."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kayak-confidentiality",
+   "title": "Confidentiality and Information Security at Kayak",
+   "topic": "kayak",
+   "level": "Induction",
+   "audience": "internal",
+   "summary": "How we protect client confidences and data: classification, handling, devices, AI tools and incident reporting.",
+   "outcomes": [
+    "Classify and handle information correctly",
+    "Follow Kayak's rules for devices, accounts and AI tools",
+    "Report a security incident immediately and correctly"
+   ],
+   "minutes": 22,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Confidential by default",
+     "minutes": 6,
+     "body": "Clients come to us with their most sensitive matters: suspected fraud, board disputes, crises, transactions. **Confidential by default** is one of our standards: treat everything about a client, including the fact that they are a client, as confidential unless you are told otherwise.\n\n### Classification\n\n- **Public:** published on our website or in approved materials.\n- **Internal:** for Kayak staff only, such as policies and templates.\n- **Confidential:** client information, engagement files, personal data.\n- **Restricted:** the most sensitive matters, such as investigations, price-sensitive information and whistleblower identities, shared strictly need-to-know.\n\n### Handling rules\n\n- Discuss client matters only with people who need to know, and never in public places.\n- Use client code names where the engagement calls for them.\n- Share files through Kayak's approved systems, never personal email or messaging.\n- Lock your screen whenever you step away."
+    },
+    {
+     "id": "l2",
+     "title": "Devices, accounts and AI",
+     "minutes": 6,
+     "body": "- **Two-factor authentication** is required on Kayak systems, including this portal. Never share codes or approve a sign-in prompt you did not start.\n- **Strong, unique passphrases** for every account, stored in a password manager.\n- **Keep devices updated** and encrypted, and report a lost or stolen device immediately.\n- **Use Kayak AI** (in this portal) for client work. Its keys are held server-side and it is configured for business use. Do not paste client information into personal or free AI tools.\n- **Be sceptical of urgent requests.** Verify any request to change bank details, make a payment or share credentials through a separate, known channel.\n- **Personal data** is handled under the DPDP Act, 2023: collect the minimum, keep it only as long as needed, and protect it."
+    },
+    {
+     "id": "l3",
+     "title": "When something goes wrong",
+     "minutes": 5,
+     "body": "Report immediately if you:\n\n- clicked a suspicious link or opened a suspicious attachment\n- sent information to the wrong person\n- lost a device or a document\n- suspect someone has accessed an account\n- see a client's information where it should not be\n\n**Report first, fix later.** Tell your engagement lead and email the founder's office straight away. Speed matters: under the DPDP Rules, a personal data breach must be reported to affected people without delay and to the Data Protection Board within 72 hours, and clients may have their own notification duties.\n\nNobody is blamed for reporting a mistake promptly. Hiding one is a serious matter."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "At Kayak, information about a client is treated as:",
+      "options": [
+       "Public unless marked",
+       "Confidential by default",
+       "Internal only",
+       "Free to share with friends"
+      ],
+      "answer": 1,
+      "why": "Confidential by default is a Kayak standard."
+     },
+     {
+      "q": "Whistleblower identities belong to which class?",
+      "options": [
+       "Public",
+       "Internal",
+       "Confidential",
+       "Restricted"
+      ],
+      "answer": 3,
+      "why": "The most sensitive information is Restricted and shared strictly need-to-know."
+     },
+     {
+      "q": "For client work involving AI you should use:",
+      "options": [
+       "Any free chatbot",
+       "Kayak AI in the internal portal",
+       "A personal account",
+       "No AI under any circumstances"
+      ],
+      "answer": 1,
+      "why": "Kayak AI is the approved tool for client work."
+     },
+     {
+      "q": "You sent a client file to the wrong email address. You should:",
+      "options": [
+       "Hope no one notices",
+       "Report it immediately to your engagement lead and the founder's office",
+       "Wait a week",
+       "Delete your sent items"
+      ],
+      "answer": 1,
+      "why": "Report first, fix later: speed matters."
+     },
+     {
+      "q": "A sign-in approval prompt appears that you did not start. You should:",
+      "options": [
+       "Approve it",
+       "Deny it and report it",
+       "Ignore it",
+       "Share the code with IT by chat"
+      ],
+      "answer": 1,
+      "why": "An unexpected prompt may mean someone has your password."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kayak-independence-quality",
+   "title": "Independence, Conflicts and Quality",
+   "topic": "kayak",
+   "level": "Induction",
+   "audience": "internal",
+   "summary": "How we keep our independence, run conflict checks before every engagement and hold our work to a consistent standard.",
+   "outcomes": [
+    "Run a conflict check before any new engagement",
+    "Apply Kayak's quality standards to work products",
+    "Use lawful, ethical methods in every inquiry"
+   ],
+   "minutes": 22,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "Conflicts checked first",
+     "minutes": 6,
+     "body": "Before we accept any engagement, we check for conflicts. **No work starts until the check is cleared.**\n\nThe check covers:\n\n- the client, its group companies and key individuals\n- the **counterparties**: the other side of a dispute, transaction or investigation\n- current and past Kayak engagements involving any of them\n- personal relationships and interests of the proposed team\n\nIf a conflict exists, we decline, or, where appropriate and permitted, disclose it and obtain informed consent with safeguards such as separate teams. We never act for both sides of a dispute.\n\nTeam members must declare any personal connection to a client or counterparty as soon as they become aware of it, including during an engagement."
+    },
+    {
+     "id": "l2",
+     "title": "Evidence you can rely on",
+     "minutes": 6,
+     "body": "Our reports are often relied upon by boards, courts, regulators and investors. Our standard, **Evidence you can rely on**, means:\n\n- every factual statement is traceable to a source in the working file\n- sources are graded for reliability, and hearsay is labelled as such\n- figures are checked twice, by two people for anything material\n- limitations of scope are stated clearly\n- conclusions say how confident we are, and why\n- a second reviewer who did not do the work reads every client deliverable\n\n### Lawful, ethical methods\n\nWe gather information only by lawful and ethical means. We do **not** use pretexting, hacking, bribery, unlawful surveillance or access to data we are not entitled to. Where an engagement needs specialist activity, it is approved in advance and within the law."
+    },
+    {
+     "id": "l3",
+     "title": "Working alongside advisers",
+     "minutes": 5,
+     "body": "Our standard **Alongside your advisers** means we work constructively with a client's lawyers, auditors and other advisers, not against them or around them.\n\n- Where legal privilege matters, engagements in investigations are often structured **through the client's counsel**. Follow the engagement's protocol for communications and documents.\n- We do not give legal opinions; we give findings and advisory recommendations, and refer legal questions to counsel.\n- Respect the roles of statutory and internal auditors; share findings through agreed channels.\n\n### Quality in every deliverable\n\nUse the Kayak brand templates from the Brand Portal, write in plain English, and run the final checklist: facts verified, names and figures correct, sources logged, limitations stated, reviewer sign-off recorded."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "When can work on a new engagement begin?",
+      "options": [
+       "Immediately on request",
+       "After the conflict check is cleared",
+       "After the first invoice",
+       "After the report is drafted"
+      ],
+      "answer": 1,
+      "why": "No work starts until the conflict check is cleared."
+     },
+     {
+      "q": "Kayak acting for both sides of a dispute is:",
+      "options": [
+       "Allowed with a discount",
+       "Never permitted",
+       "Allowed if both agree by email",
+       "Allowed for small matters"
+      ],
+      "answer": 1,
+      "why": "We never act for both sides of a dispute."
+     },
+     {
+      "q": "Which method is NOT acceptable in a Kayak inquiry?",
+      "options": [
+       "Public records research",
+       "Interviews with consent",
+       "Pretexting to obtain records",
+       "Court record searches"
+      ],
+      "answer": 2,
+      "why": "Pretexting is deceptive and is never used."
+     },
+     {
+      "q": "Material figures in a report should be checked by:",
+      "options": [
+       "The client",
+       "Two people",
+       "No one",
+       "The AI only"
+      ],
+      "answer": 1,
+      "why": "Material figures are checked by two people."
+     },
+     {
+      "q": "Legal questions arising in an engagement should be:",
+      "options": [
+       "Answered by us as a legal opinion",
+       "Referred to the client's counsel",
+       "Ignored",
+       "Posted online"
+      ],
+      "answer": 1,
+      "why": "We do not give legal opinions; we work alongside counsel."
+     }
+    ]
+   }
+  },
+  {
+   "id": "kayak-brand-voice",
+   "title": "The Kayak Brand and Voice",
+   "topic": "kayak",
+   "level": "Induction",
+   "audience": "internal",
+   "summary": "How Kayak looks and sounds: the identity, colours and type, how to write in the Kayak voice and where to find the templates.",
+   "outcomes": [
+    "Apply the Kayak identity correctly",
+    "Write in the Kayak voice",
+    "Use the Brand Portal, Business Cards and Presentations tools"
+   ],
+   "minutes": 22,
+   "lessons": [
+    {
+     "id": "l1",
+     "title": "How we look",
+     "minutes": 6,
+     "body": "The Kayak identity is calm, precise and confident, like the water it is named after.\n\n- **Wordmark and identifier:** always use the master files from the **Brand Portal**. Never redraw, stretch, recolour or add effects to the logo.\n- **Colours:** **Deep Current** (our deep teal-navy) is the anchor; **Open Water** teal supports it; **Saffron** is the accent, used sparingly to draw the eye to one thing.\n- **Typography:** **Archivo** for headings and interface, **Source Serif 4** for long-form reading.\n- **Space:** generous margins and clear hierarchy. When in doubt, take something away.\n- **Imagery:** water, horizons and real places of work; never clichéd handshakes or stock \"business people\".\n\nThe **Brand Portal** holds the brand manual, logos, colours, fonts, templates and product logos."
+    },
+    {
+     "id": "l2",
+     "title": "How we sound",
+     "minutes": 6,
+     "body": "Our voice follows our values.\n\n- **Balanced:** measured and fair. No hype, no alarm.\n- **Clear:** plain English, short sentences, active voice. Explain jargon or avoid it.\n- **Directional:** lead with the point, then the reasons, then what to do.\n\n### Do\n\n- \"We found three control gaps. The most serious is in vendor payments. Fix it first.\"\n- \"We are confident about the first finding and less sure about the second, because the records are incomplete.\"\n\n### Avoid\n\n- \"Leveraging synergistic paradigms to unlock holistic value.\"\n- Exaggeration: \"unprecedented\", \"game-changing\", \"world-class\".\n- Hedging everything until nothing is said."
+    },
+    {
+     "id": "l3",
+     "title": "Tools that keep us on-brand",
+     "minutes": 5,
+     "body": "The internal portal has tools that build on-brand material for you:\n\n- **Business Cards:** create your card from a prompt; export print-ready PDF with bleed, plus SVG, PNG and JPG.\n- **Presentations:** describe the deck by sector, service line and services; Kayak AI drafts it on the Kayak master slides; export to PowerPoint.\n- **Kayak AI:** drafting, research and review in the Kayak voice.\n- **Brand Portal:** download any asset, always the latest approved version.\n\nBefore anything goes to a client, run the brand check: correct logo file, Kayak colours and type, plain-English headline, no spelling errors, and the reviewer has signed off."
+    }
+   ],
+   "quiz": {
+    "pass": 70,
+    "questions": [
+     {
+      "q": "Where should you get the Kayak logo?",
+      "options": [
+       "A web search",
+       "The Brand Portal master files",
+       "Redraw it",
+       "A screenshot of the website"
+      ],
+      "answer": 1,
+      "why": "Always use the master files from the Brand Portal."
+     },
+     {
+      "q": "Saffron in the Kayak palette is used:",
+      "options": [
+       "As the main background",
+       "Sparingly as an accent",
+       "Never",
+       "For all body text"
+      ],
+      "answer": 1,
+      "why": "Saffron is an accent to draw the eye to one thing."
+     },
+     {
+      "q": "Which sentence is in the Kayak voice?",
+      "options": [
+       "We are leveraging synergies",
+       "We found three control gaps; fix vendor payments first",
+       "This is an unprecedented, game-changing finding",
+       "It may possibly perhaps be a concern"
+      ],
+      "answer": 1,
+      "why": "Clear, direct and leading with the point."
+     },
+     {
+      "q": "Kayak's heading typeface is:",
+      "options": [
+       "Arial",
+       "Archivo",
+       "Times New Roman",
+       "Comic Sans"
+      ],
+      "answer": 1,
+      "why": "Archivo is used for headings and interface."
+     },
+     {
+      "q": "To create an on-brand slide deck you should use:",
+      "options": [
+       "Any template online",
+       "The Presentations tool in the internal portal",
+       "A blank document",
+       "A competitor's deck"
+      ],
+      "answer": 1,
+      "why": "The Presentations tool builds decks on the Kayak masters."
+     }
+    ]
+   }
+  }
+ ],
+ "bytes": [
+  {
+   "id": "byte-pause",
+   "topic": "ethics",
+   "title": "The two-minute pause",
+   "minutes": 2,
+   "audience": "public",
+   "body": "When a request feels wrong, you rarely have to answer at once. Saying *\"Let me check and come back to you\"* buys time to think, read the policy and ask someone you trust. Most poor decisions are made in the first sixty seconds, under pressure.",
+   "check": {
+    "q": "What is the simplest way to avoid a rushed ethical mistake?",
+    "options": [
+     "Decide immediately",
+     "Ask for time before answering",
+     "Do what the senior person says",
+     "Say nothing"
+    ],
+    "answer": 1,
+    "why": "A short pause lets you think, check and ask."
+   }
+  },
+  {
+   "id": "byte-gift-card",
+   "topic": "ethics",
+   "title": "Why gift cards are cash",
+   "minutes": 2,
+   "audience": "public",
+   "body": "A voucher or gift card can be spent like money, which is why almost every gifts policy treats it as **cash**. Politely decline, thank the giver, and record the offer in the gifts register.",
+   "check": {
+    "q": "A vendor sends you a ₹5,000 shopping voucher at Diwali. You should:",
+    "options": [
+     "Keep it, it's festive",
+     "Decline politely and record it",
+     "Share it with the team",
+     "Use it for team lunch"
+    ],
+    "answer": 1,
+    "why": "Vouchers are cash equivalents and should be declined and recorded."
+   }
+  },
+  {
+   "id": "byte-bank-change",
+   "topic": "risk",
+   "title": "The bank-detail change email",
+   "minutes": 2,
+   "audience": "public",
+   "body": "One of the costliest frauds is simple: an email, apparently from a supplier, asks you to update its bank account. **Always verify by calling a number you already hold**, never one in the email. Business email compromise costs organisations billions each year.",
+   "check": {
+    "q": "How should you verify a supplier's bank-change request?",
+    "options": [
+     "Reply to the email",
+     "Call a number you already hold for the supplier",
+     "Check the logo",
+     "Ask a colleague to approve it"
+    ],
+    "answer": 1,
+    "why": "Independent verification defeats email impersonation."
+   }
+  },
+  {
+   "id": "byte-dpdp-minimum",
+   "topic": "compliance",
+   "title": "Collect the minimum",
+   "minutes": 2,
+   "audience": "public",
+   "body": "The DPDP Act, 2023 expects you to collect only the personal data necessary for a stated purpose and to erase it when the purpose is served. Before adding a field to a form, ask: **do we actually need this?**",
+   "check": {
+    "q": "Which principle does 'collect only what you need' reflect?",
+    "options": [
+     "Data minimisation",
+     "Data monetisation",
+     "Data maximisation",
+     "Open data"
+    ],
+    "answer": 0,
+    "why": "Data minimisation is central to the DPDP Act."
+   }
+  },
+  {
+   "id": "byte-breach-72",
+   "topic": "compliance",
+   "title": "The 72-hour clock",
+   "minutes": 2,
+   "audience": "public",
+   "body": "Under the DPDP Rules, 2025 a data fiduciary must inform affected people of a personal data breach without delay and give the Data Protection Board a detailed report within **72 hours**. That clock starts when you become aware, so report incidents internally at once.",
+   "check": {
+    "q": "Within how long must a detailed breach report reach the Data Protection Board?",
+    "options": [
+     "24 hours",
+     "72 hours",
+     "30 days",
+     "There is no deadline"
+    ],
+    "answer": 1,
+    "why": "The Rules require a detailed report within 72 hours of becoming aware."
+   }
+  },
+  {
+   "id": "byte-facilitation",
+   "topic": "compliance",
+   "title": "Small payments, big trouble",
+   "minutes": 2,
+   "audience": "public",
+   "body": "A 'speed money' payment to get a file moved is still a bribe under India's Prevention of Corruption Act and the UK Bribery Act. Size does not matter. If someone asks, refuse, record it and tell compliance.",
+   "check": {
+    "q": "Is a small 'speed' payment to an official acceptable?",
+    "options": [
+     "Yes, if under ₹1,000",
+     "No, it is a bribe",
+     "Yes, if recorded",
+     "Yes, if customary"
+    ],
+    "answer": 1,
+    "why": "Facilitation payments are bribes, whatever their size."
+   }
+  },
+  {
+   "id": "byte-deepfake",
+   "topic": "ai",
+   "title": "Spotting a deepfake call",
+   "minutes": 2,
+   "audience": "public",
+   "body": "Voice and video can now be faked convincingly. Be wary of **urgency, secrecy and a request to skip process**. Hang up and call back on a number you already have. A real colleague will understand.",
+   "check": {
+    "q": "A video call from your 'CFO' urgently asks for a confidential transfer. What should you do?",
+    "options": [
+     "Make the transfer",
+     "Call the CFO back on a known number",
+     "Ask on the same call for proof",
+     "Email the CFO's assistant from the call link"
+    ],
+    "answer": 1,
+    "why": "Verify through a separate, known channel."
+   }
+  },
+  {
+   "id": "byte-ai-paste",
+   "topic": "ai",
+   "title": "Think before you paste",
+   "minutes": 2,
+   "audience": "public",
+   "body": "Free AI tools may keep and learn from what you type. Never paste client documents, personal data, passwords or unpublished financials into a tool your organisation has not approved.",
+   "check": {
+    "q": "Which is safe to paste into an unapproved AI tool?",
+    "options": [
+     "A client contract",
+     "A general writing question",
+     "Your password",
+     "Unpublished results"
+    ],
+    "answer": 1,
+    "why": "Only non-confidential content belongs in unapproved tools."
+   }
+  },
+  {
+   "id": "byte-ai-citation",
+   "topic": "ai",
+   "title": "Check every citation",
+   "minutes": 2,
+   "audience": "public",
+   "body": "AI tools sometimes invent convincing references: cases, reports and quotes that do not exist. Before you rely on any citation an AI gives you, **open the original source and read it**.",
+   "check": {
+    "q": "An AI gives you a case citation. Before using it you should:",
+    "options": [
+     "Trust it",
+     "Find and read the original judgment",
+     "Ask the AI again",
+     "Shorten it"
+    ],
+    "answer": 1,
+    "why": "Only cite what you have verified at source."
+   }
+  },
+  {
+   "id": "byte-board-minutes",
+   "topic": "governance",
+   "title": "Dissent belongs in the minutes",
+   "minutes": 2,
+   "audience": "public",
+   "body": "If a director disagrees with a board decision, that dissent should be recorded in the minutes. Under the Companies Act, 2013, non-executive and independent directors are liable mainly where they knew of a wrong and consented, or failed to act diligently. A recorded objection is evidence of diligence.",
+   "check": {
+    "q": "Why should a director's dissent be minuted?",
+    "options": [
+     "It is a formality",
+     "It is evidence that the director acted diligently",
+     "It is required for tax",
+     "It hides the decision"
+    ],
+    "answer": 1,
+    "why": "Recorded dissent shows the director exercised independent judgement."
+   }
+  },
+  {
+   "id": "byte-rpt",
+   "topic": "governance",
+   "title": "The arm's length test",
+   "minutes": 2,
+   "audience": "public",
+   "body": "A related-party transaction is at arm's length when its terms are what independent parties would agree. Ask: **would we offer the same price and terms to a stranger?** If not, it needs a closer look.",
+   "check": {
+    "q": "What does 'arm's length' mean for a related-party transaction?",
+    "options": [
+     "Signed far away",
+     "Terms that independent parties would agree",
+     "Approved by the promoter",
+     "Below ₹1 crore"
+    ],
+    "answer": 1,
+    "why": "Arm's length means market terms between unrelated parties."
+   }
+  },
+  {
+   "id": "byte-kri",
+   "topic": "risk",
+   "title": "Indicators that warn early",
+   "minutes": 2,
+   "audience": "public",
+   "body": "A key risk indicator tells you a risk is rising before it happens: for example, overdue vendor reviews, staff attrition in a key team or a growing patch backlog. Set a threshold and agree in advance who acts when it turns red.",
+   "check": {
+    "q": "What makes a good key risk indicator?",
+    "options": [
+     "It reports losses after they occur",
+     "It signals rising risk early, with a threshold and an owner",
+     "It is reviewed once a year",
+     "It is kept secret"
+    ],
+    "answer": 1,
+    "why": "Good KRIs are early, measurable and owned."
+   }
+  },
+  {
+   "id": "byte-posh-ic",
+   "topic": "compliance",
+   "title": "Know your Internal Committee",
+   "minutes": 2,
+   "audience": "public",
+   "body": "Every workplace with ten or more employees must have an Internal Committee under the POSH Act, 2013, with its members' names displayed. Find out who is on yours, so you know where to go, or where to send a colleague who needs help.",
+   "check": {
+    "q": "From how many employees must an employer constitute an Internal Committee?",
+    "options": [
+     "5",
+     "10",
+     "25",
+     "100"
+    ],
+    "answer": 1,
+    "why": "The POSH Act applies the Internal Committee requirement from ten employees."
+   }
+  },
+  {
+   "id": "byte-kayak-conflict",
+   "topic": "kayak",
+   "title": "No conflict check, no start",
+   "minutes": 2,
+   "audience": "internal",
+   "body": "At Kayak, no engagement begins until the conflict check has cleared, covering the client, its group and every counterparty. If you learn of a personal link to anyone involved, declare it straight away.",
+   "check": {
+    "q": "When does work on a new Kayak engagement begin?",
+    "options": [
+     "When the client asks",
+     "After the conflict check clears",
+     "After the first meeting",
+     "After the report"
+    ],
+    "answer": 1,
+    "why": "No conflict check, no start."
+   }
+  }
+ ]
+}

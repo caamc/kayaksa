@@ -106,7 +106,7 @@ export async function certificatePdf(d: CertData): Promise<Uint8Array> {
   };
   meta("DATE OF ISSUE", date, L);
   meta("CERTIFICATE ID", d.id, L + 170);
-  if (d.minutes) meta("LEARNING TIME", `${Math.max(1, Math.round(d.minutes / 6) / 10)} hours`, L + 360);
+  if (d.minutes) meta("LEARNING TIME", d.minutes < 60 ? `${d.minutes} minutes` : `${Math.floor(d.minutes / 60)} h${d.minutes % 60 ? ` ${d.minutes % 60} min` : ""}`, L + 360);
 
   p.drawLine({ start: { x: L, y: 92 }, end: { x: L + 220, y: 92 }, thickness: 0.8, color: DEEP });
   p.drawText(d.issuer || "Anuj Matushankar Choudhary", { x: L, y: 76, size: 11, font: hSemi, color: DEEP });

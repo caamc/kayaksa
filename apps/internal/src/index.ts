@@ -77,6 +77,14 @@ app.route(
       return u ? { id: u.id, name: u.name || u.email } : null;
     },
     verifyBase: (c) => `${(c.env.LEARN_URL || "https://learn.kayaksa.com").replace(/\/$/, "")}/verify/`,
+    // Mirror staff certificates into the learn database so learn.kayaksa.com/verify can confirm them.
+    onIssued: async (c, l, cert) => {
+      const ldb = (c.env as Env).LEARN_DB;
+      if (!ldb) return;
+      await ldb.prepare("INSERT OR IGNORE INTO certificates (id, user_id, kind, ref_id, holder, title, issued_at) VALUES (?,?,?,?,?,?,?)")
+        .bind(cert.id, `staff:${l.id}`, cert.kind, cert.ref, l.name, cert.title, cert.issued_at).run()
+        .catch((e: any) => console.error("certificate mirror failed", e?.message));
+    },
   }),
 );
 app.all("/api/*", (c) => c.json({ error: "Not found." }, 404));

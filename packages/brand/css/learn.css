@@ -1,0 +1,32 @@
+/* Learning pages shared by learn.kayaksa.com and Kayak Learn (internal). */
+.page{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+.page-head .stack-sm{max-width:760px}
+.hero{position:relative;overflow:hidden;background:var(--deep-current);color:#F3F7F6;padding:32px;clip-path:polygon(0 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%)}
+.hero h1{color:#fff;font-size:clamp(1.8rem,3.2vw,2.6rem)} .hero p{color:#CDE8E3}
+.hero .mark{position:absolute;right:-30px;bottom:-40px;width:240px;opacity:.14}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{cursor:pointer}
+.split{display:grid;gap:24px;grid-template-columns:1fr}
+@media (min-width:1100px){.split{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}}
+.md h1,.md h2,.md h3{margin:16px 0 8px;font-size:1.08rem}
+.md p,.md ul,.md ol,.md pre,.md table,.md blockquote{margin:0 0 10px}
+.md pre{background:var(--surface-2);padding:12px;overflow-x:auto;font:.85rem/1.5 var(--mono)}
+.md code{font:.88em var(--mono);background:var(--surface-2);padding:1px 4px}
+.md pre code{background:none;padding:0}
+.md table{border-collapse:collapse;display:block;overflow-x:auto}
+.md th,.md td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+.md blockquote{border-left:3px solid var(--accent);padding-left:12px;color:var(--muted)}
+.course-card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--fg);min-width:0}
+.course-card .band-top{height:8px}
+.course-card .body{padding:18px;display:flex;flex-direction:column;gap:8px;flex:1}
+.course-card:hover{border-color:var(--accent);color:var(--fg)}
+.lesson{max-width:760px}
+.lesson .md{font-family:var(--serif);font-size:1.08rem;line-height:1.75}
+.lesson .md h2,.lesson .md h3{font-family:var(--display)}
+.qopt{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1.5px solid var(--line);cursor:pointer;background:var(--surface)}
+.qopt:hover{border-color:var(--accent)}
+.qopt input{margin-top:3px;accent-color:var(--accent)}
+.qopt.right{border-color:var(--ok);background:var(--ok-bg)} .qopt.wrong{border-color:var(--danger);background:var(--danger-bg)}
+.chips a.chip{text-decoration:none;padding:6px 12px;font-size:.84rem}
+.page > a.small:first-child .ico:first-child{transform:rotate(180deg)}

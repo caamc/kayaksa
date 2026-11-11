@@ -7,8 +7,8 @@ export interface Course {
   id: string; title: string; summary: string; topic: string; level: string; minutes: number;
   audience: "public" | "internal"; outcomes: string[]; lessons: Lesson[]; quiz: { pass: number; questions: Question[] };
 }
-export interface Path { id: string; title: string; summary: string; topic: string; color: string; courses: string[]; audience: "public" | "internal" }
-export interface Byte { id: string; title: string; topic: string; minutes: number; body: string; check: Question }
+export interface Path { id: string; title: string; summary: string; topic: string; color: string; courses: string[]; audience: "public" | "internal"; minutes?: number }
+export interface Byte { id: string; title: string; topic: string; minutes: number; body: string; audience?: "public" | "internal"; check: Question }
 export interface Catalog { topics: { id: string; name: string; color: string; blurb: string }[]; paths: Path[]; courses: Course[]; bytes: Byte[] }
 
 const C = catalog as unknown as Catalog;
@@ -27,11 +27,13 @@ export function publicCatalog(internal = false) {
     lessons: x.lessons.map((l) => ({ id: l.id, title: l.title, minutes: l.minutes })),
   }));
   const ids = new Set(courses.map((x) => x.id));
+  const bytes = C.bytes.filter((b) => keep(b.audience || "public"));
+  const used = new Set([...courses.map((x) => x.topic), ...bytes.map((b) => b.topic)]);
   return {
-    topics: C.topics,
+    topics: C.topics.filter((t) => used.has(t.id)),
     paths: C.paths.filter((p) => keep(p.audience)).map((p) => ({ ...p, courses: p.courses.filter((id) => ids.has(id)) })),
     courses,
-    bytes: C.bytes.map((b) => ({ ...b, check: { q: b.check.q, options: b.check.options } })),
+    bytes: bytes.map((b) => ({ ...b, check: { q: b.check.q, options: b.check.options } })),
   };
 }
 
