@@ -37,7 +37,8 @@ const guard = async (c: any, next: any) => {
   }
   c.set("user", u);
   await next();
-  c.res.headers.set("Cache-Control", "private, no-store");
+  c.res = new Response(c.res.body, c.res);
+  if (!c.req.path.startsWith("/files/")) c.res.headers.set("Cache-Control", "private, no-store");
 };
 
 app.use("/api/me/*", guard);

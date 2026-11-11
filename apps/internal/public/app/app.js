@@ -30,7 +30,7 @@ function initials(n, e) {
 function shell() {
   $("#logo").innerHTML = `${wordmark(22)}<span class="sub">Internal</span>`;
   const me = state.me;
-  $("#who").innerHTML = String(html`<span class="avatar">${initials(me.name, me.email)}</span><span class="meta">${me.name || me.email}<small>${me.title || me.role}</small></span>`);
+  $("#who").innerHTML = String(html`<span class="avatar">${initials(me.name, me.email)}</span><span class="meta">${me.name || me.email}<small>${me.title || ({ superadmin: "SuperAdmin", admin: "Administrator", editor: "Editor", employee: "Employee" })[me.role]}</small></span>`);
   $("#side").innerHTML = NAV.filter((g) => !g.admin || me.can.admin)
     .map((g) => `<div class="grp">${esc(g.group)}</div>` + g.items.map((i) => `<a href="#/${i.id}" data-id="${i.id}">${ico(i.icon)}<span>${esc(i.label)}</span></a>`).join(""))
     .join("") + `<a href="#/account" data-id="account">${ico("settings")}<span>My account</span></a><a href="#" id="signout">${ico("logout")}<span>Sign out</span></a>

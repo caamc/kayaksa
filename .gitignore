@@ -6,3 +6,4 @@ node_modules/
 apps/*/public/_shared/
 apps/*/public/vendor/
 tests/e2e/out/
+tests/e2e/out/

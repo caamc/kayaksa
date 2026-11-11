@@ -20,7 +20,6 @@ export function csp(opts: CspOptions = {}): string {
     "base-uri 'none'",
     "form-action 'self'",
     `frame-ancestors ${opts.frameAncestors ?? "'none'"}`,
-    "upgrade-insecure-requests",
   ].join("; ");
 }
 
@@ -29,8 +28,11 @@ export function securityHeaders(opts: CspOptions & { noindex?: boolean } = {}): 
   const policy = csp(opts);
   return async (c, next) => {
     await next();
+    // Responses from the static-assets binding have immutable headers; copy before editing.
+    c.res = new Response(c.res.body, c.res);
     const h = c.res.headers;
-    if (!h.has("Content-Security-Policy")) h.set("Content-Security-Policy", policy);
+    const https = new URL(c.req.url).protocol === "https:";
+    if (!h.has("Content-Security-Policy")) h.set("Content-Security-Policy", https ? policy + "; upgrade-insecure-requests" : policy);
     h.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
     h.set("X-Content-Type-Options", "nosniff");
     h.set("Referrer-Policy", "strict-origin-when-cross-origin");
