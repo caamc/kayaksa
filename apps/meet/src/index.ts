@@ -143,8 +143,13 @@ app.post("/api/translate/:room", needRoom, async (c) => {
   if (!(await rateLimit(c.env.DB, `tr:${cl.r}:${c.req.header("CF-Connecting-IP")}`, 60, 60))) return c.json({ error: "Too many translations. Wait a moment." }, 429);
   const b = await c.req.json<any>().catch(() => ({}));
   const text = str(b.text, 2000);
-  if (!text) return c.json({ en: "" });
-  return c.json({ en: await toEnglish(c.env.AI, text) });
+  if (!text) return c.json({ en: "", text: "" });
+  // Captions and chat into the viewer's own language (m2m100 covers 100 languages); English by default.
+  const to = typeof b.to === "string" && /^[a-z]{2,3}$/.test(b.to) ? b.to : "en";
+  if (to === "en") { const en = await toEnglish(c.env.AI, text, str(b.from, 8) || undefined); return c.json({ en, text: en, to }); }
+  const r: any = await c.env.AI.run("@cf/meta/m2m100-1.2b" as any, { text, target_lang: to, ...(b.from ? { source_lang: str(b.from, 8) } : {}) } as any).catch(() => null);
+  const out = String(r?.translated_text || "").trim().slice(0, 2000);
+  return c.json({ en: null, text: out || text, to });
 });
 
 // Whisper sometimes "hears" stock phrases in silence; drop them.

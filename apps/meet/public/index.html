@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Meet by Kayak · Private meetings, chat and projects for advisers and their clients</title>
-<meta name="description" content="Meet by Kayak brings meetings, persistent chat, channels, tasks and Kayak AI into one private workspace for Kayak Strategic Advisors and its clients. Two-factor sign-in for everyone, client privacy walls, live captions and translation.">
+<title>Meet by Kayak · The private meeting and collaboration platform for advisers and their clients</title>
+<meta name="description" content="Meet by Kayak unifies video meetings, chat, channels, projects, To-Do, Planner and Kayak AI — including Notes.AI evidence-grade transcription in 75+ languages — in one private, two-factor workspace for Kayak Strategic Advisors and its clients.">
 <link rel="canonical" href="https://meet.kayaksa.com/">
 <meta property="og:title" content="Meet by Kayak">
-<meta property="og:description" content="Meetings, chat, channels and tasks in one private workspace, with Kayak AI recaps and translation.">
+<meta property="og:description" content="Meetings, chat, projects and Kayak AI in one private workspace. Built for confidential advisory work.">
 <meta property="og:image" content="https://meet.kayaksa.com/assets/img/workspace.webp">
 <meta property="og:type" content="website">
 <link rel="icon" href="/_shared/logos/MeetByKayak_Favicon.svg" type="image/svg+xml">
@@ -16,145 +16,276 @@
 <link rel="stylesheet" href="/_shared/css/kayak.css">
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="stylesheet" href="/assets/product.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Meet by Kayak","applicationCategory":"BusinessApplication","operatingSystem":"Web, Windows, macOS","publisher":{"@type":"Organization","name":"Kayak Strategic Advisors Private Limited","url":"https://www.kayaksa.com"},"url":"https://meet.kayaksa.com/"}</script>
 </head>
 <body class="mk">
-<a class="skip" href="#features">Skip to features</a>
-<header class="mk-nav"><div class="mk-wrap"><a href="/" aria-label="Meet by Kayak home"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"></a>
-<nav aria-label="Main"><a href="#features">Features</a><a href="#further">Why Meet</a><a href="#compare">Compare</a><a href="#security">Security</a><a href="/download">Download</a><a class="mk-btn p" href="/login">Sign in</a></nav></div></header>
+<a class="skip" href="#modules">Skip to content</a>
+
+<div class="announce" id="announce" data-v="notesai-2026-11">
+  <div class="mk-wrap announce-row">
+    <p><span class="tag-new">New</span> <b>Notes.AI</b> — evidence-grade transcription and notes that auto-detect 75+ languages. <a href="#notesai">See how it works →</a></p>
+    <button data-x aria-label="Dismiss">✕</button>
+  </div>
+</div>
+
+<header class="mk-nav" id="nav">
+  <div class="mk-wrap nav-row">
+    <a href="/" class="nav-logo" aria-label="Meet by Kayak home"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"></a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Menu"><span></span><span></span><span></span></button>
+    <nav class="nav-links" id="navLinks" aria-label="Main">
+      <a href="#modules">Platform</a>
+      <a href="#notesai">Notes.AI</a>
+      <a href="#usecases">Solutions</a>
+      <a href="#compare">Compare</a>
+      <a href="#security">Security</a>
+      <a href="/download">Download</a>
+      <a class="mk-btn p nav-cta" href="/login">Sign in</a>
+    </nav>
+  </div>
+</header>
 
 <main>
-<section class="mk-hero hero"><div class="mk-wrap hero-grid">
-  <div class="hero-copy">
-    <span class="mk-eyebrow">Meet by Kayak</span>
-    <h1>Every meeting, message and next step, in one private place.</h1>
-    <p class="mk-lede">Meet by Kayak is where Kayak Strategic Advisors and its clients work together: video meetings, persistent chat, channels and project boards, with Kayak AI writing the recap. Everyone signs in with two factors, and every client sees only their own conversations.</p>
-    <div class="hero-cta"><a class="mk-btn p" href="/login">Sign in</a><a class="mk-btn g" href="/download">Get the Windows or Mac app</a></div>
-    <p class="hero-note">For Kayak employees and invited clients. Joining one meeting as a guest? Just open your invitation link.</p>
+<section class="hero">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="mk-wrap hero-grid">
+    <div class="hero-copy reveal">
+      <span class="mk-eyebrow">The Kayak meeting &amp; collaboration platform</span>
+      <h1>Where every meeting, message and deliverable comes together.</h1>
+      <p class="mk-lede">Meet by Kayak replaces your meeting app, chat app and task tracker with one private, two-factor workspace for Kayak Strategic Advisors and its clients — with Kayak AI taking the notes.</p>
+      <div class="hero-cta"><a class="mk-btn p lg" href="/login">Sign in</a><a class="mk-btn g lg" href="/download">Get the desktop app</a></div>
+      <ul class="hero-trust">
+        <li>🔒 End-to-end encrypted meetings</li>
+        <li>🛡️ Two-factor sign-in for everyone</li>
+        <li>🚫 No ads · no AI training on your content</li>
+      </ul>
+    </div>
+    <figure class="hero-shot reveal">
+      <div class="hero-float">
+        <img src="/assets/img/workspace.webp" width="1360" height="860" alt="The Meet by Kayak workspace: a client project conversation with a shared file, a task and a meeting ready to join." fetchpriority="high">
+        <img class="hero-phone" src="/assets/img/mobile.webp" width="390" height="780" alt="The same workspace on a phone." loading="lazy">
+      </div>
+    </figure>
   </div>
-  <figure class="hero-shot">
-    <img src="/assets/img/workspace.webp" width="1360" height="860" alt="The Meet by Kayak workspace: a project conversation with a client, a shared file, a task and a meeting card with a Join button.">
-    <img class="hero-phone" src="/assets/img/mobile.webp" width="390" height="780" alt="The same conversation on a phone." loading="lazy">
-  </figure>
+</section>
+
+<section class="proof"><div class="mk-wrap proof-row reveal">
+  <div><b data-count="2" data-suffix="-factor">2-factor</b><span>sign-in on every account</span></div>
+  <div><b data-count="75" data-suffix="+">75+</b><span>languages for Notes.AI &amp; translation</span></div>
+  <div><b data-count="1">1</b><span>workspace for meetings, chat &amp; tasks</span></div>
+  <div><b data-count="0">0</b><span>ads, trackers or content used to train AI</span></div>
 </div></section>
 
-<section class="proof"><div class="mk-wrap proof-row">
-  <div><b>2-factor</b><span>sign-in for every account</span></div>
-  <div><b>40+</b><span>languages for Kayak AI translation</span></div>
-  <div><b>1</b><span>workspace for meetings, chat and tasks</span></div>
-  <div><b>0</b><span>ads, trackers or AI training on your content</span></div>
-</div></section>
-
-<section class="mk-sec" id="features"><div class="mk-wrap">
-  <span class="mk-eyebrow dark">Everything in one place</span>
-  <h2>A complete workspace, not just a meeting link</h2>
-  <p class="sec-lede">Most teams juggle a meeting app, a chat app, a task tracker and email. Meet by Kayak puts them in one window, organised around the engagement.</p>
-  <div class="feat">
-    <article class="mk-card"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><h3>Persistent chat and channels</h3><p>A channel per client engagement or topic, direct messages, threads, reactions, @mentions, file sharing and search across everything you are part of.</p><span class="st on">Available now</span></article>
-    <article class="mk-card"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><h3>Projects and tasks</h3><p>Turn a conversation into a project with a due date and a board: To do, In progress, In review, Done. Assign tasks to colleagues or clients; see everything assigned to you in one list.</p><span class="st on">Available now</span></article>
-    <article class="mk-card"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg></span><h3>Meetings</h3><p>Meet now from any conversation, or schedule with an Outlook, Google Calendar or .ics invitation. HD video, screen sharing, lobby, host controls, raise hand, reactions and in-meeting chat.</p><span class="st on">Available now</span></article>
-    <article class="mk-card"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 4.8L19 9.5l-4.1 3.2L16.2 18 12 15.3 7.8 18l1.3-5.3L5 9.5l5.1-1.7z"/></svg></span><h3>Kayak AI recaps and translation</h3><p>One click summarises a conversation or thread into decisions, action items and open questions. Messages translate into 40+ languages; meeting captions translate to English live, with minutes after the call.</p><span class="st on">Available now</span></article>
-    <article class="mk-card"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span><h3>Clients and guests</h3><p>Invite a client by email: they accept the privacy notice and set up an authenticator in two minutes. One-off guests join a meeting from a link, with no account, and wait in the lobby until admitted.</p><span class="st on">Available now</span></article>
-    <article class="mk-card"><span class="fi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M17.5 14v7M14 17.5h7"/></svg></span><h3>Works with your tools</h3><p>Send recaps and task updates to Slack, or to HubSpot, Zapier, Power Automate and Make through signed webhooks. Calendar invitations for Microsoft 365 and Google Workspace. Desktop apps for Windows and Mac.</p><span class="st on">Available now</span></article>
+<section class="mk-sec" id="modules"><div class="mk-wrap">
+  <div class="sec-head reveal"><span class="mk-eyebrow dark">One platform</span><h2>Everything your engagements need, in one place</h2>
+  <p class="sec-lede">Open Meet by Kayak and the whole engagement is there — the meeting, the conversation, the files, the tasks and the deadlines. No switching apps, no lost context.</p></div>
+  <div class="modules reveal">
+    <a class="mod" href="#meetings"><span class="mod-i i-video"></span><b>Meetings</b><small>HD video, screen share, lobby, recording</small><span class="mod-s on">Now</span></a>
+    <a class="mod" href="#workspace"><span class="mod-i i-chat"></span><b>Chat &amp; channels</b><small>Threads, mentions, files, search</small><span class="mod-s on">Now</span></a>
+    <a class="mod" href="#workspace"><span class="mod-i i-board"></span><b>Projects &amp; tasks</b><small>Boards per engagement, assignments</small><span class="mod-s on">Now</span></a>
+    <a class="mod" href="#plan"><span class="mod-i i-check"></span><b>To-Do</b><small>Plan, track, update &amp; strike</small><span class="mod-s on">Now</span></a>
+    <a class="mod" href="#plan"><span class="mod-i i-cal"></span><b>Planner</b><small>Due dates &amp; client deliverables</small><span class="mod-s on">Now</span></a>
+    <a class="mod" href="#notesai"><span class="mod-i i-ai"></span><b>Notes.AI</b><small>Auto-detect transcription &amp; notes</small><span class="mod-s roll">Rolling out</span></a>
+    <a class="mod" href="#meetings"><span class="mod-i i-avatar"></span><b>Kayak Avatar</b><small>Join as an avatar, camera off</small><span class="mod-s soon">Coming</span></a>
+    <a class="mod" href="#kayakers"><span class="mod-i i-people"></span><b>Kayakers</b><small>The internal collaboration home</small><span class="mod-s on">Now</span></a>
+    <a class="mod" href="#notesai"><span class="mod-i i-globe"></span><b>Live translation</b><small>Captions &amp; messages in your language</small><span class="mod-s on">Now</span></a>
   </div>
 </div></section>
 
-<section class="mk-sec alt"><div class="mk-wrap split">
-  <div>
-    <span class="mk-eyebrow dark">Meetings that run themselves</span>
-    <h2>Built for client calls, webinars and town halls</h2>
+<section class="spotlight" id="notesai"><div class="mk-wrap split reveal">
+  <div class="spot-copy">
+    <span class="mk-eyebrow">Notes.AI</span>
+    <h2>Your personal AI note-taker. In any language in the room.</h2>
+    <p class="spot-lede">Notes.AI listens, transcribes and writes the notes for you — so you can be present in the conversation. It detects the language automatically and keeps an evidence-grade record: who said what, and when.</p>
     <ul class="ticks">
-      <li><b>Lobby by default for client meetings.</b> The host sees who is waiting and admits them; signed-in clients appear with their verified name and organisation.</li>
-      <li><b>Live captions with English translation,</b> processed on Kayak's own cloud platform, and AI minutes when the meeting ends.</li>
+      <li><b>Auto-detects the language.</b> Over 50 of the world's most spoken languages and the top 25 languages of India — including Hindi, Marathi, Tamil, Telugu, Gujarati, Bengali, Kannada and Punjabi — recognised as people speak.</li>
+      <li><b>Evidence-grade.</b> A timestamped, speaker-labelled transcript you can rely on, stored in Kayak's own storage with a tamper-evident record.</li>
+      <li><b>Notes, not just a transcript.</b> Summary, decisions, action items and open questions, written when the meeting ends.</li>
+      <li><b>Private by design.</b> Processed on Kayak's own cloud platform, only when captions or notes are switched on, with a notice to everyone.</li>
+    </ul>
+    <p class="spot-note">Built on Meet by Kayak's live captions and AI minutes, available today. Broader language auto-detection is rolling out.</p>
+  </div>
+  <div class="nai reveal" aria-hidden="true">
+    <div class="nai-top"><span class="nai-dot"></span> Notes.AI · detected language: <b id="naiLang">Hindi</b></div>
+    <div class="nai-line"><span class="nai-who" style="background:#17807E">AA</span><div><b>Anuj</b><p>Let's confirm the FY27 scope and the filing deadline.</p></div></div>
+    <div class="nai-line"><span class="nai-who" style="background:#9C630E">PS</span><div><b>Priya</b><p><i>हम 15 तारीख तक दस्तावेज़ भेज देंगे।</i></p><p class="nai-tr">We'll send the documents by the 15th.</p></div></div>
+    <div class="nai-notes"><h4>Notes.AI summary</h4><ul><li><b>Decision:</b> FY27 scope confirmed — direct &amp; indirect tax review.</li><li><b>Action:</b> Priya to send documents by 15 Nov.</li><li><b>Open:</b> Confirm the GST reconciliation owner.</li></ul></div>
+  </div>
+</div></section>
+
+<section class="mk-sec" id="usecases"><div class="mk-wrap">
+  <div class="sec-head reveal"><span class="mk-eyebrow dark">Solutions</span><h2>One platform. Every way Kayak works with clients.</h2></div>
+  <div class="tabs-wrap reveal">
+    <div class="tablist" role="tablist" aria-label="Ways to work">
+      <button role="tab" data-tab="client" aria-selected="true">Client engagements</button>
+      <button role="tab" data-tab="team" aria-selected="false">Internal collaboration</button>
+      <button role="tab" data-tab="events" aria-selected="false">Webinars &amp; town halls</button>
+      <button role="tab" data-tab="evidence" aria-selected="false">Investigations &amp; evidence</button>
+    </div>
+    <div class="tabpanel" data-panel="client">
+      <div class="tp-copy"><h3>Run the whole engagement in one room</h3><ul class="ticks">
+        <li>A private channel per client, walled off from every other client.</li>
+        <li>Meetings, files, tasks and deliverables beside the conversation.</li>
+        <li>Clients sign in with two factors and see only what they're part of.</li></ul>
+        <a class="mk-btn o" href="/login">Start an engagement</a></div>
+      <figure><img src="/assets/img/workspace.webp" width="1360" height="860" alt="A client engagement workspace." loading="lazy"></figure>
+    </div>
+    <div class="tabpanel" data-panel="team" hidden>
+      <div class="tp-copy"><h3>Kayakers: the internal collaboration home</h3><ul class="ticks">
+        <li>Team channels, direct messages and project boards for Kayak staff.</li>
+        <li>Everything assigned to you across engagements, in To-Do and Planner.</li>
+        <li>Kayak AI recaps so no one has to read the whole thread.</li></ul>
+        <a class="mk-btn o" href="#kayakers">About Kayakers</a></div>
+      <figure><img src="/assets/img/board.webp" width="1360" height="860" alt="A project board." loading="lazy"></figure>
+    </div>
+    <div class="tabpanel" data-panel="events" hidden>
+      <div class="tp-copy"><h3>From a client call to a town hall</h3><ul class="ticks">
+        <li>Webinars with every attendee admitted from the lobby.</li>
+        <li>Screen share, host controls, raise hand, reactions and chat.</li>
+        <li>Large town halls with video are rolling out on Kayak's scalable backbone.</li></ul>
+        <a class="mk-btn o" href="#meetings">Meeting features</a></div>
+      <figure><img src="/assets/img/meetings.webp" width="1360" height="860" alt="The meetings view." loading="lazy"></figure>
+    </div>
+    <div class="tabpanel" data-panel="evidence" hidden>
+      <div class="tp-copy"><h3>Evidence-grade records, lawfully</h3><ul class="ticks">
+        <li>Notes.AI keeps timestamped, speaker-labelled transcripts.</li>
+        <li>Recording is stored tamper-evident — always with a notice to everyone on screen.</li>
+        <li>Full audit trail of who joined, when, and what was recorded.</li></ul>
+        <a class="mk-btn o" href="#security">How we protect it</a></div>
+      <figure><img src="/assets/img/planner.webp" width="1360" height="860" alt="The planner view." loading="lazy"></figure>
+    </div>
+  </div>
+</div></section>
+
+<section class="mk-sec alt" id="meetings"><div class="mk-wrap split rev reveal">
+  <figure class="shot"><img src="/assets/img/meetings.webp" width="1360" height="860" alt="Scheduling and joining meetings in Meet by Kayak." loading="lazy"></figure>
+  <div>
+    <span class="mk-eyebrow dark">Meetings</span>
+    <h2>Meetings that run themselves</h2>
+    <ul class="ticks">
+      <li><b>HD video &amp; screen sharing,</b> a lobby for client meetings, host controls, raise hand, reactions and in-meeting chat — available today.</li>
+      <li><b>Steady on weak connections.</b> Video adapts to each person's bandwidth and audio is protected first, with a relay when a firewall blocks direct paths.</li>
+      <li><b>Kayak Avatar.</b> Present as a branded avatar with your camera off — your expressions, not your surroundings. <span class="chip-soon">Coming</span></li>
+      <li><b>Breakout rooms, background blur &amp; virtual backgrounds, and a voice changer</b> for workshops and privacy. <span class="chip-roll">Rolling out</span></li>
       <li><b>Recording only with a notice</b> on everyone's screen, stored in Kayak's own storage.</li>
-      <li><b>Steady on weak connections.</b> Video adapts to each person's bandwidth, audio is protected first, and a relay takes over when an office firewall blocks direct connections.</li>
-      <li><b>Webinars</b> with every attendee admitted from the lobby. Breakout rooms, muted-attendee mode and large town halls are rolling out.</li>
+    </ul>
+    <a class="mk-btn o" href="/download">Get the desktop app</a>
+  </div>
+</div></section>
+
+<section class="mk-sec" id="workspace"><div class="mk-wrap split reveal">
+  <div>
+    <span class="mk-eyebrow dark">Workspace</span>
+    <h2>Chat, projects and files — around the engagement</h2>
+    <ul class="ticks">
+      <li><b>Persistent chat &amp; channels</b> with threads, @mentions, reactions, file sharing and search across everything you're in.</li>
+      <li><b>Projects &amp; task boards</b> — turn a conversation into a project with a due date and a To&nbsp;do / In&nbsp;progress / In&nbsp;review / Done board.</li>
+      <li><b>Works with your tools</b> — Slack and signed webhooks (HubSpot, Zapier, Power Automate), and calendar invitations for Microsoft 365 and Google Workspace.</li>
+      <li><b>Two-way calendar sync</b> with Outlook and Google. <span class="chip-roll">Needs your workspace connection</span></li>
     </ul>
   </div>
-  <figure class="shot"><img src="/assets/img/board.webp" width="1360" height="860" alt="A project board with tasks in To do, In progress and In review, beside a conversation thread." loading="lazy"></figure>
+  <figure class="shot"><img src="/assets/img/board.webp" width="1360" height="860" alt="A project board beside a thread." loading="lazy"></figure>
 </div></section>
 
-<section class="mk-sec" id="further"><div class="mk-wrap">
-  <span class="mk-eyebrow dark">Where Meet by Kayak goes further</span>
-  <h2>Designed for confidential advisory work</h2>
-  <div class="feat three">
-    <article class="mk-card"><h3>Privacy walls between clients</h3><p>A client sees only the conversations they were added to and only the people in them. They cannot browse a directory, find other clients or start channels. Conversations with clients are marked <span class="ext">External</span> so no one forgets who is listening.</p></article>
-    <article class="mk-card"><h3>Two-factor for everyone, always</h3><p>Kayak staff sign in through Kayak Internal (password and authenticator); clients use an authenticator app on every sign-in. Codes cannot be reused, and one-time links expire.</p></article>
-    <article class="mk-card"><h3>AI that stays on Kayak's platform</h3><p>Captions, translation and recaps run on Kayak's own cloud account, only when someone asks for them. Your content is never used to train AI models and never shown to advertisers.</p></article>
-    <article class="mk-card"><h3>Your data rights, self-service</h3><p>Anyone can download a copy of their data, and clients can close their account themselves: built for India's Digital Personal Data Protection Act, the GDPR and the UAE's PDPL.</p></article>
-    <article class="mk-card"><h3>Mute from anywhere</h3><p>The desktop app mutes you with one shortcut from any app, floats a mini window while you present (hidden from the people watching), and puts meeting controls in the Windows taskbar.</p></article>
-    <article class="mk-card"><h3>Calm by design</h3><p>No ads, no upsells, no feeds. Chat notifications wait while you are in a meeting. Unread counts, @mentions and reminders are the only interruptions.</p></article>
+<section class="mk-sec alt" id="plan"><div class="mk-wrap">
+  <div class="sec-head reveal"><span class="mk-eyebrow dark">Stay on top of it</span><h2>To-Do and Planner</h2>
+  <p class="sec-lede">Plan, track, update and strike through your to-dos — and never miss a client deliverable or a deadline.</p></div>
+  <div class="two-shot reveal">
+    <figure><img src="/assets/img/todo.webp" width="1360" height="860" alt="The To-Do list." loading="lazy"><figcaption><b>To-Do</b> — a personal list of to-dos and deliverables, with due dates and priorities. Strike them as you go.</figcaption></figure>
+    <figure><img src="/assets/img/planner.webp" width="1360" height="860" alt="The Planner timeline." loading="lazy"><figcaption><b>Planner</b> — every to-do, deliverable, task and meeting with a date, on one timeline: Overdue, Today, This week, Later.</figcaption></figure>
   </div>
 </div></section>
 
-<section class="mk-sec alt" id="compare"><div class="mk-wrap">
-  <span class="mk-eyebrow dark">Compare</span>
-  <h2>What you expect from Zoom, Teams and Google Meet, with Kayak's extras</h2>
-  <p class="sec-lede">The everyday features of the leading meeting tools, and where each stands in Meet by Kayak today.</p>
-  <div class="tbl"><table>
-    <thead><tr><th scope="col">Feature</th><th scope="col">Meet by Kayak</th><th scope="col">Typical in Zoom, Teams, Google Meet</th></tr></thead>
+<section class="kayakers" id="kayakers"><div class="mk-wrap split reveal">
+  <div class="spot-copy">
+    <span class="mk-eyebrow">Kayakers</span>
+    <h2>The collaboration home for the Kayak team</h2>
+    <p class="spot-lede">Kayakers is where Kayak's own people work together — team channels, direct messages, shared boards and AI recaps — the same secure platform, with clients walled off until you invite them in.</p>
+    <ul class="ticks">
+      <li><b>One identity.</b> Sign in once through Kayak Internal, with its password and two-factor check.</li>
+      <li><b>Everything in reach.</b> Your conversations, tasks, to-dos and deliverables across every engagement.</li>
+      <li><b>Recaps on tap.</b> Kayak AI summarises any channel or thread into decisions and actions.</li>
+    </ul>
+    <a class="mk-btn g" href="/login">Open Kayakers</a>
+  </div>
+  <div class="lockcard" aria-hidden="true"><img src="/_shared/logos/MeetByKayak_Mark_Reversed.svg" alt=""><p>Two voices.<br>One private space.</p></div>
+</div></section>
+
+<section class="mk-sec" id="compare"><div class="mk-wrap">
+  <div class="sec-head reveal"><span class="mk-eyebrow dark">Compare</span><h2>Everything you expect from Zoom, Teams and Google Meet — plus Kayak's extras</h2>
+  <p class="sec-lede">The everyday capabilities of the leading tools, and where each stands in Meet by Kayak today.</p></div>
+  <div class="tbl reveal"><table>
+    <thead><tr><th scope="col">Capability</th><th scope="col">Meet by Kayak</th><th scope="col">Zoom · Teams · Google Meet</th></tr></thead>
     <tbody>
-      <tr><th scope="row">HD video meetings, screen sharing, chat, reactions, raise hand</th><td class="y">Yes</td><td>Yes</td></tr>
-      <tr><th scope="row">Lobby / waiting room and host controls</th><td class="y">Yes</td><td>Yes</td></tr>
-      <tr><th scope="row">Persistent chat, channels, threads, direct messages</th><td class="y">Yes</td><td>Teams; Zoom Team Chat; Google Chat</td></tr>
-      <tr><th scope="row">Task boards and projects in the same app</th><td class="y">Yes</td><td>Usually a separate app or add-on</td></tr>
-      <tr><th scope="row">AI recaps of meetings and threads</th><td class="y">Yes</td><td>Usually a paid AI add-on</td></tr>
-      <tr><th scope="row">Live captions and translation</th><td class="y">Captions with English translation; messages in 40+ languages</td><td>Varies by plan</td></tr>
-      <tr><th scope="row">Recording with on-screen notice</th><td class="y">Yes</td><td>Yes</td></tr>
-      <tr><th scope="row">Guest access by link</th><td class="y">Yes, with lobby</td><td>Yes</td></tr>
-      <tr><th scope="row">Webinars and town halls</th><td class="y">Webinars now; large town halls rolling out</td><td>Varies by plan</td></tr>
-      <tr><th scope="row">Breakout rooms</th><td class="p">Rolling out</td><td>Yes</td></tr>
-      <tr><th scope="row">Background blur and images</th><td class="p">Rolling out</td><td>Yes</td></tr>
-      <tr><th scope="row">Desktop apps for Windows and Mac</th><td class="y">Yes</td><td>Yes</td></tr>
-      <tr><th scope="row">Slack, HubSpot and webhook integrations</th><td class="y">Outgoing: Slack and signed webhooks</td><td>Varies by app</td></tr>
-      <tr><th scope="row">Microsoft 365 and Google Workspace</th><td class="y">Calendar invitations; two-way calendar sync rolling out</td><td>Native to Teams / Google Meet</td></tr>
-      <tr><th scope="row">Phone numbers and calling</th><td class="p">Planned</td><td>Paid phone add-ons</td></tr>
-      <tr><th scope="row">Meeting-room hardware</th><td class="p">Planned (browser-based room mode)</td><td>Certified room systems</td></tr>
-      <tr><th scope="row">Clients walled off from each other by default</th><td class="y">Yes</td><td>Depends on how admins configure it</td></tr>
-      <tr><th scope="row">Two-factor sign-in required for every account</th><td class="y">Yes</td><td>Admin setting</td></tr>
+      <tr><th scope="row">HD video, screen share, chat, reactions, raise hand</th><td class="y">Yes</td><td>Yes</td></tr>
+      <tr><th scope="row">Lobby / waiting room &amp; host controls</th><td class="y">Yes</td><td>Yes</td></tr>
+      <tr><th scope="row">Persistent chat, channels, threads, DMs</th><td class="y">Yes</td><td>Teams; Zoom Team Chat; Google Chat</td></tr>
+      <tr><th scope="row">Projects, task boards, To-Do &amp; Planner in the same app</th><td class="y">Yes</td><td>Usually separate apps or add-ons</td></tr>
+      <tr><th scope="row">AI meeting notes &amp; recaps</th><td class="y">Yes — Notes.AI</td><td>Usually a paid AI add-on</td></tr>
+      <tr><th scope="row">Auto-detect transcription across 75+ languages</th><td class="p">Rolling out — incl. 25 Indian languages</td><td>Varies by plan</td></tr>
+      <tr><th scope="row">Live caption &amp; message translation</th><td class="y">Into your own language</td><td>Varies by plan</td></tr>
+      <tr><th scope="row">Avatar / camera-off presence</th><td class="p">Kayak Avatar — coming</td><td>Varies</td></tr>
+      <tr><th scope="row">Breakout rooms, background blur, voice changer</th><td class="p">Rolling out</td><td>Yes</td></tr>
+      <tr><th scope="row">Webinars &amp; town halls</th><td class="p">Webinars now; large town halls rolling out</td><td>Varies by plan</td></tr>
+      <tr><th scope="row">Desktop apps for Windows &amp; Mac</th><td class="y">Yes</td><td>Yes</td></tr>
+      <tr><th scope="row">Mobile</th><td class="y">Installable mobile web app (all features)</td><td>Native apps</td></tr>
+      <tr><th scope="row">Clients walled off from each other by default</th><td class="y">Yes</td><td>Depends on admin setup</td></tr>
+      <tr><th scope="row">Two-factor required on every account</th><td class="y">Yes</td><td>Admin setting</td></tr>
+      <tr><th scope="row">No ads · no training on your content</th><td class="y">Guaranteed</td><td>Varies by provider</td></tr>
     </tbody>
   </table></div>
   <p class="fine">Zoom, Microsoft Teams and Google Meet are trademarks of their respective owners. Meet by Kayak is not affiliated with or endorsed by them. The right-hand column summarises publicly described capabilities as of November 2026; what is included depends on each provider's plan and settings.</p>
 </div></section>
 
-<section class="mk-sec" id="security"><div class="mk-wrap split rev">
+<section class="mk-sec alt" id="security"><div class="mk-wrap split rev reveal">
   <div>
-    <span class="mk-eyebrow dark">Security and privacy</span>
+    <span class="mk-eyebrow dark">Security &amp; privacy</span>
     <h2>Confidential by default</h2>
     <ul class="ticks">
-      <li><b>Encrypted in transit, everywhere.</b> Meeting audio and video travel directly between participants' browsers, encrypted end to end by WebRTC. When a relay is needed, it forwards encrypted media it cannot read.</li>
-      <li><b>Signed, expiring links.</b> Invitation and sign-in links are signed, single-use where it matters, and expire.</li>
-      <li><b>Every sign-in and change is logged</b> with security records kept for 180 days, as India's CERT-In Directions require.</li>
-      <li><b>Files are shared only with the conversation,</b> downloaded under a strict sandbox, and programs are refused.</li>
-      <li><b>Built to Indian, EU and UAE privacy law:</b> notice and consent at sign-up, data downloads, account closure and a named privacy contact.</li>
-      <li><b>Certification roadmap:</b> Kayak is working towards ISO/IEC 27001 and SOC 2 Type II for its platforms.</li>
+      <li><b>Encrypted in transit, everywhere.</b> Meeting audio and video travel directly between browsers, encrypted end to end by WebRTC; a relay only ever forwards encrypted media it cannot read.</li>
+      <li><b>Two-factor for everyone.</b> Staff through Kayak Internal; clients with an authenticator app on every sign-in. Codes can't be reused; links expire.</li>
+      <li><b>Walls between clients.</b> Each client sees only their own conversations and the people in them.</li>
+      <li><b>Audited &amp; retained to law.</b> Every sign-in and change is logged; security records kept 180 days per India's CERT-In Directions.</li>
+      <li><b>Built to Indian, EU &amp; UAE privacy law.</b> Notice and consent, data downloads, self-service account closure, a named privacy contact.</li>
+      <li><b>Certification roadmap.</b> Working towards ISO/IEC 27001 and SOC 2 Type II.</li>
     </ul>
-    <p><a class="mk-btn o" href="https://www.kayaksa.com/legal#privacy">Read the privacy notice</a></p>
+    <a class="mk-btn o" href="https://www.kayaksa.com/legal#privacy">Read the privacy notice</a>
   </div>
-  <div class="lockcard" aria-hidden="true"><img src="/_shared/logos/MeetByKayak_Mark_Reversed.svg" alt=""><p>Two voices.<br>One private space.</p></div>
-</div></section>
-
-<section class="mk-sec alt" id="help"><div class="mk-wrap">
-  <h2>Questions</h2>
-  <div class="faq">
-    <details><summary>Who can use Meet by Kayak?</summary><p>Kayak employees, and clients and partners a Kayak employee invites. Anyone can join a single meeting as a guest from an invitation link.</p></details>
-    <details><summary>I'm a client. How do I get access?</summary><p>Your Kayak contact invites you by email. Open the link, read and accept the privacy notice, and set up an authenticator app such as Microsoft Authenticator or Google Authenticator. From then on, sign in with your email and the 6-digit code.</p></details>
-    <details><summary>I lost my phone. How do I sign in?</summary><p>Ask your Kayak contact to reset your access. They send you a new one-time link to set up your authenticator again. For your security, no one at Kayak can see or recover your codes.</p></details>
-    <details><summary>Do I need to install anything?</summary><p>No. Meet by Kayak works in Chrome, Edge, Safari and Firefox on computers and phones. The <a href="/download">Windows and Mac app</a> adds global mute shortcuts, a mini window and taskbar controls.</p></details>
-    <details><summary>Is the meeting recorded or transcribed?</summary><p>Only if the host turns recording or captions on, and everyone sees a notice when they do. Recordings and transcripts are stored in Kayak's own storage.</p></details>
-    <details><summary>How do I get help or report a problem?</summary><p>Write to enquiries@kayaksa.com. For privacy requests, put "Privacy" in the subject line; we reply within 30 days.</p></details>
+  <div class="seccard" aria-hidden="true">
+    <div class="sec-badge">🔒<span>End-to-end<br>encrypted</span></div>
+    <div class="sec-badge">🛡️<span>2-factor<br>everyone</span></div>
+    <div class="sec-badge">🇮🇳<span>DPDP Act<br>CERT-In</span></div>
+    <div class="sec-badge">🇪🇺<span>GDPR</span></div>
+    <div class="sec-badge">🇦🇪<span>UAE PDPL</span></div>
+    <div class="sec-badge">🚫<span>No ads ·<br>no AI training</span></div>
   </div>
 </div></section>
 
-<section class="cta-band"><div class="mk-wrap cta-row">
-  <h2>Ready when you are.</h2>
-  <div class="hero-cta"><a class="mk-btn p" href="/login">Sign in</a><a class="mk-btn g" href="/download">Download the app</a></div>
+<section class="mk-sec" id="help"><div class="mk-wrap">
+  <div class="sec-head reveal"><h2>Questions</h2></div>
+  <div class="faq reveal">
+    <details><summary>Is there a mobile app?</summary><p>There's no separate app to download from an app store. Instead, open <b>meet.kayaksa.com</b> in your phone's browser and add it to your home screen — it installs as a mobile web app and gives you the full experience: meetings, chat, tasks, To-Do, Planner and notifications. On a computer, there are also native Windows and Mac apps.</p></details>
+    <details><summary>Who can use Meet by Kayak?</summary><p>Kayak employees, and the clients and partners a Kayak employee invites. Anyone can join a single meeting as a guest from an invitation link.</p></details>
+    <details><summary>What is Notes.AI?</summary><p>Kayak's AI note-taker. It transcribes the meeting, auto-detecting the language across 75+ world and Indian languages, and writes the summary, decisions and action items — kept as an evidence-grade, timestamped record. It builds on the live captions and AI minutes available today; wider auto-detection is rolling out.</p></details>
+    <details><summary>I'm a client. How do I get access?</summary><p>Your Kayak contact invites you by email. Open the link, accept the privacy notice and set up an authenticator app such as Microsoft or Google Authenticator. After that, sign in with your email and a 6-digit code.</p></details>
+    <details><summary>Is a meeting recorded or transcribed?</summary><p>Only if the host turns recording or captions on — and everyone sees a notice when they do. Recordings and transcripts are stored in Kayak's own storage.</p></details>
+    <details><summary>How do I get help?</summary><p>Write to enquiries@kayaksa.com. For privacy requests, put "Privacy" in the subject line; we reply within 30 days.</p></details>
+  </div>
+</div></section>
+
+<section class="cta-band"><div class="mk-wrap cta-row reveal">
+  <div><h2>Ready when you are.</h2><p>Sign in on the web, or install the app for Windows, Mac or your phone.</p></div>
+  <div class="hero-cta"><a class="mk-btn p lg" href="/login">Sign in</a><a class="mk-btn g lg" href="/download">Download</a></div>
 </div></section>
 </main>
 
-<footer class="mk-foot"><div class="mk-wrap foot-row">
-  <img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak" height="30">
-  <p>Meet by Kayak is a service of Kayak Strategic Advisors Private Limited, Mumbai. · <a href="https://www.kayaksa.com/legal#privacy">Privacy</a> · <a href="https://www.kayaksa.com/legal">Terms</a> · <a href="https://www.kayaksa.com">www.kayaksa.com</a></p>
+<footer class="mk-foot"><div class="mk-wrap">
+  <div class="foot-grid">
+    <div class="foot-brand"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak" height="34"><p>The private meeting and collaboration platform of Kayak Strategic Advisors Private Limited, Mumbai.</p></div>
+    <div class="foot-col"><h4>Platform</h4><a href="#meetings">Meetings</a><a href="#workspace">Chat &amp; projects</a><a href="#plan">To-Do &amp; Planner</a><a href="#notesai">Notes.AI</a><a href="#kayakers">Kayakers</a></div>
+    <div class="foot-col"><h4>Get it</h4><a href="/login">Sign in</a><a href="/download">Windows &amp; Mac</a><a href="/download">Mobile web app</a></div>
+    <div class="foot-col"><h4>Company</h4><a href="https://www.kayaksa.com">Kayak Strategic Advisors</a><a href="https://www.kayaksa.com/legal#privacy">Privacy</a><a href="https://www.kayaksa.com/legal">Terms</a><a href="#help">Help</a></div>
+  </div>
+  <div class="foot-base"><span>© Kayak Strategic Advisors Private Limited</span><span>meet.kayaksa.com</span></div>
 </div></footer>
+<script src="/assets/product.js" defer></script>
 </body>
 </html>

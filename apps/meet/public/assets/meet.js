@@ -42,7 +42,7 @@ const S = {
   peers: new Map(), // id -> { info, pc, polite, makingOffer, ignoreOffer, streams:{cam,screen}, screenId, tile, screenTile, quality }
   room: {}, panel: null, unread: 0, lobby: [], chat: [], captions: [], transcript: [],
   layout: "auto", rec: null, cap: null, ended: false, leaving: false, stats: { rtt: [], loss: [] }, joinedAt: 0, retries: 0,
-  english: (() => { try { return localStorage.getItem("km:en") !== "0"; } catch { return true; } })(),
+  capLang: (() => { try { const v = localStorage.getItem("km:caplang"); return v !== null ? v : localStorage.getItem("km:en") === "0" ? "" : "en"; } catch { return "en"; } })(),
   devices: { mic: localStorage.getItem("km:mic") || "", cam: localStorage.getItem("km:cam") || "" },
 };
 
@@ -230,9 +230,9 @@ function onMsg(m) {
     case "leave": dropPeer(m.id); render(); return;
     case "peer": { const x = S.peers.get(m.peer.id); if (x) { const wasHand = x.info.hand; x.info = m.peer; if (m.peer.hand && !wasHand) toast(`${m.peer.name} raised a hand ✋`); } render(); renderPanel(); return; }
     case "signal": return onSignal(m.from, m.data);
-    case "chat": S.chat.push(m); if (S.english && m.from !== S.me?.id && !looksEnglish(m.text)) api(`/api/translate/${room}`, { method: "POST", body: JSON.stringify({ text: m.text }) }).then((r) => { m.en = r.en; renderPanel(); }).catch(() => {}); if (S.panel !== "chat" && m.from !== S.me?.id) { S.unread++; toast(`${m.name}: ${m.text.slice(0, 80)}`, "", 4000); } renderPanel(); badge(); return;
+    case "chat": S.chat.push(m); if (S.capLang && m.from !== S.me?.id && !(S.capLang === "en" && looksEnglish(m.text))) api(`/api/translate/${room}`, { method: "POST", body: JSON.stringify({ text: m.text, to: S.capLang }) }).then((r) => { if (r.text && r.text !== m.text) { m.en = r.text; renderPanel(); } }).catch(() => {}); if (S.panel !== "chat" && m.from !== S.me?.id) { S.unread++; toast(`${m.name}: ${m.text.slice(0, 80)}`, "", 4000); } renderPanel(); badge(); return;
     case "react": return floatReact(m.e);
-    case "caption": S.captions.push(m); S.transcript.push(m); S.captions = S.captions.slice(-3); drawCaptions(); if (S.panel === "transcript") renderPanel(); setTimeout(() => { S.captions = S.captions.filter((x) => x !== m); drawCaptions(); }, 7000); return;
+    case "caption": translateCaption(m); S.captions.push(m); S.transcript.push(m); S.captions = S.captions.slice(-3); drawCaptions(); if (S.panel === "transcript") renderPanel(); setTimeout(() => { S.captions = S.captions.filter((x) => x !== m); drawCaptions(); }, 7000); return;
     case "lobby": { const n = m.list.length > S.lobby.length; S.lobby = m.list; if (n) { chime(); toast(`${m.list[m.list.length - 1].name} is waiting to join.`, "warn", 8000); } renderPanel(); badge(); return; }
     case "room": { const before = S.room; S.room = m.room; refreshRoom(before, m.by); return; }
     case "muteRequest": if (S.micOn) { setMic(false); toast(`${m.by} muted you. Unmute when you're ready to speak.`); } return;
@@ -455,7 +455,7 @@ function bar() {
   $("#bmore").onclick = (e) => menu(e.currentTarget, [
     [`${ic("layout")} ${S.layout === "speaker" ? "Grid view" : "Speaker view"}`, () => { S.layout = S.layout === "speaker" ? "auto" : "speaker"; render(); }],
     [`${ic("cc")} Transcript`, () => panel("transcript")],
-    [`${ic("globe")} ${S.english ? "Turn off live translation" : "Translate to English live"}`, () => setEnglish(!S.english)],
+    [`${ic("globe")} Caption language: ${S.capLang ? langName(S.capLang) : "Off"}`, () => { if (S.panel !== "transcript") panel("transcript"); setTimeout(() => $("#ten")?.focus(), 50); }],
     [`${ic("screen")} ${S.screen ? "Stop sharing" : "Share screen"}`, toggleScreen],
     ...(isHost() ? [
       [`${ic("micOff")} Mute everyone`, () => send({ t: "muteAll" })],
@@ -489,7 +489,7 @@ function refreshRoom(before = {}, by) {
   $("#cappill") && ($("#cappill").hidden = !S.room.captions);
   if (S.room.recording && !before.recording) toast(`${S.room.recording} started recording this meeting. Everyone can see this notice.`, "warn", 8000);
   if (!S.room.recording && before.recording) toast("Recording stopped.");
-  if (S.room.captions && !before.captions) { toast(`Captions are on. Speech is transcribed on Kayak's own servers and kept as the meeting transcript.${S.english ? " Anything not in English is translated to English live." : ""}`, "", 8000); startCaptions(); }
+  if (S.room.captions && !before.captions) { toast(`Captions are on. Speech is transcribed on Kayak's own servers and kept as the meeting transcript.${S.capLang ? ` Captions are shown in ${langName(S.capLang)}; change it under Transcript.` : ""}`, "", 8000); startCaptions(); }
   if (!S.room.captions && before.captions) { toast("Captions are off."); stopCaptions(); }
   if (S.room.locked !== before.locked && by) toast(S.room.locked ? `${by} locked the meeting. New guests wait to be admitted.` : `${by} unlocked the meeting.`);
   bar();
@@ -591,10 +591,22 @@ function floatReact(e) {
   el.className = "react"; el.textContent = e; el.style.left = 10 + Math.random() * 70 + "%";
   $(".stage")?.append(el); setTimeout(() => el.remove(), 3000);
 }
+function capText(m) {
+  if (!S.capLang || m.lang === S.capLang) return null;
+  return S.capLang === "en" ? m.en || null : m.tr || null;
+}
 function drawCaptions() {
   const c = $("#caps"); if (!c) return;
-  c.innerHTML = S.captions.map((m) => S.english && m.en ? `<p><b>${esc(m.name)}</b>${esc(m.en)}<br><small style="opacity:.7">${esc(m.text)} · ${esc(langName(m.lang))}</small></p>` : `<p><b>${esc(m.name)}</b>${esc(m.text)}</p>`).join("");
+  c.innerHTML = S.captions.map((m) => { const t = capText(m); return t ? `<p><b>${esc(m.name)}</b>${esc(t)}<br><small style="opacity:.7">${esc(m.text)} · ${esc(langName(m.lang))}</small></p>` : `<p><b>${esc(m.name)}</b>${esc(m.text)}</p>`; }).join("");
 }
+// Each viewer gets captions in their own language. English comes with the caption from the server;
+// any other language is translated for this viewer only (nothing is stored per viewer).
+function translateCaption(m) {
+  if (!S.capLang || S.capLang === "en" || m.lang === S.capLang || !m.text) return;
+  api(`/api/translate/${room}`, { method: "POST", body: JSON.stringify({ text: m.text, to: S.capLang, from: m.lang || undefined }) })
+    .then((r) => { if (r.text) { m.tr = r.text; drawCaptions(); if (S.panel === "transcript") renderPanel(); } }).catch(() => {});
+}
+
 let lastChime = 0;
 function chime() {
   if (Date.now() - lastChime < 1500) return; lastChime = Date.now();
@@ -632,16 +644,24 @@ function renderPanel() {
     $$("[data-pm]", s).forEach((b) => (b.onclick = () => { const p = S.peers.get(b.dataset.pm)?.info; menu(b, [["Ask to unmute / mute", () => send({ t: "mute", id: p.id })], ...(p.role === "member" ? [["Make co-host", () => send({ t: "host", id: p.id })]] : []), ["Remove from meeting", () => send({ t: "remove", id: p.id })]]); }));
     $("#invite").onclick = () => { navigator.clipboard.writeText(location.origin + location.pathname).then(() => toast("Meeting address copied. Invited people still need their own invitation link from the Kayak portal.")).catch(() => toast(location.origin + location.pathname)); };
   } else if (S.panel === "transcript") {
-    s.innerHTML = head("Transcript") + `<div class="body" id="tb"><label class="row" style="display:flex;gap:8px;align-items:center;font-size:.9rem"><input type="checkbox" id="ten" ${S.english ? "checked" : ""}> Translate to English live</label>${S.transcript.length ? S.transcript.map((m) => `<p class="tline"><b>${esc(m.name)}</b> ${esc(S.english && m.en ? m.en : m.text)}${S.english && m.en ? `<br><small class="km-muted">${esc(m.text)} · ${esc(langName(m.lang))}</small>` : ""}</p>`).join("") : `<p class="km-muted">${S.room.captions ? "Waiting for someone to speak…" : isHost() ? "Turn on captions to transcribe the meeting. Everyone will see a notice." : "Captions are off. The host can turn them on."}</p>`}</div>`;
+    s.innerHTML = head("Transcript") + `<div class="body" id="tb"><label class="row" style="display:grid;gap:4px;font-size:.9rem" for="ten">Show captions in<select class="input" id="ten" style="min-height:38px">${capOptions()}</select></label>${S.transcript.length ? S.transcript.map((m) => `<p class="tline"><b>${esc(m.name)}</b> ${esc(capText(m) || m.text)}${capText(m) ? `<br><small class="km-muted">${esc(m.text)} · ${esc(langName(m.lang))}</small>` : ""}</p>`).join("") : `<p class="km-muted">${S.room.captions ? "Waiting for someone to speak…" : isHost() ? "Turn on captions to transcribe the meeting. Everyone will see a notice." : "Captions are off. The host can turn them on."}</p>`}</div>`;
     const b = $("#tb"); b.scrollTop = b.scrollHeight;
-    $("#ten").onchange = (e) => setEnglish(e.target.checked);
+    $("#ten").onchange = (e) => setCapLang(e.target.value);
   }
   $("#pclose").onclick = () => panel(S.panel);
 }
-const LANGS = { hi: "Hindi", mr: "Marathi", gu: "Gujarati", ta: "Tamil", te: "Telugu", kn: "Kannada", ml: "Malayalam", bn: "Bengali", pa: "Punjabi", ur: "Urdu", ar: "Arabic", fr: "French", de: "German", es: "Spanish", it: "Italian", pt: "Portuguese", ja: "Japanese", zh: "Chinese", ko: "Korean", ru: "Russian", tr: "Turkish", fa: "Persian", id: "Indonesian", ms: "Malay", th: "Thai", vi: "Vietnamese", nl: "Dutch", sw: "Swahili" };
+const LANGS = { en: "English", hi: "Hindi", bn: "Bengali", mr: "Marathi", te: "Telugu", ta: "Tamil", gu: "Gujarati", ur: "Urdu", kn: "Kannada", ml: "Malayalam", pa: "Punjabi", or: "Odia", as: "Assamese", ne: "Nepali", sd: "Sindhi", si: "Sinhala", ar: "Arabic", fr: "French", de: "German", es: "Spanish", it: "Italian", pt: "Portuguese", nl: "Dutch", ru: "Russian", uk: "Ukrainian", pl: "Polish", tr: "Turkish", fa: "Persian", he: "Hebrew", el: "Greek", sv: "Swedish", da: "Danish", fi: "Finnish", no: "Norwegian", cs: "Czech", ro: "Romanian", hu: "Hungarian", ja: "Japanese", zh: "Chinese", ko: "Korean", id: "Indonesian", ms: "Malay", th: "Thai", vi: "Vietnamese", tl: "Filipino", sw: "Swahili", am: "Amharic", ha: "Hausa", yo: "Yoruba", zu: "Zulu" };
+const capOptions = () => `<option value="" ${!S.capLang ? "selected" : ""}>As spoken (no translation)</option>` + Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${S.capLang === k ? "selected" : ""}>${v}</option>`).join("");
 const langName = (l) => LANGS[l] || (l ? l.toUpperCase() : "translated");
 const looksEnglish = (t) => /^[\x00-\x7F\u2018-\u201D\u2026\u20B9]*$/.test(t) && !/\b(hai|nahi|kya|aap|merci|bonjour|gracias|danke)\b/i.test(t);
-function setEnglish(on) { S.english = on; try { localStorage.setItem("km:en", on ? "1" : "0"); } catch {} drawCaptions(); renderPanel(); toast(on ? "Live translation to English is on. Captions and transcript show English, with the original underneath." : "Live translation is off. Captions show what was said."); }
+function setCapLang(lang) {
+  S.capLang = LANGS[lang] ? lang : "";
+  try { localStorage.setItem("km:caplang", S.capLang); } catch {}
+  for (const m of S.transcript) m.tr = null;
+  for (const m of S.transcript.slice(-30)) translateCaption(m); // recent lines only, to stay within the translation rate limit
+  drawCaptions(); renderPanel(); bar();
+  toast(S.capLang ? `Captions and chat now show in ${LANGS[S.capLang]}, with what was said underneath.` : "Captions show exactly what was said.");
+}
 const linkify = (h) => h.replace(/(https:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 
 // ---------------------------------------------------------------- captions: my own voice, transcribed on Kayak's servers
@@ -709,7 +729,7 @@ async function startRecording() {
       };
       if (spot && ts.length) { place(ts[0], 0, 0, W, H - 150); ts.slice(1, 6).forEach((t, i) => place(t, 8 + i * 254, H - 142, 246, 138)); }
       else { const n = Math.max(1, ts.length), cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols), w = W / cols, h = H / rows; ts.forEach((t, i) => place(t, (i % cols) * w + 3, Math.floor(i / cols) * h + 3, w - 6, h - 6)); }
-      if (S.captions.length) { const c = S.captions[S.captions.length - 1]; g.font = "22px Archivo, Arial"; const line = `${c.name}: ${(S.english && c.en) || c.text}`.slice(0, 110); const tw = g.measureText(line).width; g.fillStyle = "#000000cc"; g.fillRect((W - tw) / 2 - 12, H - 60, tw + 24, 36); g.fillStyle = "#fff"; g.textAlign = "center"; g.fillText(line, W / 2, H - 42); }
+      if (S.captions.length) { const c = S.captions[S.captions.length - 1]; g.font = "22px Archivo, Arial"; const line = `${c.name}: ${capText(c) || c.text}`.slice(0, 110); const tw = g.measureText(line).width; g.fillStyle = "#000000cc"; g.fillRect((W - tw) / 2 - 12, H - 60, tw + 24, 36); g.fillStyle = "#fff"; g.textAlign = "center"; g.fillText(line, W / 2, H - 42); }
       if (logo.complete) g.drawImage(logo, W - 170, 12, 156, 42);
     };
     rec.timer = setInterval(draw, 1000 / 20);
