@@ -48,12 +48,28 @@ export function tax(offerPaise: number, buyerState: string) {
 }
 
 /** Prices for the browser: every public course and path. */
+/**
+ * Grievance Officer and customer care, as the Consumer Protection (E-Commerce) Rules, 2020 (rule 4, as
+ * amended on 9 September 2026) require them to be shown: name, designation, email, landline and mobile.
+ * Empty fields are shown as "being published"; fill them in here.
+ */
+export const GRIEVANCE = {
+  name: "",
+  designation: "Grievance Officer",
+  email: "officer@kayaksa.com",
+  landline: "",
+  mobile: "",
+  customerCare: { email: "learn@kayaksa.com", landline: "", mobile: "" },
+  acknowledgeHours: 48,
+  resolveDays: 30,
+} as const;
+
 export function priceList() {
   const C = getCatalog();
   const out: Record<string, any> = {};
   for (const c of C.courses) if (c.audience === "public") out[`course:${c.id}`] = priceOf("course", c.id);
   for (const p of C.paths) if (p.audience === "public") out[`path:${p.id}`] = priceOf("path", p.id);
-  return { ...PRICING, items: out, states: STATES };
+  return { ...PRICING, items: out, states: STATES, grievance: GRIEVANCE };
 }
 
 export const rupees = (paise: number) => "₹" + (paise / 100).toLocaleString("en-IN", { minimumFractionDigits: paise % 100 ? 2 : 0, maximumFractionDigits: 2 });

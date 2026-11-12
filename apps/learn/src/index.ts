@@ -9,7 +9,7 @@ import { createSession, readSession, endSession, endAllSessions, audit, SessionC
 import { mailEnabled, mailHtml, sendMail, MailEnv } from "../../../packages/core/src/mail";
 import { learnApi } from "../../../packages/learnkit/src/routes";
 import { getCatalog } from "../../../packages/learnkit/src/catalog";
-import { PRICING } from "../../../packages/learnkit/src/pricing";
+import { PRICING, GRIEVANCE } from "../../../packages/learnkit/src/pricing";
 import { entitlements, type PayEnv } from "../../../packages/learnkit/src/commerce";
 import { payApi, invoicePage, razorpayWebhook } from "./pay";
 
@@ -247,6 +247,35 @@ app.route("/api/learn", learnApi({
 }));
 app.route("/api/pay", payApi(currentUser, site));
 app.get("/invoice/:id", (c) => invoicePage(c, currentUser));
+// ---------------------------------------------------------------- consumer grievances
+// Anyone can raise a grievance (no account needed). They get a reference and, by email, a copy of the
+// complaint exactly as recorded; the Grievance Officer gets it too. Due within one month.
+const GRIEVANCE_TYPES = ["Payment or invoice", "Refund or cancellation", "Course access", "Course content", "Certificate", "Privacy or data", "Other"];
+app.post("/api/grievance", async (c) => {
+  if (!(await rateLimit(c.env.DB, `grievance:${clientIp(c)}`, 6, 3600))) return c.json({ error: "Too many submissions from this network. Please email " + GRIEVANCE.email + "." }, 429);
+  const b = await readJson<any>(c, 16_384).catch(() => ({} as any));
+  const name = str(b.name, 100), email = cleanEmail(b.email), details = str(b.details, 4000);
+  const category = GRIEVANCE_TYPES.includes(b.category) ? b.category : "Other";
+  if (!name || !email || details.length < 20) return c.json({ error: "Please give your name, a valid email address and a description of at least 20 characters." }, 400);
+  const now = new Date(), d = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const id = `KLG-${d}-${crypto.randomUUID().slice(0, 4).toUpperCase()}`;
+  const due = new Date(now.getTime() + GRIEVANCE.resolveDays * 86_400_000).toISOString();
+  const rec = { id, name, email, phone: str(b.phone, 30), order_ref: str(b.order, 60), category, details };
+  await c.env.DB.prepare("INSERT INTO grievances (id, name, email, phone, order_ref, category, details, created_at, acknowledged_at, due_by) VALUES (?,?,?,?,?,?,?,?,?,?)")
+    .bind(id, rec.name, rec.email, rec.phone, rec.order_ref, rec.category, rec.details, now.toISOString(), mailEnabled(c.env) ? now.toISOString() : null, due).run();
+  await audit(c, c.env.DB, null, "learn.grievance.received", { id, category });
+  const table = `<table cellpadding="4">${[["Reference", id], ["Received", now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST"], ["Name", name], ["Email", email], ["Phone", rec.phone], ["Order", rec.order_ref], ["About", category]].filter((r) => r[1]).map((r) => `<tr><td style="color:#4E6470">${esc(r[0])}</td><td><b>${esc(r[1])}</b></td></tr>`).join("")}</table><p style="white-space:pre-wrap;border-left:3px solid #17807E;padding-left:10px">${esc(details)}</p>`;
+  if (mailEnabled(c.env)) {
+    c.executionCtx.waitUntil(Promise.all([
+      sendMail(c.env, email, `We have received your grievance (${id})`, mailHtml({ site: "LEARN", title: "We have received your grievance",
+        intro: `Thank you for telling us. This is a copy of your complaint as we recorded it. We will resolve it by <b>${new Date(due).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "long" })}</b> at the latest.${table}`,
+        outro: `${GRIEVANCE.name ? esc(GRIEVANCE.name) + ", " : ""}${esc(GRIEVANCE.designation)}, Kayak Learn · ${esc(GRIEVANCE.email)}. You may also approach the National Consumer Helpline on 1915 or at consumerhelpline.gov.in.` })),
+      sendMail(c.env, GRIEVANCE.email, `Grievance ${id}: ${category}`, mailHtml({ site: "LEARN", title: `New grievance ${id}`, intro: `Acknowledged automatically. Resolve by ${new Date(due).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "long" })}.${table}`, outro: "Reply to the consumer directly and record the outcome." })),
+    ]).then(() => {}).catch(() => {}));
+  }
+  return c.json({ ok: true, id, due, copySent: mailEnabled(c.env) });
+});
+
 app.all("/api/*", (c) => c.json({ error: "Not found." }, 404));
 
 // ---------------------------------------------------------------- public pages
@@ -323,7 +352,7 @@ app.get("/courses/:id", (c) => {
   const desc = `${x.summary} ${x.minutes} minutes, ${x.level}, assessed, with a verifiable certificate. ₹${rupee(PRICING.offerPaise)} plus GST.`.slice(0, 300);
   const body = `<div class="page"><p><a href="/courses">Courses</a> › ${esc(topicName(x.topic))}</p><h1>${esc(x.title)}</h1><p class="lead">${esc(x.summary)}</p>
     <p>${x.minutes} minutes · ${esc(x.level)} · ${x.lessons.length} lessons · assessment (pass mark ${x.quiz.pass}%) · verifiable certificate · ${PRICING.accessMonths} months' access</p>
-    <p><b>Launch offer ₹${rupee(PRICING.offerPaise)}</b> plus 18% GST (list price ₹${rupee(PRICING.listPaise)}).</p>
+    <p><b>Launch offer ₹${rupee(PRICING.offerPaise)}</b> plus 18% GST, so <b>₹${rupee(Math.round(PRICING.offerPaise * (1 + PRICING.gstRate)))} in all</b> (list price ₹${rupee(PRICING.listPaise)} plus GST).</p>
     <h2>What you will learn</h2><ul>${x.outcomes.map((o: string) => `<li>${esc(o)}</li>`).join("")}</ul>
     <h2>Lessons</h2><ol>${x.lessons.map((l: any) => `<li>${esc(l.title)} (${l.minutes} min)</li>`).join("")}</ol>
     <p><a class="btn btn-primary" href="/#/course/${x.id}">Start this course</a></p></div>`;

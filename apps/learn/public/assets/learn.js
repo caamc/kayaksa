@@ -78,7 +78,7 @@ const hero = () => {
     <span class="eyebrow" style="color:#F5C46D">Kayak Learn · professional programmes</span>
     <h1>Judgement you can carry into every decision.</h1>
     <p class="serif" style="font-size:1.15rem">Rigorous courses on ethics, compliance, risk, corporate governance and responsible AI, written by advisers who do this work every day. Grounded in Indian law, aware of global standards, assessed, and certified.</p>
-    ${P ? `<div class="offer"><span class="eyebrow" style="color:#F5C46D">Launch offer</span><span><s>₹${(P.listPaise / 100).toLocaleString("en-IN")}</s> <b>₹${(P.offerPaise / 100).toLocaleString("en-IN")}</b> per course <em>${Math.round((1 - P.offerPaise / P.listPaise) * 100)}% off</em></span><small>+ GST · ${P.accessMonths} months' access · certificate included</small></div>` : ""}
+    ${P ? `<div class="offer"><span class="eyebrow" style="color:#F5C46D">Launch offer</span><span><s>₹${(P.listPaise / 100).toLocaleString("en-IN")}</s> <b>₹${(P.offerPaise / 100).toLocaleString("en-IN")}</b> per course <em>${Math.round((1 - P.offerPaise / P.listPaise) * 100)}% off</em></span><small>+ 18% GST (₹${Math.round(P.offerPaise * (1 + P.gstRate) / 100).toLocaleString("en-IN")} in all) · ${P.accessMonths} months' access · certificate included</small></div>` : ""}
     <div class="row">${STATE.signedIn ? `<a class="btn btn-accent" href="#/purchases">${ico("briefcase")} My learning</a>` : `<a class="btn btn-accent" href="#/path/compliance-india">Explore Compliance Essentials</a><button class="btn btn-ghost" style="color:#fff;border-color:rgba(255,255,255,.4)" data-auth="up">Create account</button>`}</div>
     <div class="stats"><div><b>5</b><span>Learning paths</span></div><div><b>15</b><span>Courses</span></div><div><b>14</b><span>Awareness bytes</span></div><div><b>100%</b><span>Verifiable certificates</span></div></div></div></section>`;
 };
@@ -208,6 +208,37 @@ async function purchasesPage() {
     <p class="small muted">Questions about a payment or invoice? Write to learn@kayaksa.com with your order number.</p></section></div>`;
 }
 
+// The Grievance Officer and customer care, as the Consumer Protection (E-Commerce) Rules, 2020 require.
+function grievanceBlock() {
+  const G = CAT_PRICING?.grievance || { designation: "Grievance Officer", email: "officer@kayaksa.com", customerCare: { email: "learn@kayaksa.com" } };
+  const ph = (l, m) => [l && `Landline ${esc(l)}`, m && `Mobile ${esc(m)}`].filter(Boolean).join(" · ") || "Phone numbers are being published";
+  return `<div class="card stack-sm" style="padding:16px"><p style="margin:0"><b>Grievance Officer:</b> ${G.name ? `${esc(G.name)}, ` : ""}${esc(G.designation)}, Kayak Strategic Advisors Private Limited<br>Email <a href="mailto:${esc(G.email)}">${esc(G.email)}</a> · ${ph(G.landline, G.mobile)}<br>A/2, 314, Shah &amp; Nahar Industrial Estate, Delisle Road, Mumbai 400013</p>
+    <p style="margin:0"><b>Customer care:</b> <a href="mailto:${esc(G.customerCare.email)}">${esc(G.customerCare.email)}</a> · ${ph(G.customerCare.landline, G.customerCare.mobile)}</p>
+    <p style="margin:0">Raise a grievance with the <a href="#/grievance">grievance form</a> or by email with "Grievance" in the subject. We acknowledge within ${G.acknowledgeHours || 48} hours, send you a copy of your complaint as recorded, and resolve it within one month. You may also approach the National Consumer Helpline on 1915 or at consumerhelpline.gov.in.</p></div>`;
+}
+function grievancePage() {
+  const TYPES = ["Payment or invoice", "Refund or cancellation", "Course access", "Course content", "Certificate", "Privacy or data", "Other"];
+  main.innerHTML = `<div class="page"><article class="prose stack-sm" style="max-width:720px"><span class="eyebrow">Customer care</span><h1>Raise a grievance</h1>
+  <p>Tell us what went wrong. You'll get a reference straight away and an email with a copy of your complaint as we recorded it. We resolve every grievance within one month.</p>
+  <form id="gf" class="stack-sm" novalidate>
+    <label class="field">Your name<input class="input" id="gn" maxlength="100" required autocomplete="name"></label>
+    <label class="field">Email<input class="input" id="ge" type="email" maxlength="200" required autocomplete="email"></label>
+    <label class="field">Phone (optional)<input class="input" id="gp" type="tel" maxlength="30" autocomplete="tel"></label>
+    <label class="field">Order or invoice number (optional)<input class="input" id="go" maxlength="60"></label>
+    <label class="field">What is it about?<select class="input" id="gc">${TYPES.map((t) => `<option>${t}</option>`).join("")}</select></label>
+    <label class="field">What happened, and what would you like us to do?<textarea class="input" id="gd" rows="6" maxlength="4000" required></textarea></label>
+    <p class="small muted">We use these details only to resolve your grievance and keep a record of it, as the law requires.</p>
+    <button class="btn btn-primary" style="justify-self:start">Send grievance</button>
+  </form>${grievanceBlock()}</article></div>`;
+  $("#gf").onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector("button"); btn.disabled = true;
+    try {
+      const r = await api("/api/grievance", { body: { name: $("#gn").value.trim(), email: $("#ge").value.trim(), phone: $("#gp").value.trim(), order: $("#go").value.trim(), category: $("#gc").value, details: $("#gd").value.trim() }, authRedirect: false });
+      $("#gf").outerHTML = `<div class="card stack-sm" style="padding:16px" role="status"><h2 style="margin:0">Received. Your reference is ${esc(r.id)}</h2><p style="margin:0">${r.copySent ? "We've emailed you a copy of your complaint as recorded." : "Please keep this reference."} We will resolve it by ${new Date(r.due).toLocaleDateString("en-IN", { dateStyle: "long" })}.</p></div>`;
+    } catch (x) { toast(x.message); btn.disabled = false; }
+  };
+}
 function termsPage() {
   const P = CAT_PRICING;
   main.innerHTML = `<div class="page"><article class="prose stack-sm"><span class="eyebrow">Terms of sale</span><h1>Kayak Learn terms of sale and refund policy</h1>
@@ -225,7 +256,7 @@ function termsPage() {
   <h2>Payment</h2><p>Payments are processed securely by Razorpay (card, UPI, net banking and wallets). Kayak never sees your payment details. Your GST invoice is available under My learning as soon as payment is confirmed. Businesses can add a GSTIN at checkout to claim input tax credit.</p>
   <h2>Cancellation and refunds</h2><p>You may cancel within <b>7 days</b> of payment for a full refund if you have completed no more than one lesson and no certificate has been issued. Write to learn@kayaksa.com with your order number. Approved refunds go back to the original payment method within 7 working days. After 7 days, or once more of the course has been used, fees are not refundable, except where the law requires otherwise or Kayak cannot provide the course.</p>
   <h2>Fair use</h2><p>Accounts are personal. Do not share sign-ins, copy or republish course material, or use automated tools to download it. Kayak may suspend access for misuse after telling you why.</p>
-  <h2>Grievances</h2><p>If something goes wrong, write to our Grievance Officer at <b>learn@kayaksa.com</b> with "Grievance" in the subject. We acknowledge within 48 hours and resolve within one month, as the Consumer Protection (E-Commerce) Rules, 2020 require. You may also approach the National Consumer Helpline (1915).</p>
+  <h2>Customer care and grievances</h2>${grievanceBlock()}
   <h2>General</h2><p>Courses are for professional awareness and are not legal advice. These terms are governed by the laws of India, and the courts at Mumbai have jurisdiction, without affecting your rights as a consumer.</p>
   <p class="small muted">Last updated November 2026.</p></article></div>`;
 }
@@ -251,6 +282,7 @@ async function route() {
     if (!CAT_PRICING) CAT_PRICING = (await api("/api/learn/catalog").catch(() => ({}))).pricing || null;
     if (parts[0] === "privacy") { privacyPage(); document.title = "Privacy notice · Kayak Learn"; }
     else if (parts[0] === "terms") { termsPage(); document.title = "Terms of sale and refunds · Kayak Learn"; }
+    else if (parts[0] === "grievance") { grievancePage(); document.title = "Raise a grievance · Kayak Learn"; }
     else if (parts[0] === "purchases") { await purchasesPage(); document.title = "My learning · Kayak Learn"; }
     else if (parts[0] === "account") { await accountPage(); document.title = "My account · Kayak Learn"; }
     else if (parts[0] === "confirm" || parts[0] === "reset") await tokenPage(parts[0], new URLSearchParams(q).get("t") || "");
