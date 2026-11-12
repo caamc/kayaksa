@@ -61,7 +61,7 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          if [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; echo "::warning::Building an UNSIGNED macOS app (no MAC_CERT_P12_BASE64 secret)."; fi
+          if [ -z "$CSC_LINK" ]; then unset CSC_LINK CSC_KEY_PASSWORD; export CSC_IDENTITY_AUTO_DISCOVERY=false; echo "::warning::Building an UNSIGNED macOS app (no MAC_CERT_P12_BASE64 secret)."; fi
           N=false; if [ -n "$APPLE_ID" ] && [ -n "$CSC_LINK" ]; then N=true; fi
           npx electron-builder --mac --publish never -c.mac.notarize=$N
       - name: Build for Windows
@@ -79,7 +79,7 @@ jobs:
             dotnet tool install --global AzureSignTool >/dev/null && echo "Signing with the certificate in Azure Key Vault."
             npx electron-builder --win --publish never -c.win.signtoolOptions.sign=build/sign-win.js
           else
-            if [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; echo "::warning::Building an UNSIGNED Windows app (no code-signing secrets)."; fi
+            if [ -z "$CSC_LINK" ]; then unset CSC_LINK CSC_KEY_PASSWORD; export CSC_IDENTITY_AUTO_DISCOVERY=false; echo "::warning::Building an UNSIGNED Windows app (no code-signing secrets)."; fi
             npx electron-builder --win --publish never
           fi
       - uses: actions/upload-artifact@v4
