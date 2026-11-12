@@ -240,6 +240,7 @@ jobs:
           MS_TENANT: ${{ secrets.MS_TENANT }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: |
           set -e
           if ! npx wrangler r2 bucket list | grep -qE "^name:\s+kayaksa-meet$"; then npx wrangler r2 bucket create kayaksa-meet || true; fi
@@ -276,7 +277,7 @@ jobs:
             fi
           fi
           # Two-way calendar sync: app registrations from Microsoft and Google, kept in GitHub secrets.
-          for k in MS_CLIENT_ID MS_CLIENT_SECRET MS_TENANT GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
+          for k in MS_CLIENT_ID MS_CLIENT_SECRET MS_TENANT GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET RESEND_API_KEY; do
             v="${!k}"; [ -n "$v" ] && node -e 'const f="/tmp/m.json";const j=JSON.parse(require("fs").readFileSync(f));j[process.argv[1]]=process.argv[2];require("fs").writeFileSync(f,JSON.stringify(j))' "$k" "$v"
           done
           [ "$(cat /tmp/m.json)" = "{}" ] || npx wrangler secret bulk /tmp/m.json --name kayaksa-meet; rm -f /tmp/m.json
