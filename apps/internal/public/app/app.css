@@ -386,3 +386,16 @@
 .cd-flat .face svg{max-height:420px;width:auto;max-width:100%;box-shadow:0 18px 40px rgba(14,47,60,.22)}
 @media (prefers-reduced-motion:reduce){.cd-card{transition:none}}
 .cd-stage .btn-ghost{color:#F3F7F6;border-color:#3E5563}
+/* Document Drive */
+.drive{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.drive{grid-template-columns:1fr}}
+.drive-tree{display:grid;gap:2px;padding:10px;position:sticky;top:76px;max-height:calc(100vh - 100px);overflow:auto}
+.drive-tree summary{cursor:pointer;font-weight:600;font-size:.86rem;padding:8px 6px;display:flex;gap:8px;align-items:center}
+.drive-tree summary .ico{width:16px;height:16px}
+.drv-node{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:7px 8px;border:0;background:none;color:inherit;font:inherit;font-size:.86rem;cursor:pointer}
+.drv-node .ico{width:15px;height:15px;flex:none;color:var(--muted)}
+.drv-node span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drv-node.sub{padding-left:26px}
+.drv-node:hover{background:var(--surface-2)}
+.drv-node.on{background:var(--surface-2);box-shadow:inset 3px 0 0 #EE9B1E}
+.drv-doc{border-left:3px solid var(--line)}

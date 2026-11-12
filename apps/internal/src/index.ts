@@ -23,11 +23,12 @@ import { briefs } from "./briefs";
 import { clientTools, runChecks } from "./clienttools";
 import { grow, checkCompetitors } from "./grow";
 import { people, runCelebrations } from "./people";
+import { vault } from "./vault";
 
 type V = { Bindings: Env; Variables: { user: User } };
 const app = new Hono<V>();
 
-app.use("*", securityHeaders({ noindex: true, permissions: "camera=(), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
+app.use("*", securityHeaders({ noindex: true, frame: ["'self'", "blob:"], permissions: "camera=(), microphone=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
 app.use("*", shield("internal", (e) => e.DB, { allowGoodBots: false }));
 app.use("/api/*", sameOrigin());
 app.onError((e: any, c) => {
@@ -77,7 +78,7 @@ app.use("/api/meet/*", guard);
 app.use("/api/meet", guard);
 app.use("/api/confluence/*", guard);
 app.use("/api/confluence", guard);
-for (const p of ["dash", "ops", "workspace", "briefs", "clienttools", "grow", "people"]) { app.use(`/api/${p}`, guard); app.use(`/api/${p}/*`, guard); }
+for (const p of ["dash", "ops", "workspace", "briefs", "clienttools", "grow", "people", "vault"]) { app.use(`/api/${p}`, guard); app.use(`/api/${p}/*`, guard); }
 app.use("/files/*", guard);
 app.use("/app", guard);
 app.use("/app/*", guard);
@@ -103,6 +104,7 @@ app.route("/api/briefs", briefs);
 app.route("/api/clienttools", clientTools);
 app.route("/api/grow", grow);
 app.route("/api/people", people);
+app.route("/api/vault", vault);
 app.route(
   "/api/learn",
   learnApi({

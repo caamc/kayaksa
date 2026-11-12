@@ -36,6 +36,8 @@ const JOURNEYS: Record<string, [string, number][]> = {
   "Trade mark registration": [["Clearance search", 7], ["File application", 7], ["Examination and reply", 180], ["Publication and opposition window", 120], ["Registration", 60]],
   "eSign Service Provider empanelment (CCA)": [["Eligibility and gap assessment", 30], ["Infrastructure and audit readiness", 120], ["Application to the CCA", 30], ["Audit and empanelment", 120]],
   "Udyam (MSME) registration": [["File on the Udyam portal", 1]],
+  "EU GDPR applicability and compliance": [["Test whether GDPR applies (EU offering or monitoring)", 14], ["Article 27 EU representative, if it applies", 21], ["Records of processing, transfer safeguards (SCCs) and notices", 30], ["Independent review", 14]],
+  "CERT-In Directions, 2022 compliance": [["Name the CERT-In point of contact", 3], ["Six-hour incident reporting procedure and drill", 14], ["180-day log retention in India and NTP time sync on every system", 21], ["Annual attestation by the IT and Security Administrator", 7]],
 };
 // The certification and registration roadmap. Topped up, never overwritten: anything already
 // tracked keeps its own dates and progress.
@@ -62,7 +64,10 @@ const SEED_CERTS: [string, string, string, number, number][] = [
   ["NexaPair", "VAPT by a CERT-In empanelled auditor", "CERT-In empanelled auditor", 0, 150000],
   ["NexaPair", "UAE PDPL readiness (Federal Decree-Law 45 of 2021)", "Independent reviewer", 30, 100000],
   ["SayUsNow", "VAPT by a CERT-In empanelled auditor", "CERT-In empanelled auditor", 30, 150000],
-  ["SayUsNow", "ISO 37301:2021", "Accredited certification body (to be selected)", 210, 200000],
+  ["Kayak Strategic Advisors", "ISO 37301:2021", "Accredited certification body (to be selected)", 210, 200000],
+  ["Kayak Strategic Advisors", "EU GDPR applicability and compliance", "Independent reviewer", 30, 150000],
+  ["Kayak Strategic Advisors", "CERT-In Directions, 2022 compliance", "Internal, with the VAPT auditor's review", 0, 0],
+  ["NexaPair", "ISO/IEC 42001:2023", "Accredited certification body (to be selected)", 240, 150000],
   ["DocuVow", "eSign Service Provider empanelment (CCA)", "Controller of Certifying Authorities", 60, 0],
 ];
 async function seedCerts(db: D1Database) {

@@ -75,7 +75,7 @@ check(fg1.ok() && fg2.ok() && (await fg1.json()).message === (await fg2.json()).
 const again = await page.request.post(`${BASE}/api/auth/setup`, { data: { email: EMAIL, token: vars.BOOTSTRAP_TOKEN, name: "X", password: PASSWORD + "x" }, headers: { Origin: BASE } });
 check(again.status() === 409 || again.status() === 403, "set-up refuses an already active SuperAdmin");
 
-for (const v of ["website/sections", "website/competitors", "roles", "masters/employee", "masters/partner", "masters/director", "masters/client", "masters/distributor", "digital", "updates", "clienttools", "clienttools/monitoring", "studio", "board", "briefs", "store", "launch", "certs", "brain", "brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "confluence", "account"]) {
+for (const v of ["website/sections", "website/competitors", "roles", "masters/employee", "masters/partner", "masters/director", "masters/client", "masters/distributor", "drive", "digital", "updates", "clienttools", "clienttools/monitoring", "studio", "board", "briefs", "store", "launch", "certs", "brain", "brand", "tools", "network", "ai", "cards", "decks", "website", "learn", "admin", "audit", "security/overview", "security/events", "security/blocks", "confluence", "account"]) {
   await page.goto(`${BASE}/app#/${v}`);
   await page.waitForFunction(() => !document.querySelector("#main .spinner") || document.querySelector("#main h1"), null, { timeout: 15000 });
   await page.waitForTimeout(600);
@@ -108,6 +108,20 @@ check(roles.roles.some((r) => r.id === "dpo" && r.statutory), "roles seeded, inc
 const ref = await page.request.post(`${BASE}/api/grow/referrals`, { headers: H, data: { partner_id: "brand-defence-integrity", direction: "in", opportunity: "Brand protection programme", status: "won", value_inr: 500000, fee_pct: 10 } });
 const st = await (await page.request.get(`${BASE}/api/grow/network/stats`)).json();
 check(ref.ok() && st.totals.won === 1 && st.totals.feesDue === 50000, "referral recorded and counted in network statistics");
+// Document Drive: encrypted upload, card images never kept, maker-checker on approval
+const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+const up = await page.request.post(`${BASE}/api/vault/docs`, { headers: H, multipart: { file: { name: "pan.png", mimeType: "image/png", buffer: png }, doc_type: "pan", master_id: sid } });
+const upj = await up.json();
+check(up.ok() && upj.stored === true, "document uploaded and stored encrypted");
+const card = await page.request.post(`${BASE}/api/vault/docs`, { headers: H, multipart: { file: { name: "card.png", mimeType: "image/png", buffer: Buffer.concat([png, Buffer.from([1])]) }, doc_type: "payment_card", master_id: sid } });
+check(card.ok() && (await card.json()).stored === false, "payment card image is never stored");
+const self = await page.request.post(`${BASE}/api/vault/docs/${upj.id}/approve`, { headers: H, data: { fields: { pan: "ABCDE1234F", name: "Test Employee" } } });
+check(self.status() === 403, "maker-checker: the uploader cannot approve their own document");
+const noReason = await page.request.post(`${BASE}/api/vault/docs/${upj.id}/open`, { headers: H, data: {} });
+check(noReason.status() === 400, "opening a document needs a reason");
+const opened = await page.request.post(`${BASE}/api/vault/docs/${upj.id}/open`, { headers: H, data: { reason: "Checking the upload works" } });
+check(opened.ok() && Buffer.from(await opened.body()).equals(png), "the decrypted file matches the upload");
+
 await page.goto(`${BASE}/app#/masters/employee`); await page.waitForSelector("[data-open]"); await page.click("[data-open]"); await page.waitForSelector("[data-reveal]");
 await page.screenshot({ path: OUT + "internal-masters-open.png" });
 check(!(await page.content()).includes("ABCDE1234F"), "employee dialog shows PAN masked");
