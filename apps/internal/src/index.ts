@@ -24,6 +24,7 @@ import { clientTools, runChecks } from "./clienttools";
 import { grow, checkCompetitors } from "./grow";
 import { people, runCelebrations } from "./people";
 import { vault } from "./vault";
+import { driveApi, drivePages } from "./gdrive";
 import { signMeet } from "../../../packages/core/src/meettoken";
 
 type V = { Bindings: Env; Variables: { user: User } };
@@ -80,6 +81,9 @@ app.use("/api/meet", guard);
 app.use("/api/confluence/*", guard);
 app.use("/api/confluence", guard);
 for (const p of ["dash", "ops", "workspace", "briefs", "clienttools", "grow", "people", "vault"]) { app.use(`/api/${p}`, guard); app.use(`/api/${p}/*`, guard); }
+app.use("/oauth/*", guard);
+app.route("/api/vault/drive", driveApi);
+app.route("/oauth/drive", drivePages);
 app.use("/files/*", guard);
 app.use("/app", guard);
 app.use("/app/*", guard);

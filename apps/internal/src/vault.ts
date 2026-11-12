@@ -20,6 +20,7 @@ import { modelFor } from "../../../packages/core/src/ai";
 import { Env, User, atLeast, uid } from "./env";
 import { REGISTERS } from "./people";
 import { recordUsage } from "./assistant";
+import { putEncrypted, getEncrypted, delEncrypted } from "./gdrive";
 
 type V = { Bindings: Env; Variables: { user: User } };
 export const vault = new Hono<V>();
@@ -144,7 +145,7 @@ vault.get("/docs", async (c) => {
   if (!admin(c)) return deny(c);
   const m = c.req.query("master"), st = c.req.query("status");
   const where = st === "qc" ? "d.status = 'qc'" : m ? "d.master_id = ?1" : "d.master_id IS NULL";
-  const { results } = await c.env.DB.prepare(`SELECT d.id, d.master_kind, d.master_id, d.doc_type, d.file_name, d.mime, d.size, d.stored, d.status, d.qc, d.uploaded_by, d.approved_by, d.approved_at, d.created_at, d.note, u.name uploader, a.name approver, ms.name master_name FROM vault_docs d LEFT JOIN users u ON u.id = d.uploaded_by LEFT JOIN users a ON a.id = d.approved_by LEFT JOIN masters ms ON ms.id = d.master_id WHERE ${where} ORDER BY d.created_at DESC LIMIT 300`).bind(...(m && st !== "qc" ? [m] : [])).all<any>();
+  const { results } = await c.env.DB.prepare(`SELECT d.id, d.master_kind, d.master_id, d.doc_type, d.file_name, d.mime, d.size, d.stored, CASE WHEN d.r2_key LIKE 'gd:%' THEN 'gd:' ELSE '' END r2_key, d.status, d.qc, d.uploaded_by, d.approved_by, d.approved_at, d.created_at, d.note, u.name uploader, a.name approver, ms.name master_name FROM vault_docs d LEFT JOIN users u ON u.id = d.uploaded_by LEFT JOIN users a ON a.id = d.approved_by LEFT JOIN masters ms ON ms.id = d.master_id WHERE ${where} ORDER BY d.created_at DESC LIMIT 300`).bind(...(m && st !== "qc" ? [m] : [])).all<any>();
   return c.json({ docs: results.map((d: any) => ({ ...d, qc: JSON.parse(d.qc || "[]") })) });
 });
 
@@ -189,7 +190,8 @@ vault.post("/docs", async (c) => {
   if (read && read.legible === false) qc.unshift({ check: "Legible", result: "fail", detail: "The scan is not clear enough. Upload a sharper copy." });
   const id = uid();
   let r2: string | null = null;
-  if (store) { r2 = `docs/${id}`; await c.env.VAULT.put(r2 as string, await encryptBytes(c.env, buf), { customMetadata: { type, by: u.id } }); }
+  // Encrypted here, then kept in the "Kayak Document Drive" shared drive (or R2 until it is connected).
+  if (store) r2 = await putEncrypted(c.env, id, await encryptBytes(c.env, buf), { type, by: u.id });
   await c.env.DB.prepare("INSERT INTO vault_docs (id, master_kind, master_id, doc_type, file_name, mime, size, sha256, r2_key, stored, ocr, qc, status, note, uploaded_by, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
     .bind(id, master?.kind || null, master?.id || null, type, str(file.name, 160), file.type, file.size, sha, r2, store ? 1 : 0, sealedOcr, JSON.stringify(qc), "qc", note, u.id, now()).run();
   await audit(c, c.env.DB, u.id, "vault.uploaded", { id, type, stored: store, master: master?.id || null });
@@ -266,9 +268,9 @@ vault.post("/docs/:id/open", async (c) => {
   if (reason.length < 8) return c.json({ error: "Give the reason for opening this document." }, 400);
   const d = await c.env.DB.prepare("SELECT * FROM vault_docs WHERE id = ?").bind(c.req.param("id")).first<any>();
   if (!d?.stored || !d.r2_key) return c.json({ error: "No file is kept for this document." }, 404);
-  const o = await c.env.VAULT!.get(d.r2_key);
+  const o = await getEncrypted(c.env, d.r2_key);
   if (!o) return c.json({ error: "The file is missing from storage." }, 404);
-  const plain = await decryptBytes(c.env, await o.arrayBuffer());
+  const plain = await decryptBytes(c.env, o);
   await c.env.DB.prepare("INSERT INTO vault_access (doc_id, user_id, action, reason, at) VALUES (?,?,?,?,?)").bind(d.id, c.get("user").id, "open", reason, now()).run();
   await audit(c, c.env.DB, c.get("user").id, "vault.opened", { id: d.id, reason });
   return new Response(plain, { headers: { "Content-Type": d.mime, "Cache-Control": "no-store", "Content-Disposition": `inline; filename="${d.doc_type}-${d.id.slice(0, 8)}.${d.mime === "application/pdf" ? "pdf" : d.mime.split("/")[1]}"`, "X-Content-Type-Options": "nosniff" } });
@@ -285,7 +287,7 @@ vault.post("/docs/:id/delete", async (c) => {
   const reason = str(b.reason, 200);
   if (reason.length < 8) return c.json({ error: "Record why the document is being erased." }, 400);
   const d = await c.env.DB.prepare("SELECT r2_key FROM vault_docs WHERE id = ?").bind(c.req.param("id")).first<any>();
-  if (d?.r2_key) await c.env.VAULT?.delete(d.r2_key);
+  if (d?.r2_key) await delEncrypted(c.env, d.r2_key);
   await c.env.DB.prepare("UPDATE vault_docs SET stored = 0, r2_key = NULL, ocr = '', status = 'erased', note = ? WHERE id = ?").bind(`Erased: ${reason}`, c.req.param("id")).run();
   await audit(c, c.env.DB, c.get("user").id, "vault.erased", { id: c.req.param("id"), reason });
   return c.json({ ok: true });

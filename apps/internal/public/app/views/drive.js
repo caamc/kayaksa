@@ -14,8 +14,30 @@ export async function render(main, ctx) {
       <button class="btn btn-primary" id="up">${ico("upload")} Upload documents</button></div>
     ${meta.ready ? "" : html`<div class="note warn">Encrypted storage and the personal-data key are created on the next deploy. Uploads are disabled until then.</div>`}
     ${meta.ocr ? "" : html`<div class="note warn">Kayak AI is not connected, so OCR is off. Documents can still be filed and their details entered by hand at QC.</div>`}
+    <div id="gstore"></div>
     <div class="drive"><nav class="drive-tree card" id="tree"></nav><section class="drive-main" id="pane"></section></div>
     <p class="small muted">${ico("lock")} Files are encrypted before storage. Opening one needs a reason and is logged. Aadhaar is kept only as a masked copy; card images are never kept, only the network, issuer, last four digits and expiry. The uploader cannot approve their own document.</p></div>`);
+
+  // Where the encrypted files live: the "Kayak Document Drive" Google shared drive, or R2 until it is connected.
+  async function storage() {
+    const g = await api("/api/vault/drive").catch(() => null); if (!g) return;
+    const gd = ctx.query.get("gd");
+    if (gd) { toast({ connected: "Google Drive connected. New documents now go to the Kayak Document Drive.", nodrive: `Signed in, but the "Kayak Document Drive" shared drive wasn't found for that account. Add it to the shared drive as a Content manager, then choose Find the shared drive.`, failed: "Google sign-in didn't complete. Try again.", cancelled: "Google sign-in was cancelled.", unconfigured: "Google sign-in isn't set up yet: add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to GitHub secrets." }[gd] || "", gd === "connected" ? "" : "err"); history.replaceState(null, "", "#drive"); }
+    const btn = (id, label, kind = "btn-ghost") => g.canManage ? `<button class="btn ${kind} btn-sm" id="${id}">${label}</button>` : "";
+    $("#gstore").innerHTML = `<div class="card row between" style="padding:14px 16px;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="stack-sm" style="gap:2px"><b>${ico("lock")} Storage: ${g.ready ? `Google Drive · ${esc(g.driveName || g.driveLabel)}` : "Kayak's encrypted R2 storage"}</b>
+        <span class="small muted">${!g.configured ? "Google Drive isn't set up yet (needs the Google sign-in client in GitHub secrets)." : !g.connected ? `Connect the "${esc(g.driveLabel)}" shared drive. Files stay encrypted there and open only through Kayak Internal.` : g.error ? esc(g.error) : g.ready ? `Connected as ${esc(g.account || "")}. ${g.inDrive} in Google Drive${g.inR2 ? `, ${g.inR2} still in R2` : ""}. Files are encrypted before upload.` : `Signed in as ${esc(g.account || "")}, but the shared drive isn't attached yet.`}</span></div>
+      <div class="row">${g.configured && (!g.connected || g.error) ? (g.canManage ? `<a class="btn btn-primary btn-sm" href="/oauth/drive/connect">Connect Google Drive</a>` : "") : ""}${g.connected && !g.ready ? btn("gattach", "Find the shared drive", "btn-primary") : ""}${g.ready && g.inR2 ? btn("gmove", `Move ${g.inR2} from R2`, "btn-primary") : ""}</div></div>`;
+    $("#gattach") && ($("#gattach").onclick = async () => { try { await api("/api/vault/drive/attach", { body: {} }); toast("Shared drive attached."); storage(); } catch (e) { toast(e.message, "err"); } });
+    $("#gmove") && ($("#gmove").onclick = async (e) => {
+      e.target.disabled = true;
+      let left = g.inR2, moved = 0, failed = 0;
+      while (left > 0) { e.target.textContent = `Moving… ${left} left`; const r = await api("/api/vault/drive/migrate", { body: {} }).catch((x) => ({ error: x.message })); if (r.error) { toast(r.error, "err"); break; } moved += r.moved; failed += r.failed; left = r.left; if (!r.moved) break; }
+      toast(failed ? `${moved} moved to Google Drive; ${failed} couldn't be moved and stay in R2.` : `${moved} documents moved to Google Drive and removed from R2.`, failed ? "err" : "");
+      storage(); pane();
+    });
+  }
+  storage();
 
   async function tree() {
     const t = await api("/api/vault/tree");
@@ -30,7 +52,7 @@ export async function render(main, ctx) {
     const q = sel === "qc" ? "status=qc" : sel ? `master=${encodeURIComponent(sel)}` : "";
     const { docs } = await api(`/api/vault/docs?${q}`);
     $("#pane").innerHTML = docs.length ? `<div class="stack">${docs.map((d) => { const [sl, sk] = ST[d.status] || [d.status, ""]; const fails = d.qc.filter((x) => x.result === "fail").length, warns = d.qc.filter((x) => x.result === "warn").length; return `<article class="card stack-sm drv-doc">
-      <div class="row between"><div><b>${esc(meta.types[d.doc_type]?.label || d.doc_type)}</b>${d.master_name ? ` · ${esc(d.master_name)}` : ""} <span class="badge ${sk}">${sl}</span> ${d.stored ? `<span class="badge">${ico("lock")} Encrypted file</span>` : `<span class="badge">No file kept</span>`}</div><span class="small muted">${fmtDateTime(d.created_at)} · ${esc(d.uploader || "")}</span></div>
+      <div class="row between"><div><b>${esc(meta.types[d.doc_type]?.label || d.doc_type)}</b>${d.master_name ? ` · ${esc(d.master_name)}` : ""} <span class="badge ${sk}">${sl}</span> ${d.stored ? `<span class="badge">${ico("lock")} Encrypted file${String(d.r2_key || "").startsWith("gd:") ? " · Google Drive" : ""}</span>` : `<span class="badge">No file kept</span>`}</div><span class="small muted">${fmtDateTime(d.created_at)} · ${esc(d.uploader || "")}</span></div>
       ${d.note ? `<p class="small" style="margin:0">${esc(d.note)}</p>` : ""}
       <div class="row small">${fails ? `<span class="badge danger">${fails} failed</span>` : ""}${warns ? `<span class="badge warn">${warns} to check</span>` : ""}${!fails && !warns && d.qc.length ? `<span class="badge ok">All checks passed</span>` : ""}${d.approver ? `<span class="muted">Approved by ${esc(d.approver)} ${fmtDateTime(d.approved_at)}</span>` : ""}</div>
       <div class="row">${d.status === "qc" ? `<button class="btn btn-primary btn-sm" data-qc="${esc(d.id)}">${ico("check")} Review and approve</button>` : ""}${d.stored ? `<button class="btn btn-ghost btn-sm" data-open="${esc(d.id)}">${ico("eye")} Open</button>` : ""}<button class="btn btn-quiet btn-sm" data-log="${esc(d.id)}">Access log</button>${ctx.me.role === "superadmin" && d.status !== "erased" ? `<button class="btn btn-quiet btn-sm" data-erase="${esc(d.id)}">${ico("trash")} Erase</button>` : ""}</div></article>`; }).join("")}</div>`

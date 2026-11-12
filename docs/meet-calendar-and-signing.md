@@ -1,4 +1,4 @@
-# Meet by Kayak - switching on calendar sync, town halls and signed installers
+# Kayak - switching on Google Drive, calendar sync, town halls and signed installers
 
 Everything below is entered in **GitHub → caamc/kayaksa → Settings → Secrets and variables → Actions → New repository secret**.
 Never paste a key, password or certificate into a chat or an email. The next deploy picks the secrets up by itself.
@@ -33,7 +33,30 @@ their profile menu → **Cloudflare usage this month**.
 
 ---
 
-## 2. Two-way calendar sync
+## 2. Document Drive in the "Kayak Document Drive" shared drive (Kayak Internal)
+
+Done so far: the shared drive **Kayak Document Drive**, the Google Cloud project **kayak-internal**, and the
+Google Drive API. Remaining (one OAuth client also serves Meet's Google Calendar sync):
+
+1. In **kayak-internal**: **Google Auth Platform → Branding / Audience** (the OAuth consent screen). Choose
+   **Internal**, app name `Kayak Internal`, support email, and the authorised domain `kayaksa.com`.
+2. **Data access → Add scopes**: `openid`, `email`, `.../auth/drive`, and for Meet `.../auth/calendar.events`.
+   With an Internal app, Google doesn't need to review these.
+3. **Clients → Create client → Web application**, named `Kayak web sign-in`. Authorised redirect URIs:
+   - `https://internal.kayaksa.com/oauth/drive/callback`
+   - `https://meet.kayaksa.com/calendar/callback/google`
+4. Copy the Client ID and Client secret straight into GitHub secrets `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+5. Choose the Google account that will hold the connection, ideally a SuperAdmin's Workspace account.
+   Add it to **Kayak Document Drive** as a **Content manager** or Manager.
+6. After the next deploy, that SuperAdmin opens Kayak Internal → **Document Drive** → **Connect Google Drive**
+   and signs in. Kayak Internal finds the shared drive and creates the folder
+   *Kayak Internal - Document Vault (encrypted)*. Then choose **Move … from R2** to move existing documents.
+
+The files in the shared drive are encrypted (`.kdd`) and can't be read in Google Drive itself. They open only
+through Kayak Internal, which asks for a reason and logs every view. Keep the shared drive's membership small,
+and don't let anyone rename or edit the files. A file that is changed in Drive no longer decrypts.
+
+## 3. Two-way calendar sync
 
 ### Outlook / Microsoft 365
 
@@ -52,8 +75,8 @@ their profile menu → **Cloudflare usage this month**.
 
 ### Google Calendar
 
-1. <https://console.cloud.google.com> → create a project `Meet by Kayak` → **APIs & Services → Library** →
-   enable **Google Calendar API**.
+1. In the **kayak-internal** project → **APIs & Services → Library** → enable **Google Calendar API**.
+   The OAuth client from section 2 is used for this too.
 2. **OAuth consent screen**: choose **Internal** if Kayak uses Google Workspace (no Google review needed).
    *External* works too, but Google must verify apps that ask for calendar access before the public can use them.
    Scopes: `openid`, `email`, `.../auth/calendar.events`.
@@ -66,7 +89,7 @@ Calendar sync). Tokens are encrypted before they are stored; disconnecting delet
 
 ---
 
-## 3. Signed desktop installers
+## 4. Signed desktop installers
 
 Unsigned, Windows shows a SmartScreen warning and macOS asks people to right-click → Open; macOS automatic
 updates only work once the app is signed. After adding the secrets, run **Actions → Desktop app → Run workflow**.

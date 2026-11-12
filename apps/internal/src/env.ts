@@ -17,6 +17,8 @@ export interface Env extends AiEnv, MailEnv {
   ASSETS: Fetcher;
   AUTH_ENCRYPTION_KEY: string;
   PII_ENCRYPTION_KEY?: string; // seals sensitive fields in the People Masters
+  GOOGLE_CLIENT_ID?: string; // Google sign-in for the Document Drive's shared drive (kayak-internal project)
+  GOOGLE_CLIENT_SECRET?: string;
   BOOTSTRAP_TOKEN?: string;
   SUPERADMIN_EMAILS: string; // comma-separated
   SITE_URL: string; // https://internal.kayaksa.com
