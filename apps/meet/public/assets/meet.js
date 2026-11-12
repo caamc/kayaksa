@@ -71,13 +71,13 @@ async function init() {
   if (!token) return fatal("This meeting needs an invitation link.", "Ask the host to send you the link again.");
   try { S.info = await api(`/api/room/${room}`); }
   catch (e) { return fatal("We couldn't open this meeting.", e.message); }
-  document.title = `${S.info.title} · Kayak Meet`;
+  document.title = `${S.info.title} · Meet by Kayak`;
   S.name = S.info.name || localStorage.getItem("km:name") || "";
   prejoin();
 }
 
 function fatal(title, detail) {
-  app.innerHTML = `<div class="km-center"><img src="/_shared/logos/KayakMeet_Logo_Reversed.svg" alt="Kayak Meet" class="km-logo-big"><h1 style="font:800 1.5rem var(--display);margin:0">${esc(title)}</h1><p class="km-muted">${esc(detail)}</p></div>`;
+  app.innerHTML = `<div class="km-center"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak" class="km-logo-big"><h1 style="font:800 1.5rem var(--display);margin:0">${esc(title)}</h1><p class="km-muted">${esc(detail)}</p></div>`;
 }
 
 // ---------------------------------------------------------------- pre-join
@@ -110,7 +110,7 @@ async function prejoin() {
   const opt = (kind, cur) => devs.filter((d) => d.kind === kind).map((d, i) => `<option value="${esc(d.deviceId)}"${d.deviceId === cur ? " selected" : ""}>${esc(d.label || `${kind === "audioinput" ? "Microphone" : "Camera"} ${i + 1}`)}</option>`).join("");
   const isClient = S.info.kind === "client";
   app.innerHTML = `
-  <div class="top"><img src="/_shared/logos/KayakMeet_Logo_Reversed.svg" alt="Kayak Meet"><span class="title"></span><span class="pill e2e">${ic("lock")} End-to-end encrypted</span></div>
+  <div class="top"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"><span class="title"></span><span class="pill e2e">${ic("lock")} End-to-end encrypted</span></div>
   <div class="pre">
     <div class="pre-video"><video id="pv" autoplay playsinline muted></video><div class="off" id="poff" hidden>Camera is off</div><div class="meter" aria-hidden="true"><i id="pm"></i></div>
       <div class="pre-bar"><button class="kc" id="pmic" aria-pressed="true" aria-label="Microphone">${ic("mic")}</button><button class="kc" id="pcam" aria-pressed="true" aria-label="Camera">${ic("cam")}</button></div></div>
@@ -201,7 +201,7 @@ function onMsg(m) {
 
 function waitingRoom(m) {
   S.me = m.you;
-  app.innerHTML = `<div class="km-center"><img src="/_shared/logos/KayakMeet_Logo_Reversed.svg" alt="Kayak Meet" class="km-logo-big"><h1 style="font:800 1.5rem var(--display);margin:0">${esc(m.title)}</h1>
+  app.innerHTML = `<div class="km-center"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak" class="km-logo-big"><h1 style="font:800 1.5rem var(--display);margin:0">${esc(m.title)}</h1>
     <p class="km-muted">${m.hostHere ? "The host knows you're here and will let you in shortly." : "The meeting hasn't started yet. You'll join as soon as the host lets you in."}</p><span class="pill"><i class="spinner"></i> Waiting to join</span><button class="kb" id="wl">Leave</button></div>`;
   $("#wl").onclick = () => { S.leaving = true; S.ws?.close(); cleanup(); fatal("You left the waiting room.", ""); };
 }
@@ -330,7 +330,7 @@ function toggleHand() { S.hand = !S.hand; send({ t: "state", hand: S.hand }); ba
 // ---------------------------------------------------------------- room UI
 function roomUi() {
   app.innerHTML = `
-  <div class="top"><img src="/_shared/logos/KayakMeet_Logo_Reversed.svg" alt="Kayak Meet"><span class="title" id="ttl"></span>
+  <div class="top"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"><span class="title" id="ttl"></span>
     <span class="pill rec" id="recpill" hidden><i></i> Recording</span><span class="pill" id="cappill" hidden>${ic("cc")} Captions on</span>
     <span class="pill e2e hide-sm" title="Audio and video travel directly between browsers and are encrypted end to end.">${ic("lock")} Encrypted</span><span class="pill" id="clock">0:00</span></div>
   <div class="main"><div class="stage"><div class="grid" id="grid"></div><div class="caps" id="caps" aria-live="polite"></div></div><aside class="side" id="side" hidden></aside></div>
@@ -617,7 +617,7 @@ async function startRecording() {
       addStream(st) { const t = st?.getAudioTracks()[0]; if (!t || added.has(t.id)) return; added.add(t.id); try { ac.createMediaStreamSource(new MediaStream([t])).connect(dest); } catch {} } };
     rec.addStream(S.local); if (S.screen) rec.addStream(S.screen);
     for (const x of S.peers.values()) { rec.addStream(x.streams.cam); rec.addStream(x.streams.screen); }
-    const logo = new Image(); logo.src = "/_shared/logos/KayakMeet_Logo_Reversed.svg";
+    const logo = new Image(); logo.src = "/_shared/logos/MeetByKayak_Logo_Reversed.svg";
     const draw = () => {
       g.fillStyle = "#06171E"; g.fillRect(0, 0, W, H);
       const ts = rec.tiles(); const spot = $("#grid")?.classList.contains("spot");
@@ -707,7 +707,7 @@ function endScreen(msg) {
   const stars = (k, label) => `<div class="field"><label>${label}</label><div class="stars" data-k="${k}">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" aria-label="${n} of 5">★</button>`).join("")}</div></div>`;
   const ISSUES = ["Audio cut out", "Echo or noise", "Video froze", "Couldn't share screen", "Hard to join", "Captions were wrong", "Other"];
   app.innerHTML = `<div class="end"><div class="km-center" style="max-width:620px">
-    <img src="/_shared/logos/KayakMeet_Logo_Reversed.svg" alt="Kayak Meet" style="width:220px">
+    <img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak" style="width:220px">
     <h1 style="font:800 1.6rem var(--display);margin:0">${esc(msg)}</h1>
     <form id="fb" class="pre-side" style="text-align:left;width:100%">
       <p class="km-muted">How was this meeting? Your answers help Kayak Meet improve. Every change is reviewed by Kayak before it goes live.</p>

@@ -1,0 +1,61 @@
+# Installers for Meet by Kayak. Built by .github/workflows/desktop.yml on GitHub's macOS and Windows runners.
+appId: com.kayaksa.meet
+productName: Meet by Kayak
+copyright: © Kayak Strategic Advisors Private Limited
+directories: { output: dist, buildResources: build }
+files: [src/**/*, package.json]
+asar: true
+protocols:
+  - name: Meet by Kayak
+    schemes: [kayakmeet]
+publish:
+  # Updates come from Kayak's own server (meet.kayaksa.com/download), not a third party.
+  provider: generic
+  url: https://meet.kayaksa.com/download/${os}
+  channel: latest
+
+mac:
+  category: public.app-category.business
+  target:
+    - { target: dmg, arch: [universal] }
+    - { target: zip, arch: [universal] }   # the zip is what auto-update downloads
+  icon: build/icon.icns
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false            # the workflow turns this on when Apple credentials are present
+  extendInfo:
+    NSCameraUsageDescription: Meet by Kayak uses your camera so others in a meeting can see you.
+    NSMicrophoneUsageDescription: Meet by Kayak uses your microphone so others in a meeting can hear you.
+    NSScreenCaptureUsageDescription: Meet by Kayak needs screen recording permission to share your screen when you choose to.
+    LSMinimumSystemVersion: "11.0"
+dmg:
+  title: Meet by Kayak
+  background: build/dmg-background.png
+  iconSize: 104
+  window: { width: 600, height: 380 }
+  contents:
+    - { x: 160, y: 196 }
+    - { x: 440, y: 196, type: link, path: /Applications }
+
+win:
+  target:
+    - { target: nsis, arch: [x64, arm64] }
+    - { target: msi, arch: [x64] }        # for IT teams deploying through Intune or Group Policy
+  icon: build/icon.ico
+  publisherName: Kayak Strategic Advisors Private Limited
+  artifactName: Meet-by-Kayak-Setup-${version}-${arch}.${ext}
+nsis:
+  oneClick: true
+  perMachine: false
+  allowElevation: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Meet by Kayak
+  uninstallDisplayName: Meet by Kayak
+  deleteAppDataOnUninstall: false
+msi:
+  oneClick: false
+  perMachine: true
+  shortcutName: Meet by Kayak

@@ -1,0 +1,5 @@
+body { display: grid; place-items: center; background: radial-gradient(circle at 30% 20%, #15495A, var(--deep2)); color: #fff; text-align: center; }
+main { display: grid; gap: 12px; justify-items: center; max-width: 420px; padding: 24px; }
+h1 { margin: 6px 0 0; font-size: 24px; font-weight: 800; font-stretch: 112%; }
+p { margin: 0 0 6px; color: #B8CACE; }
+small { color: #8FA8AE; }

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'">
+<title>Meet by Kayak</title>
+<link rel="stylesheet" href="ui.css">
+<link rel="stylesheet" href="offline.css">
+</head>
+<body class="drag">
+<main class="nodrag">
+  <img src="MeetByKayak_Mark_Reversed.svg" alt="" width="96">
+  <h1 id="h">You're offline</h1>
+  <p id="p">Meet by Kayak can't reach Kayak's servers. Check your internet connection or VPN. We'll try again automatically.</p>
+  <button class="btn primary" id="retry">Try again</button>
+  <small id="s"></small>
+</main>
+<script src="offline.js"></script>
+</body>
+</html>

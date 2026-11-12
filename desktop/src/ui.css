@@ -1,0 +1,23 @@
+/* Shared look for the app's local screens. Brand: Deep Current, Kayak Teal, Saffron; Archivo. */
+@font-face { font-family: Archivo; src: url(fonts/Archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+:root {
+  --deep: #0E2F3C; --deep2: #0B2530; --teal: #17807E; --teal-l: #1FA3A0; --saf: #EE9B1E;
+  --bg: #F4F7F6; --card: #FFFFFF; --fg: #12242C; --muted: #5A6E76; --line: #DCE5E2; --focus: #1FA3A0;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0F1E24; --card: #152A32; --fg: #E8F0EE; --muted: #9DB2B8; --line: #24414B; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font: 14px/1.45 Archivo, "Segoe UI", -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--fg); -webkit-font-smoothing: antialiased; user-select: none; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
+.btn:hover { border-color: var(--teal); }
+.btn.primary { background: var(--teal); border-color: var(--teal); color: #fff; }
+.btn.primary:hover { background: #136C6A; }
+.btn.danger { color: #B3261E; }
+.btn:disabled { opacity: .5; cursor: default; }
+.drag { -webkit-app-region: drag; }
+.nodrag { -webkit-app-region: no-drag; }

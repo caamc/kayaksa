@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Download Meet by Kayak for Windows and Mac</title>
+<meta name="description" content="Meet by Kayak desktop app for Windows and macOS: private meetings, chat, channels and tasks, with global mute, a floating mini window and taskbar controls.">
+<link rel="icon" href="/_shared/logos/MeetByKayak_Favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/_shared/css/kayak.css">
+<link rel="stylesheet" href="/assets/site.css">
+<style>
+.dl{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+@media (max-width:900px){.dl{grid-template-columns:1fr}}
+.dl-cta{display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 10px}
+.dl-art{aspect-ratio:1;max-width:420px;justify-self:center;width:100%;filter:drop-shadow(0 30px 60px #0008)}
+.dl-plat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+.dl-plat .mk-card{display:grid;gap:10px;align-content:start}
+.dl-plat ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.6}
+.dl-feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+.dl-feat b{display:block;margin-bottom:4px}
+kbd{font:600 .8em var(--sans);border:1px solid var(--line-strong);border-bottom-width:2px;padding:1px 6px;background:var(--surface)}
+.note{border-left:3px solid var(--mk-saf);background:var(--warn-bg);padding:12px 16px;margin-top:18px;max-width:70ch}
+</style>
+</head>
+<body class="mk">
+<header class="mk-nav"><div class="mk-wrap"><a href="/" aria-label="Meet by Kayak home"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"></a>
+<nav><a href="/#features">Features</a><a href="/#compare">Compare</a><a href="/#security">Security</a><a href="/download" aria-current="page">Download</a><a class="mk-btn p" href="/login">Sign in</a></nav></div></header>
+<main>
+<section class="mk-hero"><div class="mk-wrap dl">
+  <div>
+    <span class="mk-eyebrow">Desktop app</span>
+    <h1>Meet by Kayak for <span id="osname">Windows and Mac</span></h1>
+    <p class="mk-lede">Everything in Meet by Kayak, plus what a browser tab can't do: mute yourself from any app, a mini window that floats while you present and stays out of what you share, meeting controls in the Windows taskbar, and unread counts on your dock or taskbar.</p>
+    <div class="dl-cta" id="cta"><a class="mk-btn p" href="/download/latest/win" id="primary">Download for Windows</a><a class="mk-btn g" href="/download/latest/mac" id="secondary">Download for Mac</a></div>
+    <p class="mk-small" style="color:#9DB2B8" id="ver">Free for Kayak employees and invited clients. Or use it in your browser: <a href="/login" style="color:#fff">sign in on the web</a>.</p>
+  </div>
+  <img class="dl-art" src="/_shared/logos/MeetByKayak_AppIcon_macOS.svg" alt="">
+</div></section>
+
+<section class="mk-sec"><div class="mk-wrap">
+  <h2>Made for the way advisers work</h2>
+  <div class="dl-feat">
+    <div class="mk-card"><b>Global mute</b><p>Press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>M</kbd> (<kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>M</kbd> on a Mac) from any app. Every shortcut can be changed.</p></div>
+    <div class="mk-card"><b>Present without the clutter</b><p>When you share, the app shrinks to a floating mini window that the people watching never see.</p></div>
+    <div class="mk-card"><b>Pick exactly what to share</b><p>A clear picker for a whole screen or a single window, with computer sound on Windows.</p></div>
+    <div class="mk-card"><b>Taskbar and menu-bar controls</b><p>Mute, camera, share and leave from the Windows taskbar preview, the tray or the Mac menu bar.</p></div>
+    <div class="mk-card"><b>Quiet while you meet</b><p>Chat notifications wait until your meeting ends. Reminders arrive before the next one.</p></div>
+    <div class="mk-card"><b>Built for corporate networks</b><p>System, direct or manual proxy, a data saver for slow links, and settings IT can manage on every machine.</p></div>
+  </div>
+</div></section>
+
+<section class="mk-sec alt"><div class="mk-wrap">
+  <h2>System requirements and installation</h2>
+  <div class="dl-plat">
+    <div class="mk-card"><h3>Windows</h3><ul><li>Windows 10 or 11, 64-bit (Intel, AMD or ARM)</li><li>Installs for you alone, no administrator rights needed</li><li>MSI for IT teams deploying with Intune or Group Policy: <a href="/download/latest/msi">download the MSI</a></li><li>ARM laptops: <a href="/download/latest/win-arm">download for ARM64</a></li></ul></div>
+    <div class="mk-card"><h3>macOS</h3><ul><li>macOS 11 Big Sur or later</li><li>One app for Apple silicon and Intel Macs</li><li>Open the download and drag Meet by Kayak into Applications</li><li>The first time you share your screen, allow it in System Settings → Privacy &amp; Security → Screen Recording</li></ul></div>
+    <div class="mk-card"><h3>For IT administrators</h3><ul><li>Lock any setting with a policy file: <code>%ProgramData%\Kayak\Meet\policy.json</code> on Windows, <code>/Library/Application Support/Kayak/Meet/policy.json</code> on macOS</li><li>Updates come only from meet.kayaksa.com and never install during a meeting</li><li>No telemetry or crash uploads</li></ul></div>
+  </div>
+  <p class="note" id="unsigned" hidden></p>
+</div></section>
+</main>
+<footer class="mk-foot"><div class="mk-wrap">© Kayak Strategic Advisors Private Limited · <a href="https://www.kayaksa.com/legal#privacy">Privacy</a> · <a href="https://www.kayaksa.com/legal">Terms</a> · <a href="/">meet.kayaksa.com</a></div></footer>
+<script src="/assets/download.js" type="module"></script>
+</body>
+</html>

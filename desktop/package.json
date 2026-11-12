@@ -1,0 +1,24 @@
+{
+  "name": "kayak-meet-desktop",
+  "productName": "Meet by Kayak",
+  "version": "1.0.0",
+  "description": "Meet by Kayak for Windows and macOS: private meetings, chat, channels and tasks for Kayak and its clients.",
+  "author": "Kayak Strategic Advisors Private Limited",
+  "homepage": "https://meet.kayaksa.com",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/store.js && node --check src/ui-preload.js"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
+  },
+  "devDependencies": {
+    "electron": "^36.4.0",
+    "electron-builder": "^26.0.12"
+  }
+}

@@ -1,0 +1,117 @@
+# Builds Meet by Kayak for Windows and macOS and publishes the installers and update files to
+# meet.kayaksa.com/download (Kayak's own R2 storage), plus a draft GitHub release.
+#
+# Run it from Actions → "Desktop app" → Run workflow, or push a tag like desktop-v1.0.1.
+#
+# Code signing (strongly recommended before giving the app to clients):
+#   macOS  — MAC_CERT_P12_BASE64, MAC_CERT_PASSWORD (Developer ID Application certificate),
+#            APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID (for notarisation).
+#   Windows — WIN_CERT_PFX_BASE64, WIN_CERT_PASSWORD (an OV or EV code-signing certificate),
+#            or Azure Trusted Signing later.
+# Without them the workflow still builds, unsigned: Windows shows a SmartScreen warning, macOS asks
+# people to right-click → Open, and macOS automatic updates do not work until the app is signed.
+name: Desktop app
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (for example 1.0.1). Leave blank to use desktop/package.json."
+        required: false
+      channel:
+        description: "Update channel"
+        type: choice
+        options: [latest, beta]
+        default: latest
+  push:
+    tags: ["desktop-v*"]
+
+permissions: { contents: write }
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    defaults: { run: { working-directory: desktop, shell: bash } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Set version
+        run: |
+          V="${{ inputs.version }}"
+          if [ -z "$V" ] && [[ "$GITHUB_REF_NAME" == desktop-v* ]]; then V="${GITHUB_REF_NAME#desktop-v}"; fi
+          if [ -n "$V" ]; then npm version "$V" --no-git-tag-version --allow-same-version; fi
+          if [ "${{ inputs.channel }}" = "beta" ]; then node -e 'const f="package.json",p=require("./"+f);if(!/-beta/.test(p.version))p.version+="-beta.1";require("fs").writeFileSync(f,JSON.stringify(p,null,2))'; fi
+          node -p '"Building Meet by Kayak " + require("./package.json").version'
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+      - name: Build for macOS
+        if: runner.os == 'macOS'
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; echo "::warning::Building an UNSIGNED macOS app (no MAC_CERT_P12_BASE64 secret)."; fi
+          N=false; if [ -n "$APPLE_ID" ] && [ -n "$CSC_LINK" ]; then N=true; fi
+          npx electron-builder --mac --publish never -c.mac.notarize=$N
+      - name: Build for Windows
+        if: runner.os == 'Windows'
+        env:
+          CSC_LINK: ${{ secrets.WIN_CERT_PFX_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
+        run: |
+          if [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; echo "::warning::Building an UNSIGNED Windows app (no WIN_CERT_PFX_BASE64 secret)."; fi
+          npx electron-builder --win --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meet-${{ runner.os }}
+          path: |
+            desktop/dist/*.dmg
+            desktop/dist/*.zip
+            desktop/dist/*.exe
+            desktop/dist/*.msi
+            desktop/dist/*.yml
+            desktop/dist/*.blockmap
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { path: out }
+      - name: Upload to meet.kayaksa.com/download
+        run: |
+          set -e
+          put() { npx wrangler r2 object put "kayaksa-meet/desktop/$1/$(basename "$2")" --file "$2" --remote >/dev/null && echo "  $1/$(basename "$2")"; }
+          # Installers first, update manifests (*.yml) last, so no client sees an update before its files exist.
+          for f in out/meet-macOS/*; do case "$f" in *.yml) ;; *) put mac "$f";; esac; done
+          for f in out/meet-Windows/*; do case "$f" in *.yml) ;; *) put win "$f";; esac; done
+          for f in out/meet-macOS/*.yml; do put mac "$f"; done
+          for f in out/meet-Windows/*.yml; do put win "$f"; done
+          V=$(node -p 'require("./desktop/package.json").version')
+          [ -n "${{ inputs.version }}" ] && V="${{ inputs.version }}"
+          [[ "$GITHUB_REF_NAME" == desktop-v* ]] && V="${GITHUB_REF_NAME#desktop-v}"
+          node -e 'const fs=require("fs");const n=(d,re)=>(fs.readdirSync(d).find(f=>re.test(f))||null);fs.writeFileSync("release.json",JSON.stringify({version:process.argv[1],at:new Date().toISOString(),mac:n("out/meet-macOS",/\.dmg$/),win:n("out/meet-Windows",/x64\.exe$/),winArm:n("out/meet-Windows",/arm64\.exe$/),msi:n("out/meet-Windows",/\.msi$/)}))' "$V"
+          npx wrangler r2 object put kayaksa-meet/desktop/release.json --file release.json --content-type application/json --remote >/dev/null
+          echo "### Meet by Kayak $V published to https://meet.kayaksa.com/download" >> "$GITHUB_STEP_SUMMARY"
+      - name: Draft GitHub release
+        run: |
+          V=$(node -p 'require("./release.json").version')
+          gh release create "desktop-v$V" out/meet-*/*.dmg out/meet-*/*.exe out/meet-*/*.msi --draft --title "Meet by Kayak $V" --notes "Installers for Windows and macOS. Also available at https://meet.kayaksa.com/download." || echo "Release already exists"

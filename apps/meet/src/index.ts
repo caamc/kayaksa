@@ -214,6 +214,38 @@ app.post("/api/feedback/:room", needRoom, async (c) => {
   return c.json({ ok: true });
 });
 
+// ---------------------------------------------------------------- desktop app downloads and updates
+// Installers and update manifests live in Kayak's own R2 bucket under desktop/{mac,win}/, uploaded by
+// .github/workflows/desktop.yml. The desktop app's auto-updater reads latest-mac.yml / latest.yml here.
+const DL_FILE = /^[A-Za-z0-9][A-Za-z0-9._ -]{0,120}\.(dmg|zip|exe|msi|yml|blockmap)$/;
+app.get("/download", (c) => page(c, "/download.html"));
+app.get("/download/release.json", async (c) => {
+  const o = await c.env.REC.get("desktop/release.json");
+  if (!o) return c.json({ version: null });
+  return new Response(o.body, { headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" } });
+});
+app.get("/download/latest/:os", async (c) => {
+  const o = await c.env.REC.get("desktop/release.json");
+  const r: any = o ? await o.json().catch(() => null) : null;
+  const os = c.req.param("os");
+  const f = os === "mac" ? r?.mac : os === "win" ? r?.win : os === "win-arm" ? r?.winArm : os === "msi" ? r?.msi : null;
+  if (!f) return c.redirect("/download", 302);
+  return c.redirect(`/download/${os === "mac" ? "mac" : "win"}/${encodeURIComponent(f)}`, 302);
+});
+app.get("/download/:os/:file", async (c) => {
+  const os = c.req.param("os"), file = decodeURIComponent(c.req.param("file"));
+  if (!["mac", "win"].includes(os) || !DL_FILE.test(file) || file.includes("..")) return c.text("Not found", 404);
+  const o = await c.env.REC.get(`desktop/${os}/${file}`);
+  if (!o) return c.text("Not found", 404);
+  const yml = file.endsWith(".yml");
+  const type = yml ? "text/yaml; charset=utf-8" : file.endsWith(".dmg") ? "application/x-apple-diskimage" : file.endsWith(".zip") ? "application/zip" : file.endsWith(".msi") ? "application/x-msi" : "application/octet-stream";
+  return new Response(o.body, { headers: {
+    "Content-Type": type, "Content-Length": String(o.size), ETag: o.httpEtag,
+    "Cache-Control": yml ? "no-cache" : "public, max-age=31536000, immutable",
+    ...(yml || file.endsWith(".blockmap") ? {} : { "Content-Disposition": `attachment; filename="${file.replace(/"/g, "")}"` }),
+  } });
+});
+
 // ---------------------------------------------------------------- pages
 const page = (c: any, file: string) => c.env.ASSETS.fetch(new Request(new URL(file, c.req.url)));
 app.get("/", (c) => page(c, "/index.html"));
