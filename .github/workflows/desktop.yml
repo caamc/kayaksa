@@ -6,8 +6,10 @@
 # Code signing (strongly recommended before giving the app to clients):
 #   macOS  — MAC_CERT_P12_BASE64, MAC_CERT_PASSWORD (Developer ID Application certificate),
 #            APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID (for notarisation).
-#   Windows — WIN_CERT_PFX_BASE64, WIN_CERT_PASSWORD (an OV or EV code-signing certificate),
-#            or Azure Trusted Signing later.
+#   Windows — a certificate whose key is in Azure Key Vault (the usual route since 2023, when keys moved
+#            to hardware): AZURE_KEY_VAULT_URI, AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET,
+#            AZURE_CERT_NAME. Older exportable certificates: WIN_CERT_PFX_BASE64, WIN_CERT_PASSWORD.
+#   Step-by-step: docs/meet-calendar-and-signing.md
 # Without them the workflow still builds, unsigned: Windows shows a SmartScreen warning, macOS asks
 # people to right-click → Open, and macOS automatic updates do not work until the app is signed.
 name: Desktop app
@@ -67,9 +69,19 @@ jobs:
         env:
           CSC_LINK: ${{ secrets.WIN_CERT_PFX_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
+          AZURE_KEY_VAULT_URI: ${{ secrets.AZURE_KEY_VAULT_URI }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
         run: |
-          if [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; echo "::warning::Building an UNSIGNED Windows app (no WIN_CERT_PFX_BASE64 secret)."; fi
-          npx electron-builder --win --publish never
+          if [ -n "$AZURE_KEY_VAULT_URI" ]; then
+            dotnet tool install --global AzureSignTool >/dev/null && echo "Signing with the certificate in Azure Key Vault."
+            npx electron-builder --win --publish never -c.win.signtoolOptions.sign=build/sign-win.js
+          else
+            if [ -z "$CSC_LINK" ]; then export CSC_IDENTITY_AUTO_DISCOVERY=false; echo "::warning::Building an UNSIGNED Windows app (no code-signing secrets)."; fi
+            npx electron-builder --win --publish never
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: meet-${{ runner.os }}

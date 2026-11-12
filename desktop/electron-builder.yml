@@ -44,7 +44,8 @@ win:
     - { target: nsis, arch: [x64, arm64] }
     - { target: msi, arch: [x64] }        # for IT teams deploying through Intune or Group Policy
   icon: build/icon.ico
-  publisherName: Kayak Strategic Advisors Private Limited
+  signtoolOptions:
+    publisherName: Kayak Strategic Advisors Private Limited
   artifactName: Meet-by-Kayak-Setup-${version}-${arch}.${ext}
 nsis:
   oneClick: true
