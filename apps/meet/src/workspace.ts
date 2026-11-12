@@ -72,7 +72,8 @@ ws.get("/boot", async (c) => {
   const open = isEmp(m) ? (await D.prepare("SELECT id, name, kind, topic FROM channels WHERE private = 0 AND archived = 0 AND kind != 'dm' AND id NOT IN (SELECT channel_id FROM channel_members WHERE member_id = ?) ORDER BY name LIMIT 200").bind(m.id).all<any>()).results : [];
   const people = await visiblePeople(c.env, m);
   const maxId = (await D.prepare("SELECT MAX(id) n FROM messages").first<any>())?.n || 0;
-  return c.json({ me: m, channels: chans.map((x) => ({ ...x, member_ids: String(x.member_ids || "").split(",").filter(Boolean) })), open, people, since: maxId, at: now(), mail: mailEnabled(c.env), ai: !!c.env.AI });
+  const todoDue = (await D.prepare("SELECT COUNT(*) n FROM todos WHERE member_id = ? AND done = 0 AND due IS NOT NULL AND due <= ?").bind(m.id, new Date().toISOString().slice(0,10)).first<any>())?.n || 0;
+  return c.json({ me: m, channels: chans.map((x) => ({ ...x, member_ids: String(x.member_ids || "").split(",").filter(Boolean) })), open, people, since: maxId, at: now(), mail: mailEnabled(c.env), ai: !!c.env.AI, todoDue });
 });
 
 async function visiblePeople(env: Env, m: Member) {
@@ -598,6 +599,69 @@ export async function notify(env: Env, chId: string, event: string, text: string
     }
   }
 }
+
+// ------------------------------------------------------------------ To-Do and Planner
+const PRI = ["low", "normal", "high", "urgent"];
+const isDate = (s: unknown) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+async function todoChannel(c: any, chId: unknown) {
+  if (!chId) return null;
+  await channelFor(c, String(chId)); // throws if the person is not in it
+  return String(chId);
+}
+ws.get("/todos", async (c) => {
+  const m = me(c);
+  const { results } = await c.env.DB.prepare(`SELECT t.*, ch.name channel_name FROM todos t LEFT JOIN channels ch ON ch.id = t.channel_id
+    WHERE t.member_id = ? AND (t.done = 0 OR t.done_at > ?) ORDER BY t.done, t.sort, COALESCE(t.due,'9999'), t.created_at`).bind(m.id, new Date(Date.now() - 30 * 86_400_000).toISOString()).all<any>();
+  return c.json({ todos: results });
+});
+ws.post("/todos", async (c) => {
+  const m = me(c);
+  const b = await readJson<any>(c, 8192);
+  const text = str(b.text, 400);
+  if (!text) throw err("Write the to-do first.");
+  if (!(await rateLimit(c.env.DB, `todo:${m.id}`, 120, 60))) throw err("Slow down a moment.", 429);
+  const id = id8();
+  await c.env.DB.prepare("INSERT INTO todos (id, member_id, text, note, kind, channel_id, due, priority, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
+    .bind(id, m.id, text, str(b.note, 2000) || null, b.kind === "deliverable" ? "deliverable" : "todo", await todoChannel(c, b.channel_id), isDate(b.due) ? b.due : null, PRI.includes(b.priority) ? b.priority : "normal", now(), now()).run();
+  return c.json({ id });
+});
+ws.patch("/todos/:id", async (c) => {
+  const m = me(c);
+  const t: any = await c.env.DB.prepare("SELECT * FROM todos WHERE id = ? AND member_id = ?").bind(c.req.param("id"), m.id).first();
+  if (!t) throw err("To-do not found.", 404);
+  const b = await readJson<any>(c, 8192);
+  const done = b.done === undefined ? t.done : b.done ? 1 : 0;
+  await c.env.DB.prepare("UPDATE todos SET text = ?, note = ?, kind = ?, channel_id = ?, due = ?, priority = ?, done = ?, done_at = ?, sort = ?, updated_at = ? WHERE id = ?").bind(
+    b.text !== undefined ? str(b.text, 400) || t.text : t.text, b.note !== undefined ? str(b.note, 2000) || null : t.note,
+    b.kind !== undefined ? (b.kind === "deliverable" ? "deliverable" : "todo") : t.kind,
+    b.channel_id !== undefined ? await todoChannel(c, b.channel_id) : t.channel_id,
+    b.due !== undefined ? (isDate(b.due) ? b.due : null) : t.due, PRI.includes(b.priority) ? b.priority : t.priority,
+    done, done ? t.done_at || now() : null, Number.isFinite(b.sort) ? b.sort : t.sort, now(), t.id).run();
+  return c.json({ ok: true });
+});
+ws.delete("/todos/:id", async (c) => {
+  await c.env.DB.prepare("DELETE FROM todos WHERE id = ? AND member_id = ?").bind(c.req.param("id"), me(c).id).run();
+  return c.json({ ok: true });
+});
+// The Planner: everything of mine with a date — to-dos, deliverables, tasks assigned to me, meetings —
+// so deadlines and client deliverables are met. Read-only aggregate; items are edited where they live.
+ws.get("/planner", async (c) => {
+  const m = me(c);
+  const D = c.env.DB;
+  const soon = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
+  const [todos, tasks, meetings] = await D.batch([
+    D.prepare("SELECT t.id, t.text title, t.kind, t.due, t.priority, t.done, ch.name channel FROM todos t LEFT JOIN channels ch ON ch.id = t.channel_id WHERE t.member_id = ? AND t.due IS NOT NULL AND t.done = 0").bind(m.id),
+    D.prepare("SELECT t.id, t.title, t.due, t.priority, t.status, ch.name channel, ch.id channel_id FROM tasks t JOIN channels ch ON ch.id = t.channel_id WHERE t.assignee = ? AND t.due IS NOT NULL AND t.status != 'done' AND t.channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?)").bind(m.id, m.id),
+    D.prepare(`SELECT m2.id, m2.title, m2.kind, substr(m2.starts_at,1,10) due, m2.starts_at, ch.name channel FROM meetings m2 LEFT JOIN channels ch ON ch.id = m2.channel_id
+      WHERE m2.status = 'scheduled' AND m2.parent_id IS NULL AND m2.starts_at IS NOT NULL AND substr(m2.starts_at,1,10) <= ? AND (m2.host_email = ? OR m2.invitees LIKE ? OR m2.channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?))`).bind(soon, m.email, `%"${m.email}"%`, m.id),
+  ]);
+  const items = [
+    ...todos.results.map((t: any) => ({ type: t.kind, id: t.id, title: t.title, due: t.due, priority: t.priority, done: !!t.done, channel: t.channel })),
+    ...tasks.results.map((t: any) => ({ type: "task", id: t.id, title: t.title, due: t.due, priority: t.priority, channel: t.channel, channel_id: t.channel_id })),
+    ...meetings.results.map((t: any) => ({ type: "meeting", id: t.id, title: t.title, due: t.due, startsAt: t.starts_at, channel: t.channel })),
+  ].sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : 0));
+  return c.json({ items, today: new Date().toISOString().slice(0, 10) });
+});
 
 // ------------------------------------------------------------------ people and data rights
 ws.get("/people", async (c) => c.json({ people: await visiblePeople(c.env, me(c)) }));

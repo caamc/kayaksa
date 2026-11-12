@@ -100,7 +100,7 @@ boot();
 async function boot() {
   try {
     const b = await api("/boot");
-    Object.assign(S, { me: b.me, channels: b.channels, open: b.open, people: b.people, since: b.since, at: b.at, ai: b.ai, mail: b.mail });
+    Object.assign(S, { me: b.me, channels: b.channels, open: b.open, people: b.people, since: b.since, at: b.at, ai: b.ai, mail: b.mail, todoDue: b.todoDue || 0 });
   } catch (e) { app.innerHTML = `<div class="ws-loading"><p>${esc(e.message)}</p><a class="btn" href="/login">Sign in again</a></div>`; return; }
   if (D) { try { S.prefs = (await D.prefs()) || {}; } catch {} D.onCommand((cmd, arg) => { if (cmd === "settings") S.prefs = arg || S.prefs; if (cmd === "toast") toast(arg); }); }
   shell();
@@ -113,7 +113,7 @@ function route() {
   const h = location.hash.slice(1);
   if (h === "new") { history.replaceState(null, "", "#meetings"); go("meetings"); return newMeeting(); }
   if (h === "join") { history.replaceState(null, "", "#meetings"); go("meetings"); return joinCode(); }
-  if (h === "meetings" || h === "tasks") return go(h);
+  if (["meetings","tasks","todo","planner"].includes(h)) return go(h);
   const m = h.match(/^c\/([a-z0-9]+)(?:\/(tasks|files))?$/);
   if (m) return openChannel(m[1], m[2] || "chat");
   const first = S.channels.find((c) => c.kind !== "dm") || S.channels[0];
@@ -133,7 +133,8 @@ function shell() {
       <img class="brand" src="/_shared/logos/MeetByKayak_Mark_Reversed.svg" alt="Meet by Kayak">
       <button data-v="chat" ${S.view === "chat" ? 'aria-current="page"' : ""}>${ic("chat")}Chat${S.unreadTotal ? `<span class="dot">${S.unreadTotal > 99 ? "99+" : S.unreadTotal}</span>` : ""}</button>
       <button data-v="meetings" ${S.view === "meetings" ? 'aria-current="page"' : ""}>${ic("video")}Meetings</button>
-      <button data-v="tasks" ${S.view === "tasks" ? 'aria-current="page"' : ""}>${ic("tasks")}Tasks</button>
+      <button data-v="todo" ${S.view === "todo" ? 'aria-current="page"' : ""}>${ic("tasks")}To-Do${S.todoDue ? `<span class="dot">${S.todoDue > 99 ? "99+" : S.todoDue}</span>` : ""}</button>
+      <button data-v="planner" ${S.view === "planner" ? 'aria-current="page"' : ""}>${ic("cal")}Planner</button>
       <span class="sp"></span>
       <button id="meBtn" aria-label="Profile and settings">${av(S.me.id, S.me.name, "sm")}<span>You</span></button>
     </nav>
@@ -201,7 +202,8 @@ async function openChannel(id, tab = "chat") {
 function renderMain() {
   const main = $("#main"); if (!main) return;
   if (S.view === "meetings") return renderMeetings(main);
-  if (S.view === "tasks") return renderMyTasks(main);
+  if (S.view === "todo") return renderTodo(main);
+  if (S.view === "planner") return renderPlanner(main);
   const ch = S.cur;
   if (!ch) { main.innerHTML = `<div class="empty"><img src="/_shared/logos/MeetByKayak_Mark_FullColour.svg" width="96" alt=""><h3>Welcome, ${esc(S.me.name.split(" ")[0])}</h3><p>${isEmp() ? "Pick a conversation, or start a channel for a client engagement." : "Pick a conversation to continue working with Kayak."}</p></div>`; return; }
   const members = (ch.member_ids || []).length;
@@ -627,21 +629,89 @@ function taskDialog(t, status, reload) {
     $("#tdel", d) && ($("#tdel", d).onclick = async () => { if (!confirm("Delete this task?")) return; await api(`/tasks/${t.id}`, { method: "DELETE" }).catch((x) => toast(x.message)); d.close(); reload(); });
   });
 }
-async function renderMyTasks(main) {
-  main.innerHTML = `<header class="top"><div class="t"><h2>My tasks</h2><small>Everything assigned to you, across all your conversations</small></div></header><div class="body" id="body"><p class="mk-small" style="padding:16px">Loading…</p></div>`;
-  const r = await api("/tasks").catch((e) => toast(e.message)); if (!r) return;
+// ------------------------------------------------------------------ To-Do (personal)
+const dueClass = (due, done) => { if (!due || done) return ""; const t = new Date().toISOString().slice(0, 10); return due < t ? "late" : due === t ? "soon" : ""; };
+const dueLabel = (due) => { const t = new Date().toISOString().slice(0, 10); const y = new Date(Date.now() - 864e5).toISOString().slice(0, 10); const tm = new Date(Date.now() + 864e5).toISOString().slice(0, 10); return due < t ? `Overdue · ${new Date(due).toLocaleDateString([], { day: "numeric", month: "short" })}` : due === t ? "Today" : due === tm ? "Tomorrow" : due === y ? "Yesterday" : new Date(due).toLocaleDateString([], { day: "numeric", month: "short", year: due.slice(0, 4) !== t.slice(0, 4) ? "numeric" : undefined }); };
+async function renderTodo(main) {
+  main.innerHTML = `<header class="top"><div class="t"><h2>To-Do</h2><small>Plan, track, update and strike through your to-dos and deliverables</small></div><button class="btn p" id="addTodo">${ic("plus")}<span class="lbl">Add to-do</span></button></header>
+    <div class="body" id="body"><p class="mk-small" style="padding:16px">Loading…</p></div>`;
+  $("#addTodo").onclick = () => todoDialog(null, () => renderTodo(main));
+  const [tr, tk] = await Promise.all([api("/todos").catch(() => ({ todos: [] })), api("/tasks").catch(() => ({ tasks: [] }))]);
+  const todos = tr.todos, tasks = tk.tasks.filter((t) => t.status !== "done");
+  S.todoDue = todos.filter((t) => !t.done && t.due && t.due <= new Date().toISOString().slice(0, 10)).length;
+  updateRailDots();
+  const open = todos.filter((t) => !t.done), done = todos.filter((t) => t.done);
+  const row = (t) => `<div class="td ${t.done ? "done" : ""}" data-td="${t.id}">
+    <button class="tick ${t.done ? "on" : ""}" data-tick="${t.id}" aria-label="${t.done ? "Mark as not done" : "Mark as done"}" aria-pressed="${t.done}">${t.done ? "✓" : ""}</button>
+    <div class="td-main"><span class="td-text">${fmt(t.text)}</span>${t.kind === "deliverable" ? '<span class="pill-d">Deliverable</span>' : ""}${t.channel_name ? `<span class="td-ch">#${esc(t.channel_name)}</span>` : ""}
+      ${t.due ? `<span class="td-due ${dueClass(t.due, t.done)}">${ic("cal", "ico")} ${dueLabel(t.due)}</span>` : ""}${t.priority === "high" || t.priority === "urgent" ? `<span class="td-pri ${t.priority}">${t.priority}</span>` : ""}</div>
+    <button class="ib" data-tm="${t.id}" aria-label="Edit">${ic("more")}</button></div>`;
   const body = $("#body");
-  if (!r.tasks.length) { body.innerHTML = `<div class="empty">${ic("tasks")}<h3>Nothing assigned to you</h3><p>Tasks assigned to you in any channel or project appear here.</p></div>`; return; }
-  body.innerHTML = `<div class="board">${COLS.map(([k, l]) => `<section class="col" data-col="${k}"><h4>${l}<span>${r.tasks.filter((t) => t.status === k).length}</span></h4><div class="tasks">${r.tasks.filter((t) => t.status === k).map(taskCard).join("")}</div></section>`).join("")}</div>`;
-  $$("[data-t]", body).forEach((el) => {
-    el.ondragstart = (e) => e.dataTransfer.setData("text/plain", el.dataset.t);
-    el.onclick = () => { const t = r.tasks.find((x) => x.id === el.dataset.t); openChannel(t.channel_id, "tasks"); };
+  body.innerHTML = `<div class="todo-wrap">
+    <div class="quick"><input id="qadd" placeholder="Add a quick to-do and press Enter" maxlength="400" autocomplete="off"></div>
+    ${open.length ? `<section>${open.map(row).join("")}</section>` : `<div class="empty">${ic("tasks")}<h3>All clear</h3><p>Add a to-do above, or turn a client deliverable into a tracked item with a due date.</p></div>`}
+    ${tasks.length ? `<h3 class="sec" style="margin:22px 0 8px">Assigned to me in conversations</h3><section>${tasks.map((t) => `<div class="td" data-task="${t.id}"><button class="tick" data-done="${t.id}" aria-label="Mark done">${""}</button><div class="td-main"><span class="td-text">${esc(t.title)}</span><span class="td-ch">#${esc(t.channel_name || "")}</span>${t.due ? `<span class="td-due ${dueClass(t.due)}">${ic("cal", "ico")} ${dueLabel(t.due)}</span>` : ""}</div><a class="ib" href="#c/${t.channel_id}/tasks" aria-label="Open">${ic("back")}</a></div>`).join("")}</section>` : ""}
+    ${done.length ? `<details class="done-wrap"><summary>${done.length} done recently</summary>${done.map(row).join("")}</details>` : ""}
+  </div>`;
+  const qa = $("#qadd");
+  qa.onkeydown = async (e) => { if (e.key === "Enter" && qa.value.trim()) { const v = qa.value.trim(); qa.value = ""; await post("/todos", { text: v }).catch((x) => toast(x.message)); renderTodo(main); } };
+  qa.focus();
+  $$("[data-tick]", body).forEach((b) => (b.onclick = async () => { const t = todos.find((x) => x.id === b.dataset.tick); await post(`/todos/${b.dataset.tick}`, { done: !t.done }, "PATCH"); renderTodo(main); }));
+  $$("[data-done]", body).forEach((b) => (b.onclick = async () => { await post(`/tasks/${b.dataset.done}`, { status: "done" }, "PATCH").catch((x) => toast(x.message)); renderTodo(main); }));
+  $$("[data-tm]", body).forEach((b) => (b.onclick = () => todoMenu(b, todos.find((x) => x.id === b.dataset.tm), () => renderTodo(main))));
+  $$("[data-td] .td-text", body).forEach((el) => (el.ondblclick = () => todoDialog(todos.find((x) => x.id === el.closest("[data-td]").dataset.td), () => renderTodo(main))));
+}
+function todoMenu(anchor, t, reload) {
+  menu(anchor, [["Edit", () => todoDialog(t, reload)], [t.kind === "deliverable" ? "Make a plain to-do" : "Mark as a deliverable", async () => { await post(`/todos/${t.id}`, { kind: t.kind === "deliverable" ? "todo" : "deliverable" }, "PATCH"); reload(); }], "-", ['<span style="color:var(--danger)">Delete</span>', async () => { await api(`/todos/${t.id}`, { method: "DELETE" }); reload(); }]]);
+}
+function todoDialog(t, reload) {
+  const convs = S.channels.filter((c) => c.kind !== "dm");
+  dialog(`<form><h3>${t ? "Edit to-do" : "New to-do"}</h3>
+    <div class="fld"><label for="tt">To-do</label><input id="tt" required maxlength="400" value="${esc(t?.text || "")}"></div>
+    <div class="fld"><label for="tn">Notes (optional)</label><textarea id="tn" maxlength="2000">${esc(t?.note || "")}</textarea></div>
+    <div class="row2"><div class="fld"><label for="tdu">Due date</label><input id="tdu" type="date" value="${esc(t?.due || "")}"></div><div class="fld"><label for="tp">Priority</label><select id="tp">${["low", "normal", "high", "urgent"].map((p) => `<option ${(t?.priority || "normal") === p ? "selected" : ""}>${p}</option>`).join("")}</select></div></div>
+    <div class="row2"><div class="fld"><label for="tk">Type</label><select id="tk"><option value="todo" ${t?.kind !== "deliverable" ? "selected" : ""}>To-do</option><option value="deliverable" ${t?.kind === "deliverable" ? "selected" : ""}>Client deliverable</option></select></div>
+    <div class="fld"><label for="tc">Linked conversation (optional)</label><select id="tc"><option value="">None</option>${convs.map((c) => `<option value="${c.id}" ${t?.channel_id === c.id ? "selected" : ""}>#${esc(chName(c))}</option>`).join("")}</select></div></div>
+    <div class="foot"><button class="btn" data-close>Cancel</button><button class="btn p">${t ? "Save" : "Add"}</button></div></form>`, (d) => {
+    $("#tt", d).focus();
+    $("form", d).onsubmit = async (e) => { e.preventDefault(); const b = { text: $("#tt", d).value, note: $("#tn", d).value, due: $("#tdu", d).value, priority: $("#tp", d).value, kind: $("#tk", d).value, channel_id: $("#tc", d).value || null }; try { if (t) await post(`/todos/${t.id}`, b, "PATCH"); else await post("/todos", b); d.close(); reload(); } catch (x) { toast(x.message); } };
   });
-  $$("[data-col]", body).forEach((col) => {
-    col.ondragover = (e) => { e.preventDefault(); col.classList.add("drop"); };
-    col.ondragleave = () => col.classList.remove("drop");
-    col.ondrop = async (e) => { e.preventDefault(); await post(`/tasks/${e.dataTransfer.getData("text/plain")}`, { status: col.dataset.col }, "PATCH").catch((x) => toast(x.message)); renderMyTasks(main); };
-  });
+}
+function updateRailDots() {
+  const btn = $(".rail [data-v=todo]"); if (!btn) return;
+  btn.querySelector(".dot")?.remove();
+  if (S.todoDue) btn.insertAdjacentHTML("beforeend", `<span class="dot">${S.todoDue > 99 ? "99+" : S.todoDue}</span>`);
+}
+
+// ------------------------------------------------------------------ Planner
+const BUCKETS = [["overdue", "Overdue"], ["today", "Today"], ["tomorrow", "Tomorrow"], ["week", "This week"], ["later", "Later"]];
+function bucketOf(due, today) {
+  if (due < today) return "overdue";
+  if (due === today) return "today";
+  const tm = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+  if (due === tm) return "tomorrow";
+  const wk = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+  return due <= wk ? "week" : "later";
+}
+async function renderPlanner(main) {
+  main.innerHTML = `<header class="top"><div class="t"><h2>Planner</h2><small>Meet your due dates, deliverables and meetings — everything with a date, in one place</small></div><button class="btn p" id="addDel">${ic("plus")}<span class="lbl">Add deliverable</span></button></header><div class="body" id="body"><p class="mk-small" style="padding:16px">Loading…</p></div>`;
+  $("#addDel").onclick = () => todoDialog({ kind: "deliverable" }, () => renderPlanner(main));
+  const r = await api("/planner").catch((e) => toast(e.message)); if (!r) return;
+  const body = $("#body");
+  if (!r.items.length) { body.innerHTML = `<div class="empty">${ic("cal")}<h3>Nothing scheduled</h3><p>Add a deliverable with a due date, give a to-do a date, or schedule a meeting. It all shows here on a timeline.</p></div>`; return; }
+  const by = {}; for (const it of r.items) (by[bucketOf(it.due, r.today)] ||= []).push(it);
+  const TYPE = { todo: ["To-do", "#17807E", P.tasks], deliverable: ["Deliverable", "#9C630E", P.tasks], task: ["Task", "#2D6A9F", P.tasks], meeting: ["Meeting", "#0E2F3C", P.video] };
+  const line = (it) => { const [label, col, icon] = TYPE[it.type] || TYPE.todo; return `<div class="pl-row" data-type="${it.type}" data-id="${esc(it.id)}" ${it.channel_id ? `data-ch="${esc(it.channel_id)}"` : ""}>
+    <span class="pl-ic" style="background:${col}"><svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg></span>
+    <div class="pl-main"><b>${esc(it.title)}</b><small>${label}${it.channel ? ` · #${esc(it.channel)}` : ""}${it.type === "meeting" && it.startsAt ? ` · ${new Date(it.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}${it.priority === "high" || it.priority === "urgent" ? ` · ${it.priority}` : ""}</small></div>
+    <span class="pl-due ${dueClass(it.due, it.done)}">${new Date(it.due).toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}</span></div>`; };
+  body.innerHTML = `<div class="mt-wrap">${BUCKETS.filter(([k]) => by[k]?.length).map(([k, label]) => `<section><h3 class="sec ${k === "overdue" ? "overdue" : ""}">${label} <span class="count">${by[k].length}</span></h3><div class="pl-list">${by[k].map(line).join("")}</div></section>`).join("")}</div>`;
+  $$(".pl-row", body).forEach((el) => (el.onclick = () => {
+    const type = el.dataset.type, id = el.dataset.id;
+    if (type === "meeting") joinRoom(id);
+    else if (type === "task" && el.dataset.ch) openChannel(el.dataset.ch, "tasks");
+    else go("todo");
+  }));
 }
 async function renderFiles(body) {
   const r = await api(`/channels/${S.cur.id}/files`).catch((e) => toast(e.message)); if (!r) return;
