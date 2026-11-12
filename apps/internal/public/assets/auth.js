@@ -5,7 +5,9 @@ const card = $("#card");
 const params = new URLSearchParams(location.search);
 const next = (() => {
   const n = params.get("next") || "";
-  return n.startsWith("/app") ? n : "/app";
+  // Only Kayak Internal's own app, or the hand-back to Meet by Kayak (single sign-on), are allowed.
+  if (/^\/sso\/meet(\?next=%2F[A-Za-z0-9%#/_-]*)?$/.test(n)) return n;
+  return n.startsWith("/app") && !n.startsWith("//") ? n : "/app";
 })();
 
 // The "Why Kayak" film plays once, muted, and holds on the logo. People who prefer reduced motion

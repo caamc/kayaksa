@@ -49,7 +49,9 @@ const guard = async (c: any, next: any) => {
   const u = await loadUser(c);
   if (!u) {
     if (c.req.path.startsWith("/api/") || c.req.path.startsWith("/files/")) return c.json({ error: "Your session has ended. Sign in again." }, 401);
-    const back = c.req.path === "/" ? "" : `?next=${encodeURIComponent(c.req.path)}`;
+    // Keep the query for the Meet hand-back (/sso/meet?next=…) so people land where they started.
+    const q = c.req.path === "/sso/meet" ? new URL(c.req.url).search : "";
+    const back = c.req.path === "/" ? "" : `?next=${encodeURIComponent(c.req.path + q)}`;
     return c.redirect(`/login${back}`, 302);
   }
   c.set("user", u);

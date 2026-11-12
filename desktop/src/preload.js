@@ -23,3 +23,12 @@ if (KAYAK.test(location.origin)) {
   // Let the page style itself for the desktop frame (drag region, space for the window buttons).
   window.addEventListener("DOMContentLoaded", () => { document.documentElement.dataset.desktop = process.platform; });
 }
+
+// The app's own local screens shown in the main window (splash, offline): retry and open Settings only.
+if (location.protocol === "file:") {
+  contextBridge.exposeInMainWorld("kayakUi", {
+    platform: process.platform,
+    retry: (back) => ipcRenderer.invoke("km:retry", back),
+    openSettings: () => ipcRenderer.invoke("km:openSettings"),
+  });
+}

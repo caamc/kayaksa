@@ -9,11 +9,15 @@
 </head>
 <body class="drag">
 <main class="nodrag">
-  <img src="MeetByKayak_Mark_Reversed.svg" alt="" width="96">
+  <div class="mark"><img src="MeetByKayak_Mark_Reversed.svg" alt="" width="76" height="76"></div>
   <h1 id="h">You're offline</h1>
-  <p id="p">Meet by Kayak can't reach Kayak's servers. Check your internet connection or VPN. We'll try again automatically.</p>
-  <button class="btn primary" id="retry">Try again</button>
-  <small id="s"></small>
+  <p id="p">Meet by Kayak can't reach Kayak's servers. Check your internet connection or VPN. We'll reconnect as soon as we can.</p>
+  <span class="chip" id="s" role="status" aria-live="polite">Waiting for a connection…</span>
+  <div class="row">
+    <button class="btn primary" id="retry">Try again</button>
+    <button class="btn ghost" id="settings">Settings</button>
+  </div>
+  <small>Press <kbd>Enter</kbd> to try again</small>
 </main>
 <script src="offline.js"></script>
 </body>

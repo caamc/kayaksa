@@ -16,7 +16,10 @@ const { Store } = require("./store");
 
 const store = new Store();
 const ORIGIN = String(store.policy.server || process.env.KAYAK_MEET_URL || "https://meet.kayaksa.com").replace(/\/+$/, "");
-const SSO_ORIGINS = ["https://internal.kayaksa.com"]; // employees sign in through Kayak Internal's two-factor login
+// Kayak staff sign in through Kayak Internal's password + two-factor page. The desktop app is Meet only:
+// it shows those sign-in steps and the hand-back to Meet, and nothing else from Kayak Internal.
+const SSO_ORIGIN = String(store.policy.sso || "https://internal.kayaksa.com").replace(/\/+$/, "");
+const SSO_PATHS = /^\/(login|setup|welcome|sso\/meet)\/?$/;
 const isMac = process.platform === "darwin";
 const isWin = process.platform === "win32";
 const asset = (f) => path.join(__dirname, f);
@@ -33,7 +36,18 @@ let pendingUrl = null;
 // ----------------------------------------------------------------------------- URLs and deep links
 function originOf(u) { try { return new URL(u).origin; } catch { return ""; } }
 const isKayak = (u) => originOf(u) === originOf(ORIGIN);
-const inApp = (u) => isKayak(u) || SSO_ORIGINS.includes(originOf(u));
+const isSsoOrigin = (u) => originOf(u) === originOf(SSO_ORIGIN);
+const isSsoStep = (u) => { try { return isSsoOrigin(u) && SSO_PATHS.test(new URL(u).pathname); } catch { return false; } };
+const inApp = (u) => isKayak(u) || isSsoStep(u);
+/** Anything else on Kayak Internal (its dashboard, documents…) never opens in the Meet window. A signed-in
+ *  member who lands on Kayak Internal's dashboard is sent straight back to Meet through single sign-on. */
+function steer(e, url) {
+  if (inApp(url) || url.startsWith("file://")) return false;
+  e.preventDefault();
+  if (isSsoOrigin(url)) { const p = new URL(url).pathname; if (p === "/" || p.startsWith("/app")) { win.loadURL(`${SSO_ORIGIN}/sso/meet`); return true; } }
+  openExternal(url);
+  return true;
+}
 function openExternal(u) {
   try { const p = new URL(u).protocol; if (p === "https:" || p === "http:" || p === "mailto:") shell.openExternal(u); } catch {}
 }
@@ -79,10 +93,14 @@ function createWindow() {
   const wc = win.webContents;
   wc.setUserAgent(`${wc.getUserAgent().replace(/Electron\/\S+\s?/, "")} KayakMeetDesktop/${app.getVersion()}`);
   wc.setWindowOpenHandler(({ url }) => { if (inApp(url)) { win.loadURL(url); } else openExternal(url); return { action: "deny" }; });
-  wc.on("will-navigate", (e, url) => { if (!inApp(url) && !url.startsWith("file://")) { e.preventDefault(); openExternal(url); } });
-  wc.on("will-redirect", (e, url) => { if (!inApp(url)) { e.preventDefault(); openExternal(url); } });
+  wc.on("will-navigate", (e, url) => steer(e, url));
+  wc.on("will-redirect", (e, url) => steer(e, url));
+  // Belt and braces: if a page still ends up on Kayak Internal outside the sign-in steps, return to Meet.
+  wc.on("did-navigate", (_e, url) => { if (isSsoOrigin(url) && !isSsoStep(url)) win.loadURL(`${ORIGIN}/app`); });
   wc.on("did-fail-load", (_e, code, _desc, url, isMain) => { if (isMain && code !== -3 && !url.startsWith("file://")) win.loadFile(asset("offline.html"), { query: { back: url } }); });
   wc.on("render-process-gone", () => win.loadFile(asset("offline.html"), { query: { back: `${ORIGIN}/app`, crashed: "1" } }));
+  win.on("page-title-updated", (e) => { if (isSsoOrigin(wc.getURL())) { e.preventDefault(); win.setTitle("Sign in · Meet by Kayak"); } });
+  wc.on("did-finish-load", () => { if (isSsoStep(wc.getURL())) ssoChrome(wc); });
   win.once("ready-to-show", () => { if (!(store.get("startInBackground") && process.argv.includes("--hidden"))) win.show(); });
   win.on("close", (e) => {
     if (quitting) return;
@@ -93,8 +111,19 @@ function createWindow() {
     if (store.get("closeToTray") && tray && !meeting.inMeeting) { e.preventDefault(); win.hide(); if (isMac) app.dock?.hide?.(); }
   });
   win.on("focus", () => setBadge(null));
-  win.loadURL(pendingUrl || routeFor(process.argv.find((a) => a.startsWith("kayakmeet:"))) || `${ORIGIN}/app`);
+  // A branded splash paints instantly while Meet loads; Meet replaces it as soon as its first page is ready.
+  const first = pendingUrl || routeFor(process.argv.find((a) => a.startsWith("kayakmeet:"))) || `${ORIGIN}/app`;
   pendingUrl = null;
+  win.loadFile(asset("splash.html")).finally(() => win.loadURL(first));
+}
+/** Kayak Internal's sign-in page has no desktop frame. Give it a slim Meet by Kayak bar that moves the
+ *  window, leaves room for the window buttons, and offers a way back to Meet's own sign-in. */
+function ssoChrome(wc) {
+  const pad = isMac ? "padding-left:84px" : "padding-right:150px";
+  wc.insertCSS(`#km-bar{position:fixed;inset:0 0 auto;height:38px;z-index:2147483647;display:flex;align-items:center;gap:10px;${pad};padding-inline-start:${isMac ? 84 : 14}px;background:#0E2F3Cee;backdrop-filter:blur(12px);color:#fff;font:600 12.5px/1 Archivo,"Segoe UI",-apple-system,system-ui,sans-serif;-webkit-app-region:drag;box-shadow:0 1px 0 #ffffff14}
+#km-bar span{opacity:.75;font-weight:500}#km-bar button{all:unset;-webkit-app-region:no-drag;margin-left:auto;cursor:pointer;padding:6px 12px;border-radius:99px;background:#ffffff14;border:1px solid #ffffff24;color:#fff;font-weight:600}
+#km-bar button:hover{background:#ffffff24}#km-bar button:focus-visible{outline:2px solid #1FA3A0;outline-offset:2px}html{scroll-padding-top:38px}body{padding-top:38px!important}`).catch(() => {});
+  wc.executeJavaScript(`(()=>{if(document.getElementById("km-bar"))return;const b=document.createElement("div");b.id="km-bar";b.setAttribute("role","banner");b.innerHTML='<b>Meet by Kayak</b><span>Kayak staff sign-in · password and two-factor</span><button type="button">Back to Meet</button>';b.querySelector("button").onclick=()=>{location.href=${JSON.stringify(ORIGIN + "/login")}};document.body.prepend(b);})()`).catch(() => {});
 }
 function showWindow() {
   if (!win) return createWindow();
@@ -326,6 +355,7 @@ ipcMain.handle("km:settings:reset", (e) => (fromLocal(e) ? store.reset() : null)
 ipcMain.handle("km:settings:clear", async (e) => { if (!fromLocal(e)) return false; const s = session.fromPartition("persist:kayakmeet"); await s.clearCache(); return true; });
 ipcMain.handle("km:settings:signout", (e) => (fromLocal(e) ? signOut() : null));
 ipcMain.handle("km:update:check", (e) => (fromLocal(e) ? checkUpdates(true) : null));
+ipcMain.handle("km:openSettings", (e) => { if (fromLocal(e)) openSettings(); });
 ipcMain.handle("km:retry", (e, back) => { if (fromLocal(e)) win.loadURL(back && inApp(back) ? back : `${ORIGIN}/app`); });
 ipcMain.handle("km:openExternal", (e, url) => { if (fromLocal(e)) openExternal(url); });
 

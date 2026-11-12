@@ -49,3 +49,8 @@
 .au-field input{border-radius:14px}
 .au-qr,.au-notice{border-radius:16px}
 .au-err,.au-ok{border-radius:12px}
+/* Desktop app: the window has no system title bar, so the top strip moves the window. */
+[data-desktop] body::before{content:"";position:fixed;inset:0 0 auto;height:36px;-webkit-app-region:drag;z-index:50}
+[data-desktop] a,[data-desktop] button,[data-desktop] input,[data-desktop] select{-webkit-app-region:no-drag}
+[data-desktop=darwin] .au-brand{padding-top:52px}
+[data-desktop=win32] .au-main{padding-top:48px}
