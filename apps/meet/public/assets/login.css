@@ -40,3 +40,12 @@
 .au-qr svg{width:150px;height:150px;display:block}
 .au-secret{font:600 .85rem ui-monospace,Menlo,Consolas,monospace;word-break:break-all;background:var(--surface-2);padding:6px 8px;user-select:all}
 @media (max-width:420px){.au-qr{grid-template-columns:1fr;justify-items:center}}
+/* glass sign-in controls */
+.au-sso{border-radius:999px;background:linear-gradient(180deg,#15495A,#0E2F3C);box-shadow:inset 0 1px 0 #ffffff40,0 10px 24px -10px #0E2F3C99;transition:transform .18s}
+.au-sso:active{transform:scale(.97)}
+.au-tabs{border-radius:999px;padding:4px}
+.au-tabs button{border-radius:999px}
+.au-tabs button[aria-selected=true]{box-shadow:inset 0 1px 0 #fff,0 4px 14px -6px #0E2F3C59}
+.au-field input{border-radius:14px}
+.au-qr,.au-notice{border-radius:16px}
+.au-err,.au-ok{border-radius:12px}

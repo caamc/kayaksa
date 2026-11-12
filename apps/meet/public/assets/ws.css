@@ -255,3 +255,41 @@ dialog .foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 .pl-main small{color:var(--muted)}
 .pl-due{font-weight:650;font-size:.85rem;white-space:nowrap}
 .pl-due.late{color:var(--danger)}.pl-due.soon{color:#9C630E}
+
+/* ===================== Liquid glass (workspace) ===================== */
+.btn{border-radius:999px;position:relative;overflow:hidden;
+  box-shadow:inset 0 1px 0 #ffffffb3,inset 0 -1px 0 #0000000f,0 4px 14px -6px #0E2F3C40;
+  background:linear-gradient(180deg,#ffffffeb,#F3F7F6eb);-webkit-backdrop-filter:blur(14px) saturate(170%);backdrop-filter:blur(14px) saturate(170%);
+  transition:transform .16s cubic-bezier(.2,.8,.2,1.2),box-shadow .2s,background .2s}
+.btn:hover{box-shadow:inset 0 1px 0 #fff,0 8px 20px -8px #0E2F3C59}
+.btn:active{transform:scale(.96)}
+.btn.p{background:linear-gradient(180deg,#1FA3A0,#17807E);box-shadow:inset 0 1px 0 #ffffff66,0 8px 20px -8px #17807Eb3}
+.btn.p:hover{background:linear-gradient(180deg,#22B0AD,#168784)}
+.btn.s{background:linear-gradient(180deg,#F5B04A,#EE9B1E);box-shadow:inset 0 1px 0 #ffffff80,0 8px 20px -8px #EE9B1Ecc}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn.ghost:hover{background:#0E2F3C0f}
+.ib{border-radius:50%;transition:background .15s,transform .15s}
+.ib:active{transform:scale(.92)}
+.rail button{border-radius:14px;transition:background .2s,color .2s}
+.rail button:hover{background:#ffffff12}
+.rail button[aria-current=page]{background:linear-gradient(180deg,#ffffff26,#ffffff0d);box-shadow:inset 0 1px 0 #ffffff33}
+.rail button[aria-current=page]::before{display:none}
+.search,.comp-box,.quick input,.fld input,.fld select,.fld textarea{border-radius:14px}
+.item{border-radius:10px}
+.tabs button{border-radius:10px 10px 0 0}
+.card,.task,.col,.mt-list,.pl-list,.mt-act,.recap,.two-shot figure{border-radius:16px;overflow:hidden}
+.mt-act{transition:transform .2s,box-shadow .2s}.mt-act:hover{transform:translateY(-3px);box-shadow:0 14px 34px -14px #0E2F3C59}
+.task{transition:transform .15s,box-shadow .15s}.task:hover{transform:translateY(-2px);box-shadow:0 10px 24px -12px #0E2F3C59}
+dialog{border-radius:22px;animation:dlgIn .22s cubic-bezier(.2,.8,.2,1.1)}
+@keyframes dlgIn{from{opacity:0;transform:translateY(10px) scale(.97)}}
+.menu{border-radius:16px;padding:6px;-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);background:#ffffffe0}
+.menu button,.menu a{border-radius:10px}
+.toast{border-radius:999px;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);background:#0E2F3Ce6;animation:toastIn .25s cubic-bezier(.2,.8,.2,1.2)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.95)}}
+.tick{transition:transform .2s cubic-bezier(.2,.8,.2,1.6),background .2s}.tick:active{transform:scale(.85)}
+.td{border-radius:12px;transition:background .2s}
+.msg{border-radius:12px;margin:0 8px}
+.chip{border-radius:999px}
+.ext,.pill-d,.td-pri{border-radius:999px}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .btn:not(.p):not(.s){background:linear-gradient(180deg,#1B3A44eb,#14303Aeb);color:var(--fg)} :root:not([data-theme=light]) .menu{background:#102830e6}}
+@media (prefers-reduced-motion:reduce){.btn,.task,.mt-act,dialog,.toast{transition:none;animation:none}}

@@ -5,7 +5,7 @@
 import type { MeetRole } from "../../../packages/core/src/meettoken";
 
 export interface Env { DB: D1Database; MAX_PEERS?: string }
-interface Peer { id: string; name: string; email?: string; role: MeetRole; mic: boolean; cam: boolean; screen: boolean; hand: boolean; joinedAt: number; lobby: boolean }
+interface Peer { id: string; name: string; email?: string; role: MeetRole; mic: boolean; cam: boolean; screen: number; hand: boolean; joinedAt: number; lobby: boolean }
 interface RoomState { title: string; kind: string; lobby: boolean; locked: boolean; captions: boolean; recording: string | null; started: string | null }
 
 const LIMIT = 12; // people in one peer-to-peer meeting before quality suffers
@@ -63,7 +63,7 @@ export class Room {
       server.close(4001, "full");
       return new Response(null, { status: 101, webSocket: client });
     }
-    const p: Peer = { id: crypto.randomUUID().slice(0, 8), name, email: claims.e, role, mic: true, cam: true, screen: false, hand: false, joinedAt: Date.now(), lobby };
+    const p: Peer = { id: crypto.randomUUID().slice(0, 8), name, email: claims.e, role, mic: true, cam: true, screen: 0, hand: false, joinedAt: Date.now(), lobby };
     this.st.acceptWebSocket(server);
     server.serializeAttachment(p);
     if (lobby) {
@@ -112,7 +112,14 @@ export class Room {
         break;
       }
       case "state": {
-        for (const k of ["mic", "cam", "screen", "hand"] as const) if (typeof m[k] === "boolean") me[k] = m[k];
+        for (const k of ["mic", "cam", "hand"] as const) if (typeof m[k] === "boolean") me[k] = m[k];
+        // Screens: a count per person (older clients send true/false). At most 4 across the whole room.
+        if (typeof m.screen === "boolean" || typeof m.screen === "number") {
+          const want = Math.max(0, Math.min(4, Number(m.screen) | 0));
+          const others = this.peers().filter((x) => x.p.id !== me.id && !x.p.lobby).reduce((a, x) => a + (Number(x.p.screen) || 0), 0);
+          if (others + want > 4) { this.send(ws, { t: "screenFull", limit: 4 }); me.screen = Math.max(0, 4 - others); }
+          else me.screen = want;
+        }
         ws.serializeAttachment(me);
         this.broadcast({ t: "peer", peer: this.pub(me) }, me.id);
         break;

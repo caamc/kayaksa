@@ -85,6 +85,12 @@ body{font-family:Archivo,Arial,sans-serif;color:#E8F0EF}
 .ws .card.fly{position:absolute;left:26px;width:308px;z-index:3;box-shadow:0 14px 30px #0E2F3C33}
 .ws .toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#0E2F3C;color:#fff;font-weight:700;padding:12px 18px;opacity:0;display:flex;gap:8px;align-items:center}
 .fade{position:absolute;inset:0;background:#06171E;pointer-events:none}
+.p{position:absolute;inset:0}
+.ph{background-size:cover;background-position:center 35%;will-change:transform}
+.vig{background:radial-gradient(ellipse at center,transparent 55%,#00000055 100%)}
+.wm{position:absolute;right:18px;bottom:14px;z-index:20;display:flex;align-items:center;gap:7px;font:700 12px Archivo,Arial;color:#ffffffd9;background:#06171E8c;border:1px solid #ffffff26;padding:5px 10px;border-radius:999px;backdrop-filter:blur(6px)}
+.wm img{height:14px}
+.wm.light{color:#0E2F3Cd9;background:#ffffffb3;border-color:#0E2F3C1f}
 </style></head>
 <body><div id="stage"></div>
 <script>
@@ -93,9 +99,13 @@ const CAST = {
   aarav:  { name: "Aarav",  org: "Kayak",   skin: "#C68A5E", hair: "#1B1410", style: "short",  shirt: "#1F3A5F", collar: "#ffffff", bg: ["#2B4A58", "#1B3540"], room: "shelf" },
   meera:  { name: "Meera",  org: "Client CFO", skin: "#B97850", hair: "#2A1810", style: "long",  shirt: "#EE9B1E", collar: "#C77D10", bg: ["#3F5246", "#26342B"], room: "plant", earrings: true },
   daniel: { name: "Daniel", org: "Kayak",   skin: "#EBC3A3", hair: "#7A5532", style: "side",   shirt: "#17807E", collar: "#0B5654", bg: ["#3A3F57", "#23273A"], room: "window", glasses: true, beard: "#7A5532" },
-  zara:   { name: "Zara",   org: "Counsel", skin: "#D9A47F", hair: "#17807E", style: "scarf",  shirt: "#5E4B78", collar: "#47385C", bg: ["#4A3A40", "#2B2126"], room: "art" },
+  zara:   { name: "Wei",    org: "Counsel", skin: "#D9A47F", hair: "#17807E", style: "scarf",  shirt: "#5E4B78", collar: "#47385C", bg: ["#4A3A40", "#2B2126"], room: "art", photo: "kabir" },
+  rohan:  { name: "Rohan",  org: "Kayak",   shirt: "#2D6A9F", photo: "rohan" },
 };
 const INI = (n) => n.slice(0, 2).toUpperCase();
+const PHOTO = (k) => `people/${CAST[k].photo || k}.jpg`;
+// A small round photo of the person (captions, transcript, chat).
+const AV = (k, size = 36) => `<span class="av" style="width:${size}px;height:${size}px;background:#0F2E3B url(people/av-${CAST[k].photo || k}.jpg) center/cover;border:2px solid #ffffff30"></span>`;
 const ease = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 const ramp = (t, a, b) => ease((t - a) / (b - a));
 // Deterministic "speech" amplitude.
@@ -146,12 +156,12 @@ function person(c, { talk = 0, blink = 0, tilt = 0, smile = 0.6, nod = 0 }) {
 }
 const blinkAt = (t, seed) => { const p = (t + seed) % 3.7; return p < 0.12 ? Math.sin((p / 0.12) * Math.PI) : 0; };
 function face(key, t, speaking, id) {
-  const c = CAST[key], s = key.length * 1.3;
-  const talk = speaking ? Math.min(1, amp(t, s)) : 0;
-  const tilt = Math.sin(t * 0.9 + s) * (speaking ? 2.4 : 1.2);
-  const nod = speaking ? Math.sin(t * 3.1 + s) * 3 : Math.sin(t * 0.8 + s) * 1.2;
-  return `<svg class="p" viewBox="0 0 600 340" preserveAspectRatio="xMidYMid slice">${roomBg(c, id)}${person(c, { talk, blink: blinkAt(t, s), tilt, nod, smile: speaking ? 0.4 : 0.7 })}</svg>`;
+  const s = key.length * 1.3;
+  const z = 1.06 + 0.035 * Math.sin(t * 0.32 + s) + (speaking ? 0.012 * Math.sin(t * 5.5 + s) : 0);
+  const x = 1.4 * Math.sin(t * 0.21 + s), y = 1.0 * Math.cos(t * 0.27 + s);
+  return `<div class="p ph" style="background-image:url(${PHOTO(key)});transform:scale(${z.toFixed(4)}) translate(${x.toFixed(2)}%,${y.toFixed(2)}%);filter:brightness(${speaking ? 1.04 : 0.96}) saturate(1.04)"></div><div class="p vig"></div>`;
 }
+
 const ICON = {
   mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>',
   cam: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/>',
@@ -188,7 +198,7 @@ const SCENES = {
       const k = (t - cur.a) / (cur.b - cur.a - 0.6);
       const c = CAST[cur.who];
       const op = ramp(t, cur.a, cur.a + 0.25) * (1 - ramp(t, cur.b - 0.15, cur.b));
-      cap = `<div class="cap" style="opacity:${op}"><span class="av" style="background:${c.shirt};color:#fff">${INI(c.name)}</span><div><b>${c.name}${cur.lang ? `<span class="lang">${cur.lang} · translated</span>` : ""}</b><div class="tx">${typed(cur.text, k * 1.4)}</div>${cur.tr ? `<div class="tr">${typed(cur.tr, (k - 0.3) * 1.6)}</div>` : ""}</div></div>`;
+      cap = `<div class="cap" style="opacity:${op}">${AV(cur.who)}<div><b>${c.name}${cur.lang ? `<span class="lang">${cur.lang} · translated</span>` : ""}</b><div class="tx">${typed(cur.text, k * 1.4)}</div>${cur.tr ? `<div class="tr">${typed(cur.tr, (k - 0.3) * 1.6)}</div>` : ""}</div></div>`;
     }
     return `<div class="top"><img src="${LOGO}"><span class="t">Acme · FY27 scope review</span><span class="pill ai">✦ Notes.AI on</span><span class="pill"><span class="dot"></span>Captions · English</span><span class="pill">🔒 Encrypted</span></div>
       <div class="grid">${tiles}</div>${cap}
@@ -203,8 +213,8 @@ const SCENES = {
   render(t) {
     const cur = t < 2.1 ? "zara" : t < 3.8 ? "meera" : t < 5.6 ? "aarav" : null;
     const ln = this.lines.map((l) => { const c = CAST[l.who]; const o = ramp(t, l.at, l.at + 0.35);
-      return `<div class="ln" style="opacity:${o};transform:translateY(${(1 - o) * 10}px)"><span class="av" style="background:${c.shirt};color:#fff">${INI(c.name)}</span><div><div class="who">${c.name}<span class="chip">${l.lang}${t > l.at + 0.5 ? " ✓" : " …"}</span><span class="ts">${l.ts}</span></div><div class="t1">${l.t1}</div>${l.t2 ? `<div class="t2" style="opacity:${ramp(t, l.at + 0.6, l.at + 1)}">${l.t2}</div>` : ""}</div></div>`; }).join("");
-    const items = [["Decision:", "Meera's director signs the engagement letter."], ["Action:", "Aarav sends the draft letter today."], ["Open:", "Confirm the signing date with Zara."]];
+      return `<div class="ln" style="opacity:${o};transform:translateY(${(1 - o) * 10}px)">${AV(l.who, 32)}<div><div class="who">${c.name}<span class="chip">${l.lang}${t > l.at + 0.5 ? " ✓" : " …"}</span><span class="ts">${l.ts}</span></div><div class="t1">${l.t1}</div>${l.t2 ? `<div class="t2" style="opacity:${ramp(t, l.at + 0.6, l.at + 1)}">${l.t2}</div>` : ""}</div></div>`; }).join("");
+    const items = [["Decision:", "Meera's director signs the engagement letter."], ["Action:", "Aarav sends the draft letter today."], ["Open:", "Confirm the signing date with Wei."]];
     const sum = `<div class="sum" style="opacity:${ramp(t, 6, 6.4)}"><h4>✦ Notes.AI summary</h4>${items.map(([a, b], i) => `<div class="it" style="opacity:${ramp(t, 6.5 + i * 0.6, 6.9 + i * 0.6)}"><b>${a}</b> ${b}</div>`).join("")}</div>`;
     const mini = ["zara", "meera", "aarav"].filter((k) => k !== (cur || "aarav")).map((k, i) => `<div class="mt">${face(k, t, false, "nm" + i)}</div>`).join("");
     const scanY = ((t * 160) % 760) - 120;
@@ -217,20 +227,20 @@ const SCENES = {
   render(t) {
     const msgs = [
       { who: "meera", at: 0.4, p: "Uploaded the FY26 returns for review.", file: "GSTR-9 FY26.pdf" },
-      { who: "daniel", at: 2.0, p: "Thanks! Reconciliation is done — moving it to Done." },
+      { who: "rohan", at: 2.0, p: "Thanks! Reconciliation is done — moving it to Done." },
       { who: "aarav", at: 3.6, p: "Great work. Let's walk the client through it now." },
     ].map((m) => { const c = CAST[m.who], o = ramp(t, m.at, m.at + 0.35);
-      return `<div class="m" style="opacity:${o};transform:translateY(${(1 - o) * 12}px)"><span class="av" style="background:${c.shirt}">${INI(c.name)}</span><div><b>${c.name}</b><span class="tm">${c.org}</span><p>${m.p}</p>${m.file ? `<div class="file"><i></i>${m.file}</div>` : ""}</div></div>`; }).join("");
+      return `<div class="m" style="opacity:${o};transform:translateY(${(1 - o) * 12}px)">${AV(m.who, 34)}<div><b>${c.name}</b><span class="tm">${c.org}</span><p>${m.p}</p>${m.file ? `<div class="file"><i></i>${m.file}</div>` : ""}</div></div>`; }).join("");
     const k = ramp(t, 4.6, 6.0);
     const y = 52 + k * 189;
     const struck = t > 6.0;
     const pulse = t > 7 && t < 8.6 ? 1 + 0.06 * Math.sin((t - 7) * 12) : 1;
     return `<div class="ws"><div class="rail"><img src="${MARK}"><i class="on"></i><i></i><i></i><i></i></div>
-      <div class="side"><h4>Chat</h4><div class="g">PROJECTS</div><div class="it on">◆ Acme · FY27 review</div><div class="it">◆ Orion · Due diligence <span class="n">3</span></div><div class="g">CHANNELS</div><div class="it"># Kayakers</div><div class="it"># Tax desk <span class="n">1</span></div><div class="g">DIRECT</div><div class="it">Meera</div><div class="it">Zara</div></div>
+      <div class="side"><h4>Chat</h4><div class="g">PROJECTS</div><div class="it on">◆ Acme · FY27 review</div><div class="it">◆ Orion · Due diligence <span class="n">3</span></div><div class="g">CHANNELS</div><div class="it"># Kayakers</div><div class="it"># Tax desk <span class="n">1</span></div><div class="g">DIRECT</div><div class="it">Meera</div><div class="it">Wei</div></div>
       <div class="main"><div class="hd"><b>◆ Acme · FY27 review</b><span class="ext">EXTERNAL</span><span class="meetbtn" style="transform:scale(${pulse})">▶ Meet now</span></div><div class="msgs">${msgs}</div><div class="comp">Message ◆ Acme · FY27 review</div></div>
       <div class="board"><h5>IN PROGRESS</h5><div class="col"><div class="card" style="visibility:hidden">x<small>x</small></div><div class="card">Draft engagement letter<small>Aarav · due Fri</small></div></div>
-        <h5>DONE</h5><div class="col">${struck ? `<div class="card" style="border-left-color:#4B7A4E"><s>GST reconciliation</s><small>Daniel · done</small></div>` : ""}<div class="card" style="border-left-color:#4B7A4E"><s>Collect FY26 returns</s><small>Meera · done</small></div></div>
-        ${struck ? "" : `<div class="card fly" style="top:${y}px">GST reconciliation<small>Daniel · due today</small></div>`}</div>
+        <h5>DONE</h5><div class="col">${struck ? `<div class="card" style="border-left-color:#4B7A4E"><s>GST reconciliation</s><small>Rohan · done</small></div>` : ""}<div class="card" style="border-left-color:#4B7A4E"><s>Collect FY26 returns</s><small>Meera · done</small></div></div>
+        ${struck ? "" : `<div class="card fly" style="top:${y}px">GST reconciliation<small>Rohan · due today</small></div>`}</div>
       <div class="toast" style="opacity:${ramp(t, 8.6, 8.9)}">🎥 Meeting started · 3 people joining</div></div>`;
   } },
   // 4. Captions in your own language: the viewer switches language while Zara speaks.
@@ -245,9 +255,9 @@ const SCENES = {
     const en = "The filing deadline is the 31st of March. We'll be on time.";
     const list = ["English", "Hindi", "Marathi", "Arabic", "Tamil", "Gujarati", "French", "Bengali"];
     return `<div class="top"><img src="${LOGO}"><span class="t">Captions in your language</span><span class="pill ai">✦ 50 languages</span><span class="pill">🔒 Encrypted</span></div>
-      <div class="bigtile" style="right:400px;bottom:92px">${face("zara", t, true, "lz")}<div class="nm" style="position:absolute;left:16px;top:16px;font-weight:700;background:#06171Ecc;padding:5px 12px;border-radius:8px">Zara · Counsel</div></div>
+      <div class="bigtile" style="right:400px;bottom:92px">${face("zara", t, true, "lz")}<div class="nm" style="position:absolute;left:16px;top:16px;font-weight:700;background:#06171Ecc;padding:5px 12px;border-radius:8px">Wei · Counsel</div></div>
       <div class="np" style="width:352px;bottom:92px"><h3>✦ Show captions in</h3>${list.map((l) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;font-size:16px;font-weight:${l === cur.code ? 800 : 500};background:${l === cur.code ? "#17807E" : "transparent"};color:${l === cur.code ? "#fff" : "#C9D8DC"}">${l}${l === cur.code ? "<span>✓</span>" : ""}</div>`).join("")}</div>
-      <div class="cap" style="opacity:1;left:24px;transform:none;width:856px;bottom:110px"><span class="av" style="background:#5E4B78;color:#fff">ZA</span><div style="flex:1"><b>Zara<span class="lang">English → ${cur.code}</span></b><div class="tx" dir="${cur.rtl ? "rtl" : "ltr"}" style="opacity:${ramp(t, cur.a + 0.15, cur.a + 0.5)};text-align:${cur.rtl ? "right" : "left"}">${typed(cur.text, k * 2.2)}</div><div class="tr" style="color:#9FB5BC;font-size:14px">${en}</div></div></div>
+      <div class="cap" style="opacity:1;left:24px;transform:none;width:856px;bottom:110px">${AV("zara")}<div style="flex:1"><b>Wei<span class="lang">English → ${cur.code}</span></b><div class="tx" dir="${cur.rtl ? "rtl" : "ltr"}" style="opacity:${ramp(t, cur.a + 0.15, cur.a + 0.5)};text-align:${cur.rtl ? "right" : "left"}">${typed(cur.text, k * 2.2)}</div><div class="tr" style="color:#9FB5BC;font-size:14px">${en}</div></div></div>
       <div class="bar"><span class="kc">${ic("mic")}</span><span class="kc">${ic("cam")}</span><span class="kc">${ic("share")}</span><span class="kc" style="background:#17807E;border-color:#17807E">${ic("cc")}</span><span class="kc">${ic("chat")}</span><span class="kc red">${ic("phone")}</span></div>`;
   } },
   // 5. To-Do and Planner: items struck through, the timeline clears.
@@ -277,7 +287,8 @@ window.seek = (name, t) => {
   const s = SCENES[name];
   const el = document.getElementById("stage");
   const f = Math.max(1 - ramp(t, 0, 0.35), ramp(t, s.dur - 0.35, s.dur));
-  el.innerHTML = `<div class="scene" style="display:block">${s.render(t)}</div><div class="fade" style="opacity:${f}"></div>`;
+  const light = name === "workspace" || name === "plan";
+  el.innerHTML = `<div class="scene" style="display:block">${s.render(t)}</div><div class="wm${light ? " light" : ""}"><img src="${light ? MARK : MARK}">✦ Made with Kayak AI</div><div class="fade" style="opacity:${f}"></div>`;
 };
 window.SCENES = Object.fromEntries(Object.entries(SCENES).map(([k, v]) => [k, v.dur]));
 </script></body></html>

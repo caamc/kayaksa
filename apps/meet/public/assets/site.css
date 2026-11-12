@@ -34,3 +34,22 @@ body.mk{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans)}
 @media (max-width:760px){.mk-nav nav a:not(.mk-btn){display:none}}
 .mk-hero h1,.mk-hero h2{color:#fff}
 .mk code{word-break:break-all;font-size:.88em}
+
+/* ===================== Liquid glass buttons (iOS-style): pill shape, frosted fill, specular rim ===================== */
+.mk-btn{position:relative;border-radius:999px;isolation:isolate;overflow:hidden;
+  -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  box-shadow:inset 0 1px 0 #ffffff8c,inset 0 -1px 0 #00000014,0 8px 24px -8px #0E2F3C59;
+  transition:transform .18s cubic-bezier(.2,.8,.2,1.2),box-shadow .2s,background .2s,filter .2s}
+.mk-btn::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,#ffffff59 0%,#ffffff14 46%,transparent 54%)}
+.mk-btn::after{content:"";position:absolute;top:-60%;left:-30%;width:40%;height:220%;transform:rotate(18deg);z-index:-1;pointer-events:none;
+  background:linear-gradient(90deg,transparent,#ffffff40,transparent);opacity:0;transition:left .6s ease,opacity .3s}
+.mk-btn:hover::after{left:110%;opacity:1}
+.mk-btn:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 #ffffffa6,inset 0 -1px 0 #00000014,0 14px 30px -8px #0E2F3C70}
+.mk-btn:active{transform:scale(.96)}
+.mk-btn.p{background:linear-gradient(180deg,#F5B04Aee,#EE9B1Eee);color:#0E2F3C;border:1px solid #ffffff73}
+.mk-btn.t{background:linear-gradient(180deg,#1FA3A0e6,#17807Ee6);color:#fff;border:1px solid #ffffff4d}
+.mk-btn.g{background:#ffffff1f;color:#fff;border:1px solid #ffffff4d}
+.mk-btn.g:hover{background:#ffffff2e}
+.mk-btn.o{background:#ffffffb3;color:var(--fg);border:1px solid #0E2F3C26}
+@media (prefers-reduced-motion:reduce){.mk-btn,.mk-btn::after{transition:none}}

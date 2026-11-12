@@ -122,3 +122,31 @@ body.mini .stage{padding:4px!important}
 /* Enable-sound recovery bar (shown only if the browser blocks audio autoplay) */
 .soundbar{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:60;display:inline-flex;align-items:center;gap:8px;border:0;background:var(--km-saffron);color:#0E2F3C;font:700 .95rem var(--sans);padding:10px 18px;border-radius:999px;cursor:pointer;box-shadow:0 8px 30px #0006}
 .soundbar .ico{width:18px;height:18px}
+
+/* ===================== Liquid glass (meeting room) ===================== */
+.kc{-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);
+  background:linear-gradient(180deg,#ffffff24,#ffffff0d)!important;border:1px solid #ffffff33!important;
+  box-shadow:inset 0 1px 0 #ffffff4d,0 10px 24px -10px #000c;transition:transform .16s cubic-bezier(.2,.8,.2,1.4),background .2s}
+.kc:hover{background:linear-gradient(180deg,#ffffff38,#ffffff14)!important}
+.kc:active{transform:scale(.9)}
+.kc.off{background:linear-gradient(180deg,#E3705Ae6,#C9533Ee6)!important;border-color:#ffffff40!important}
+.kc.on{background:linear-gradient(180deg,#1FA3A0e6,#17807Ee6)!important}
+.kc.end,.kc.danger,.kc.red{background:linear-gradient(180deg,#E3705A,#C9533E)!important}
+.kb{border-radius:999px;-webkit-backdrop-filter:blur(16px) saturate(170%);backdrop-filter:blur(16px) saturate(170%);
+  background:linear-gradient(180deg,#ffffff1f,#ffffff0a);border:1px solid #ffffff33;box-shadow:inset 0 1px 0 #ffffff40;transition:transform .16s}
+.kb:active{transform:scale(.96)}
+.kb.primary{background:linear-gradient(180deg,#6CC2BB,#5DB2AB);border-color:#ffffff59;box-shadow:inset 0 1px 0 #ffffff80,0 10px 24px -10px #5DB2ABcc}
+.kb.danger{background:linear-gradient(180deg,#E3705A,#C9533E)}
+.bar{-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.pill{border-radius:999px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.input{border-radius:12px}
+.pre-video,.tile{border-radius:18px;overflow:hidden}
+.menu{border-radius:16px;-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
+#side{border-radius:18px 0 0 18px}
+.kc.leave{background:linear-gradient(180deg,#E3705A,#C9533E)!important;border-color:#ffffff59!important}
+/* several screens presented at once */
+.screens-grid{display:grid;gap:8px;width:100%;height:100%;min-height:0;grid-template-columns:1fr 1fr;grid-auto-rows:1fr}
+.screens-grid[data-n="2"]{grid-template-rows:1fr}
+.screens-grid .tile{width:100%!important;height:100%;aspect-ratio:auto!important;min-height:0}
+.screens-grid .tile video{object-fit:contain;background:#000}
+.kc .badge{position:absolute;top:-4px;right:-4px}

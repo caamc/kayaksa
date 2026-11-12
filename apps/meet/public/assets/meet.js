@@ -39,7 +39,8 @@ if (location.search) history.replaceState(null, "", location.pathname); // keep 
 const S = {
   info: null, me: null, name: "", ws: null, ice: [], relay: false,
   local: null, micOn: true, camOn: true, screen: null, hand: false,
-  peers: new Map(), // id -> { info, pc, polite, makingOffer, ignoreOffer, streams:{cam,screen}, screenId, tile, screenTile, quality }
+  peers: new Map(), // id -> { info, pc, polite, makingOffer, ignoreOffer, streams:{cam,screens:{}}, screenIds:[], quality }
+  screens: [], // screens I am presenting (up to 4 across the whole room)
   room: {}, panel: null, unread: 0, lobby: [], chat: [], captions: [], transcript: [],
   layout: "auto", rec: null, cap: null, ended: false, leaving: false, stats: { rtt: [], loss: [] }, joinedAt: 0, retries: 0,
   capLang: (() => { try { const v = localStorage.getItem("km:caplang"); return v !== null ? v : localStorage.getItem("km:en") === "0" ? "" : "en"; } catch { return "en"; } })(),
@@ -89,7 +90,7 @@ function signInToJoin() {
 // and takes its commands from global shortcuts. Does nothing in a normal browser.
 const DESK = window.kayakDesktop || null;
 function deskState() {
-  DESK?.meeting({ inMeeting: !!S.me && !S.ended && !S.leaving, muted: !S.micOn, camera: S.camOn, sharing: !!S.screen, hand: S.hand, title: S.info?.title || "" });
+  DESK?.meeting({ inMeeting: !!S.me && !S.ended && !S.leaving, muted: !S.micOn, camera: S.camOn, sharing: S.screens.length > 0, hand: S.hand, title: S.info?.title || "" });
 }
 function desktopBridge() {
   if (!DESK) return;
@@ -235,6 +236,7 @@ function onMsg(m) {
     case "caption": translateCaption(m); S.captions.push(m); S.transcript.push(m); S.captions = S.captions.slice(-3); drawCaptions(); if (S.panel === "transcript") renderPanel(); setTimeout(() => { S.captions = S.captions.filter((x) => x !== m); drawCaptions(); }, 7000); return;
     case "lobby": { const n = m.list.length > S.lobby.length; S.lobby = m.list; if (n) { chime(); toast(`${m.list[m.list.length - 1].name} is waiting to join.`, "warn", 8000); } renderPanel(); badge(); return; }
     case "room": { const before = S.room; S.room = m.room; refreshRoom(before, m.by); return; }
+    case "screenFull": { const last = S.screens[S.screens.length - 1]; if (last) stopScreen(last.id); toast(`Up to ${MAX_SCREENS} screens can be shared at once.`, "warn"); return; }
     case "muteRequest": if (S.micOn) { setMic(false); toast(`${m.by} muted you. Unmute when you're ready to speak.`); } return;
     case "removed": S.ended = true; cleanup(); return fatal("The host removed you from this meeting.", "");
     case "denied": S.ended = true; cleanup(); return fatal("The host didn't admit you to this meeting.", "If you think this is a mistake, contact the host.");
@@ -254,18 +256,18 @@ function waitingRoom(m) {
 function addPeer(info) {
   if (S.peers.has(info.id) || info.id === S.me.id) return;
   const pc = new RTCPeerConnection({ iceServers: S.ice, bundlePolicy: "max-bundle" });
-  const x = { info, pc, polite: S.me.id > info.id, makingOffer: false, ignoreOffer: false, streams: {}, screenId: null, quality: "good" };
+  const x = { info, pc, polite: S.me.id > info.id, makingOffer: false, ignoreOffer: false, streams: { screens: {} }, screenIds: [], quality: "good" };
   S.peers.set(info.id, x);
   for (const t of S.local.getTracks()) pc.addTrack(t, S.local);
-  if (S.screen) for (const t of S.screen.getTracks()) pc.addTrack(t, S.screen);
+  for (const st of S.screens) for (const t of st.getTracks()) pc.addTrack(t, st);
   pc.onnegotiationneeded = async () => {
-    try { x.makingOffer = true; await pc.setLocalDescription(); send({ t: "signal", to: info.id, data: { sdp: pc.localDescription, screenId: S.screen?.id || null } }); }
+    try { x.makingOffer = true; await pc.setLocalDescription(); send({ t: "signal", to: info.id, data: { sdp: pc.localDescription, screenIds: myScreenIds() } }); }
     catch (e) { console.warn(e); } finally { x.makingOffer = false; }
   };
   pc.onicecandidate = ({ candidate }) => candidate && send({ t: "signal", to: info.id, data: { candidate } });
   pc.ontrack = ({ track, streams }) => {
     const st = streams[0] || new MediaStream([track]);
-    if (x.screenId && st.id === x.screenId) x.streams.screen = st; else if (!x.streams.cam || x.streams.cam.id === st.id) x.streams.cam = st; else x.streams.screen = st;
+    if (x.screenIds.includes(st.id)) x.streams.screens[st.id] = st; else if (!x.streams.cam || x.streams.cam.id === st.id) x.streams.cam = st; else x.streams.screens[st.id] = st;
     // Audio plays through a dedicated, always-present element, never the video tile, so it keeps
     // playing through every layout change (screen share, speaker view, camera off, phones).
     if (track.kind === "audio") playAudio(info.id, st);
@@ -286,17 +288,18 @@ async function onSignal(from, data) {
   if (!x) return;
   const pc = x.pc;
   try {
-    if (data.screenId !== undefined) x.screenId = data.screenId;
+    if (Array.isArray(data.screenIds)) x.screenIds = data.screenIds.slice(0, 4).map(String);
+    else if (data.screenId !== undefined) x.screenIds = data.screenId ? [String(data.screenId)] : []; // older clients
     if (data.sdp) {
       const collision = data.sdp.type === "offer" && (x.makingOffer || pc.signalingState !== "stable");
       x.ignoreOffer = !x.polite && collision;
       if (x.ignoreOffer) return;
       await pc.setRemoteDescription(data.sdp);
-      if (data.sdp.type === "offer") { await pc.setLocalDescription(); send({ t: "signal", to: from, data: { sdp: pc.localDescription, screenId: S.screen?.id || null } }); }
+      if (data.sdp.type === "offer") { await pc.setLocalDescription(); send({ t: "signal", to: from, data: { sdp: pc.localDescription, screenIds: myScreenIds() } }); }
       // A stream may have arrived before we knew it was a screen share.
-      if (x.screenId && x.streams.cam?.id === x.screenId) { x.streams.screen = x.streams.cam; x.streams.cam = null; }
-      if (!x.screenId && x.streams.screen) { x.streams.screen = null; }
+      reconcileScreens(x);
       render();
+    } else if (data.screenIds || data.screenId !== undefined) { reconcileScreens(x); render();
     } else if (data.candidate) {
       try { await pc.addIceCandidate(data.candidate); } catch (e) { if (!x.ignoreOffer) console.warn(e); }
     }
@@ -348,7 +351,7 @@ function tuneBitrate() {
   const scale = n <= 1 ? 1 : n <= 3 ? 1.5 : n <= 6 ? 2 : 3;
   for (const { pc } of S.peers.values()) for (const s of pc.getSenders()) {
     if (s.track?.kind !== "video") continue;
-    const isScreen = S.screen && s.track && S.screen.getTracks().includes(s.track);
+    const isScreen = !!s.track && isMyScreenTrack(s.track);
     const p = s.getParameters(); if (!p.encodings?.length) p.encodings = [{}];
     p.encodings[0].maxBitrate = (isScreen ? Math.max(kbps * 1.5, 1200) : kbps) * 1000;
     if (!isScreen) p.encodings[0].scaleResolutionDownBy = scale;
@@ -373,7 +376,7 @@ async function setCam(on) {
       const v = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 24 }, ...(S.devices.cam ? { deviceId: { exact: S.devices.cam } } : {}) } });
       t = v.getVideoTracks()[0]; S.local.addTrack(t);
       for (const { pc } of S.peers.values()) {
-        const s = pc.getSenders().find((x) => (x.track === null || x.track?.kind === "video") && !(S.screen && S.screen.getTracks().includes(x.track)) && x.__cam !== false);
+        const s = pc.getSenders().find((x) => (x.track === null || x.track?.kind === "video") && !isMyScreenTrack(x.track) && x.__cam !== false);
         if (s) await s.replaceTrack(t); else pc.addTrack(t, S.local);
       }
       tuneBitrate();
@@ -382,26 +385,57 @@ async function setCam(on) {
   send({ t: "state", cam: S.camOn });
   bar(); render();
 }
-async function toggleScreen() {
-  if (S.screen) return stopScreen();
-  try { S.screen = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 15 } }, audio: true }); }
-  catch { return; }
-  const vt = S.screen.getVideoTracks()[0];
-  if ("contentHint" in vt) vt.contentHint = "detail";
-  vt.onended = stopScreen;
-  for (const [id, { pc }] of S.peers) { send({ t: "signal", to: id, data: { screenId: S.screen.id } }); for (const t of S.screen.getTracks()) pc.addTrack(t, S.screen); }
-  send({ t: "state", screen: true });
-  tuneBitrate(); bar(); render();
+// ---------------------------------------------------------------- multi-screen share
+// Up to 4 screens at once across the whole room, from one person or several (a deck, a spreadsheet,
+// a contract and a dashboard side by side). The server enforces the limit too.
+const MAX_SCREENS = 4;
+const myScreenIds = () => S.screens.map((st) => st.id);
+const isMyScreenTrack = (t) => S.screens.some((st) => st.getTracks().includes(t));
+const othersScreens = () => [...S.peers.values()].reduce((a, x) => a + (Number(x.info.screen) || 0), 0);
+function reconcileScreens(x) {
+  if (x.streams.cam && x.screenIds.includes(x.streams.cam.id)) { x.streams.screens[x.streams.cam.id] = x.streams.cam; x.streams.cam = null; }
+  for (const id of Object.keys(x.streams.screens)) if (!x.screenIds.includes(id)) delete x.streams.screens[id];
 }
-function stopScreen() {
-  if (!S.screen) return;
-  const tracks = S.screen.getTracks();
+function announceScreens() {
+  for (const id of S.peers.keys()) send({ t: "signal", to: id, data: { screenIds: myScreenIds() } });
+  send({ t: "state", screen: S.screens.length });
+}
+// The Share button: start sharing, or (when already sharing) choose to add another screen or stop one.
+function toggleScreen(e) {
+  if (!S.screens.length) return addScreen();
+  const items = [];
+  if (S.screens.length + othersScreens() < MAX_SCREENS) items.push([`${ic("screen")} Share another screen (${S.screens.length + othersScreens()} of ${MAX_SCREENS})`, addScreen]);
+  S.screens.forEach((st, i) => items.push([`${ic("x")} Stop sharing ${esc(screenLabel(st, i))}`, () => stopScreen(st.id)]));
+  if (S.screens.length > 1) items.push([`${ic("x")} Stop all sharing`, stopAllScreens]);
+  const anchor = e?.currentTarget || $("#bscr") || $("#bmore");
+  if (anchor) menu(anchor, items); else stopAllScreens();
+}
+const screenLabel = (st, i) => (st.getVideoTracks()[0]?.label || `screen ${i + 1}`).replace(/^(screen|window|web-contents-media-stream):\S*/i, `screen ${i + 1}`).slice(0, 40);
+async function addScreen() {
+  if (S.screens.length + othersScreens() >= MAX_SCREENS) return toast(`Up to ${MAX_SCREENS} screens can be shared at once. Ask someone to stop sharing first.`, "warn");
+  let st;
+  try { st = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 15 } }, audio: S.screens.length === 0 }); }
+  catch { return; }
+  const vt = st.getVideoTracks()[0];
+  if (vt && "contentHint" in vt) vt.contentHint = "detail";
+  if (vt) vt.onended = () => stopScreen(st.id);
+  S.screens.push(st);
+  for (const { pc } of S.peers.values()) for (const t of st.getTracks()) pc.addTrack(t, st);
+  announceScreens();
+  tuneBitrate(); bar(); render();
+  if (S.screens.length > 1) toast(`You're presenting ${S.screens.length} screens. Everyone sees them side by side.`);
+}
+function stopScreen(id) {
+  const st = S.screens.find((x) => x.id === id);
+  if (!st) return;
+  const tracks = st.getTracks();
   tracks.forEach((t) => t.stop());
-  for (const [id, { pc }] of S.peers) { for (const s of pc.getSenders()) if (tracks.includes(s.track)) pc.removeTrack(s); send({ t: "signal", to: id, data: { screenId: null } }); }
-  S.screen = null;
-  send({ t: "state", screen: false });
+  for (const { pc } of S.peers.values()) for (const sd of pc.getSenders()) if (tracks.includes(sd.track)) pc.removeTrack(sd);
+  S.screens = S.screens.filter((x) => x !== st);
+  announceScreens();
   bar(); render();
 }
+function stopAllScreens() { for (const st of [...S.screens]) stopScreen(st.id); }
 function toggleHand() { S.hand = !S.hand; send({ t: "state", hand: S.hand }); bar(); render(); }
 
 // ---------------------------------------------------------------- room UI
@@ -433,7 +467,7 @@ function bar() {
   b.innerHTML = `
     <button class="kc ${S.micOn ? "" : "off"}" id="bmic" data-tip="${S.micOn ? "Mute" : "Unmute"} (Ctrl+D)" aria-label="${S.micOn ? "Mute" : "Unmute"}" aria-pressed="${!S.micOn}">${ic(S.micOn ? "mic" : "micOff")}</button>
     <button class="kc ${S.camOn ? "" : "off"}" id="bcam" data-tip="${S.camOn ? "Turn camera off" : "Turn camera on"} (Ctrl+E)" aria-label="Camera">${ic(S.camOn ? "cam" : "camOff")}</button>
-    <button class="kc ${S.screen ? "on" : ""} hide-sm" id="bscr" data-tip="${S.screen ? "Stop sharing" : "Share screen"}" aria-label="Share screen">${ic("screen")}</button>
+    <button class="kc ${S.screens.length ? "on" : ""} hide-sm" id="bscr" data-tip="${S.screens.length ? `Presenting ${S.screens.length} · share more or stop` : "Share screen"}" aria-label="Share screen">${ic("screen")}${S.screens.length > 1 ? `<span class="badge">${S.screens.length}</span>` : ""}</button>
     <button class="kc ${S.hand ? "on" : ""}" id="bhand" data-tip="${S.hand ? "Lower hand" : "Raise hand"}" aria-label="Raise hand">${ic("hand")}</button>
     <button class="kc" id="breact" data-tip="React" aria-label="React">${ic("smile")}</button>
     <span class="sep"></span>
@@ -456,7 +490,7 @@ function bar() {
     [`${ic("layout")} ${S.layout === "speaker" ? "Grid view" : "Speaker view"}`, () => { S.layout = S.layout === "speaker" ? "auto" : "speaker"; render(); }],
     [`${ic("cc")} Transcript`, () => panel("transcript")],
     [`${ic("globe")} Caption language: ${S.capLang ? langName(S.capLang) : "Off"}`, () => { if (S.panel !== "transcript") panel("transcript"); setTimeout(() => $("#ten")?.focus(), 50); }],
-    [`${ic("screen")} ${S.screen ? "Stop sharing" : "Share screen"}`, toggleScreen],
+    [`${ic("screen")} ${S.screens.length ? "Share another screen or stop" : "Share screen"}`, toggleScreen],
     ...(isHost() ? [
       [`${ic("micOff")} Mute everyone`, () => send({ t: "muteAll" })],
       [`${ic("lock")} ${S.room.locked ? "Unlock meeting" : "Lock meeting"}`, () => send({ t: "room", locked: !S.room.locked })],
@@ -512,8 +546,8 @@ function tileFor(key, { name, stream, me, screen, mic, cam, hand, quality }) {
   v.style.visibility = hasVideo ? "visible" : "hidden";
   t.querySelector(".av").hidden = !!hasVideo;
   t.querySelector(".av span").textContent = initials(name);
-  t.querySelector(".name b").textContent = screen ? `${name} is presenting` : name + (me ? " (you)" : "");
-  t.querySelector(".name").innerHTML = `${!screen && !mic ? ic("micOff") : ""}<b>${esc(screen ? `${name} is presenting` : name + (me ? " (you)" : ""))}</b>${quality && quality !== "good" ? `<span class="q ${quality}" title="Connection is ${quality}"><i></i><i></i><i></i></span>` : ""}`;
+  t.querySelector(".name b").textContent = screen ? (name.includes(" · screen ") ? name : `${name} is presenting`) : name + (me ? " (you)" : "");
+  t.querySelector(".name").innerHTML = `${!screen && !mic ? ic("micOff") : ""}<b>${esc(screen ? (name.includes(" · screen ") ? name : `${name} is presenting`) : name + (me ? " (you)" : ""))}</b>${quality && quality !== "good" ? `<span class="q ${quality}" title="Connection is ${quality}"><i></i><i></i><i></i></span>` : ""}`;
   t.querySelector(".flags").innerHTML = !screen && hand ? `<span class="hand" aria-label="Hand raised">✋</span>` : "";
   return t;
 }
@@ -522,19 +556,30 @@ function render() {
   const g = $("#grid"); if (!g) return;
   const tiles = [];
   const screens = [];
-  if (S.screen) screens.push(tileFor("me:screen", { name: S.name, stream: S.screen, me: true, screen: true }));
-  for (const [id, x] of S.peers) if (x.streams.screen && x.info.screen) screens.push(tileFor(id + ":screen", { name: x.info.name, stream: x.streams.screen, screen: true }));
+  S.screens.forEach((st, i) => screens.push(tileFor("me:screen:" + st.id, { name: S.name + (S.screens.length > 1 ? ` · screen ${i + 1}` : ""), stream: st, me: true, screen: true })));
+  for (const [id, x] of S.peers) {
+    if (!x.info.screen) continue;
+    const list = Object.values(x.streams.screens).filter((st) => st.getVideoTracks().some((t) => t.readyState === "live"));
+    list.forEach((st, i) => screens.push(tileFor(id + ":screen:" + st.id, { name: x.info.name + (list.length > 1 ? ` · screen ${i + 1}` : ""), stream: st, screen: true })));
+  }
   tiles.push(tileFor("me", { name: S.name, stream: S.local, me: true, mic: S.micOn, cam: S.camOn, hand: S.hand }));
   for (const [id, x] of S.peers) tiles.push(tileFor(id, { name: x.info.name, stream: x.streams.cam, mic: x.info.mic, cam: x.info.cam, hand: x.info.hand, quality: x.quality }));
   const keep = new Set([...tiles, ...screens]);
   $$(".tile").forEach((t) => !keep.has(t) && t.remove());
-  const spot = screens[0] || (S.layout === "speaker" && S.peers.size ? tiles.find((t) => t.dataset.k === S.loudest) || tiles[1] : null);
+  let spot = null;
+  if (screens.length > 1) {
+    let sg = $("#sgrid");
+    if (!sg) { sg = document.createElement("div"); sg.className = "screens-grid"; sg.id = "sgrid"; }
+    sg.dataset.n = Math.min(4, screens.length);
+    sg.replaceChildren(...screens.slice(0, 4));
+    spot = sg;
+  } else spot = screens[0] || (S.layout === "speaker" && S.peers.size ? tiles.find((t) => t.dataset.k === S.loudest) || tiles[1] : null);
   g.classList.toggle("spot", !!spot);
   if (spot) {
     let strip = $("#strip");
     if (!strip) { strip = document.createElement("div"); strip.className = "strip"; strip.id = "strip"; }
     g.replaceChildren(spot, strip);
-    strip.replaceChildren(...[...screens, ...tiles].filter((t) => t !== spot));
+    strip.replaceChildren(...[...(screens.length > 1 ? [] : screens), ...tiles].filter((t) => t !== spot));
     spot.style.width = ""; spot.style.aspectRatio = "auto";
   } else {
     g.replaceChildren(...tiles);
@@ -715,8 +760,8 @@ async function startRecording() {
     const added = new Set();
     const rec = { id: r.id, part: 1, size: 0, queue: [], buf: [], bufSize: 0, tiles: () => [], ac, dest,
       addStream(st) { const t = st?.getAudioTracks()[0]; if (!t || added.has(t.id)) return; added.add(t.id); try { ac.createMediaStreamSource(new MediaStream([t])).connect(dest); } catch {} } };
-    rec.addStream(S.local); if (S.screen) rec.addStream(S.screen);
-    for (const x of S.peers.values()) { rec.addStream(x.streams.cam); rec.addStream(x.streams.screen); }
+    rec.addStream(S.local); for (const st of S.screens) rec.addStream(st);
+    for (const x of S.peers.values()) { rec.addStream(x.streams.cam); for (const st of Object.values(x.streams.screens)) rec.addStream(st); }
     const logo = new Image(); logo.src = "/_shared/logos/MeetByKayak_Logo_Reversed.svg";
     const draw = () => {
       g.fillStyle = "#06171E"; g.fillRect(0, 0, W, H);
@@ -799,7 +844,7 @@ function cleanup() {
   stopCaptions();
   for (const id of [...S.peers.keys()]) dropPeer(id);
   S.local?.getTracks().forEach((t) => t.stop());
-  S.screen?.getTracks().forEach((t) => t.stop());
+  S.screens.forEach((st) => st.getTracks().forEach((t) => t.stop()));
   $(".menu")?.remove();
 }
 
