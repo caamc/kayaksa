@@ -19,42 +19,67 @@ const date = (v: any) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || "")) ? String(v
 const JOURNEYS: Record<string, [string, number][]> = {
   "ISO/IEC 27001:2022": [["Scope and gap assessment", 21], ["Risk assessment and Statement of Applicability", 30], ["Policies and controls in place", 60], ["Internal audit", 14], ["Management review", 7], ["Stage 1 audit", 14], ["Stage 2 audit and certification", 21]],
   "ISO 9001:2015": [["Process mapping and gap assessment", 14], ["Quality manual and procedures", 30], ["Run the system and keep records", 45], ["Internal audit and management review", 14], ["Certification audit", 21]],
-  "ISO/IEC 27701:2019": [["Privacy gap assessment (after 27001)", 14], ["Records of processing and privacy controls", 45], ["Internal audit", 10], ["Extension audit", 21]],
-  "SOC 2 Type I": [["Readiness assessment", 30], ["Remediation", 45], ["Select a CPA firm", 14], ["Type I examination", 30]],
+  "ISO/IEC 27701:2025": [["Privacy gap assessment", 14], ["Records of processing and privacy controls", 45], ["Internal audit", 10], ["Certification audit (with 27001)", 21]],
+  "ISO/IEC 42001:2023": [["AI system inventory and impact assessment", 21], ["AI policy, roles and controls", 45], ["Internal audit", 10], ["Certification audit", 21]],
+  "ISO 22301:2019": [["Business impact analysis", 21], ["Continuity plans and recovery tests", 45], ["Exercise and internal audit", 14], ["Certification audit", 21]],
+  "ISO 37301:2021": [["Compliance obligations register", 21], ["Policies, whistleblowing and training", 45], ["Internal audit", 10], ["Certification audit", 21]],
+  "SOC 2 Type I": [["Readiness assessment", 30], ["Remediation", 45], ["Select a licensed CPA firm", 14], ["Type I examination", 30]],
   "SOC 2 Type II": [["Observation window", 180], ["Type II examination", 45]],
+  "SOC 1 Type II (only if clients rely on it for financial reporting)": [["Confirm client need", 14], ["Control objectives and readiness", 45], ["Observation window", 180], ["Type II examination", 45]],
+  "PCI DSS v4.0.1 SAQ A (Razorpay hosted checkout)": [["Confirm card data never touches Kayak servers", 7], ["Complete SAQ A and quarterly checks", 14], ["Attestation of Compliance to Razorpay", 7]],
   "VAPT by a CERT-In empanelled auditor": [["Scope and rules of engagement", 5], ["Testing", 15], ["Remediation", 15], ["Re-test and certificate", 7]],
   "DPDP Act readiness assessment": [["Data map", 21], ["Notices and consent flows", 21], ["Security safeguards and breach response", 30], ["Independent review", 14]],
-  "DPIIT Startup India recognition": [["Prepare documents", 7], ["Apply and respond to queries", 21]],
+  "UAE PDPL readiness (Federal Decree-Law 45 of 2021)": [["Data map for UAE users", 14], ["Notices, consent and transfer safeguards", 21], ["Independent review", 14]],
+  "DPIIT Startup India recognition": [["Prepare documents and innovation write-up", 7], ["Apply on the Startup India portal", 3], ["Respond to queries", 21]],
+  "Convert OPC to private limited (for DPIIT)": [["Board and shareholder approvals", 14], ["Add a second director and member", 14], ["File INC-6 with the ROC", 7], ["Fresh certificate of incorporation", 21]],
+  "Register the partnership firm (for DPIIT)": [["Form 1 to the Registrar of Firms, Maharashtra", 7], ["Registrar's acknowledgement", 30]],
   "Trade mark registration": [["Clearance search", 7], ["File application", 7], ["Examination and reply", 180], ["Publication and opposition window", 120], ["Registration", 60]],
   "eSign Service Provider empanelment (CCA)": [["Eligibility and gap assessment", 30], ["Infrastructure and audit readiness", 120], ["Application to the CCA", 30], ["Audit and empanelment", 120]],
+  "Udyam (MSME) registration": [["File on the Udyam portal", 1]],
 };
+// The certification and registration roadmap. Topped up, never overwritten: anything already
+// tracked keeps its own dates and progress.
 const SEED_CERTS: [string, string, string, number, number][] = [
   // entity, standard, body, start offset (days), estimated cost (INR, planning estimate)
-  ["Kayak Strategic Advisors", "ISO/IEC 27001:2022", "Accredited certification body (to be selected)", 0, 350000],
-  ["Kayak Strategic Advisors", "ISO 9001:2015", "Accredited certification body (to be selected)", 60, 150000],
   ["Kayak Strategic Advisors", "DPDP Act readiness assessment", "Independent reviewer", 0, 100000],
-  ["Kayak Strategic Advisors", "ISO/IEC 27701:2019", "Accredited certification body (to be selected)", 180, 200000],
-  ["Kayak Innovations", "DPIIT Startup India recognition", "DPIIT", 0, 0],
+  ["Kayak Strategic Advisors", "ISO/IEC 27001:2022", "Accredited certification body (to be selected)", 0, 350000],
+  ["Kayak Strategic Advisors", "ISO/IEC 27701:2025", "Accredited certification body (to be selected)", 120, 200000],
+  ["Kayak Strategic Advisors", "ISO 9001:2015", "Accredited certification body (to be selected)", 60, 150000],
+  ["Kayak Strategic Advisors", "ISO/IEC 42001:2023", "Accredited certification body (to be selected)", 180, 250000],
+  ["Kayak Strategic Advisors", "ISO 22301:2019", "Accredited certification body (to be selected)", 240, 200000],
+  ["Kayak Strategic Advisors", "VAPT by a CERT-In empanelled auditor", "CERT-In empanelled auditor", 14, 250000],
+  ["Kayak Strategic Advisors", "PCI DSS v4.0.1 SAQ A (Razorpay hosted checkout)", "Self-assessment, shared with Razorpay", 0, 0],
+  ["Kayak Strategic Advisors", "DPIIT Startup India recognition", "DPIIT", 0, 0],
+  ["Kayak Strategic Advisors", "Udyam (MSME) registration", "Ministry of MSME", 0, 0],
+  ["Kayak Innovations", "Convert OPC to private limited (for DPIIT)", "Registrar of Companies", 0, 25000],
+  ["Kayak Innovations", "DPIIT Startup India recognition", "DPIIT", 60, 0],
   ["Kayak Innovations", "Trade mark registration", "Trade Marks Registry", 0, 60000],
+  ["Kayak Technology Solutions", "Register the partnership firm (for DPIIT)", "Registrar of Firms, Maharashtra", 0, 5000],
+  ["Kayak Technology Solutions", "DPIIT Startup India recognition", "DPIIT", 40, 0],
+  ["Kayak Technology Solutions", "SOC 2 Type I", "Licensed CPA firm", 60, 800000],
+  ["Kayak Technology Solutions", "SOC 2 Type II", "Licensed CPA firm", 180, 1200000],
+  ["Kayak Technology Solutions", "SOC 1 Type II (only if clients rely on it for financial reporting)", "Licensed CPA firm", 270, 900000],
   ["NexaPair", "VAPT by a CERT-In empanelled auditor", "CERT-In empanelled auditor", 0, 150000],
-  ["NexaPair", "SOC 2 Type I", "Licensed CPA firm", 30, 800000],
-  ["NexaPair", "SOC 2 Type II", "Licensed CPA firm", 150, 1200000],
+  ["NexaPair", "UAE PDPL readiness (Federal Decree-Law 45 of 2021)", "Independent reviewer", 30, 100000],
   ["SayUsNow", "VAPT by a CERT-In empanelled auditor", "CERT-In empanelled auditor", 30, 150000],
-  ["SayUsNow", "ISO/IEC 27001:2022", "Accredited certification body (to be selected)", 90, 300000],
+  ["SayUsNow", "ISO 37301:2021", "Accredited certification body (to be selected)", 210, 200000],
   ["DocuVow", "eSign Service Provider empanelment (CCA)", "Controller of Certifying Authorities", 60, 0],
 ];
 async function seedCerts(db: D1Database) {
-  const has = await db.prepare("SELECT COUNT(*) n FROM certifications").first<any>();
-  if (has?.n) return;
+  // ISO/IEC 27701:2025 replaced the 2019 edition (published October 2025; 2019 certificates end October 2028).
+  await db.prepare("UPDATE certifications SET standard = 'ISO/IEC 27701:2025' WHERE standard = 'ISO/IEC 27701:2019' AND status = 'planned'").run().catch(() => {});
+  const { results: have } = await db.prepare("SELECT entity, standard FROM certifications").all<any>();
+  const seen = new Set(have.map((r: any) => `${r.entity}|${r.standard}`));
   const stmts: D1PreparedStatement[] = [];
   for (const [entity, standard, body, off, cost] of SEED_CERTS) {
+    if (seen.has(`${entity}|${standard}`)) continue;
     const id = uid(), start = addDays(new Date(), off);
     let d = start;
     const steps = JOURNEYS[standard] || [];
     steps.forEach(([t, days], i) => { d = addDays(d, days); stmts.push(db.prepare("INSERT INTO cert_steps (cert_id, ord, title, days, owner, due_date) VALUES (?,?,?,?,?,?)").bind(id, i, t, days, "Anuj", d)); });
     stmts.push(db.prepare("INSERT INTO certifications (id, entity, standard, body, status, owner, start_date, target_date, cost_est, notes, created_at, updated_at) VALUES (?,?,?,?, 'planned', 'Anuj', ?, ?, ?, ?, ?, ?)").bind(id, entity, standard, body, start, d, cost, "Suggested plan and planning estimate. Confirm dates and quotes before relying on them.", now(), now()));
   }
-  await db.batch(stmts);
+  if (stmts.length) await db.batch(stmts);
 }
 ops.get("/certs", async (c) => {
   await seedCerts(c.env.DB);
