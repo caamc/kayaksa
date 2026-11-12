@@ -207,8 +207,8 @@ ai.post("/card-fields", async (c) => {
   try {
     const fields = await completeJson<any>(c.env, provider, {
       system: `Extract business card details from the request. Answer with JSON only, in this shape:
-{"name":"","title":"","department":"","phones":["+91 98765 43210"],"email":"","website":"www.kayaksa.com","company":"ksa|group|innovations|technology","address":"","locations":"","note":""}
-Rules: keep the person's exact spelling; format Indian mobile numbers as "+91 XXXXX XXXXX"; "company" is "group" when the card should show all Kayak companies, "innovations" for Kayak Innovations, "technology" for Kayak Technology Solutions, otherwise "ksa"; leave fields empty when not given; never invent details. Put anything you could not place in "note".`,
+{"name":"","title":"","department":"","phones":["+91 98765 43210"],"whatsapp":"","linkedin":"","email":"","website":"www.kayaksa.com","company":"ksa|group|innovations|technology","address":"","locations":"","note":""}
+Rules: keep the person's exact spelling; format Indian mobile numbers as "+91 XXXXX XXXXX"; "whatsapp" is the number to show beside the WhatsApp icon (only when the request says WhatsApp); "linkedin" is the full LinkedIn profile or company link, exactly as given; "company" is "group" when the card should show all Kayak companies, "innovations" for Kayak Innovations, "technology" for Kayak Technology Solutions, otherwise "ksa"; leave fields empty when not given; never invent details. Put anything you could not place in "note".`,
       messages: [{ role: "user", content: prompt }],
       maxTokens: 600,
       temperature: 0,
