@@ -946,3 +946,4 @@ main:focus{outline:none}
 .cv-drop .cv-n{color:var(--water);font-weight:700;overflow-wrap:anywhere}
 .cv-drop:focus-within{outline:3px solid rgba(23,128,126,.35);outline-offset:2px}
 .cv-drop{position:relative}
+.job-link{color:inherit;text-decoration:none}.job-link:hover{color:var(--water);text-decoration:underline}

@@ -4,6 +4,8 @@ import type { MailEnv } from "../../../packages/core/src/mail";
 export interface Env extends AiEnv, MailEnv {
   DB: D1Database; // kayaksa-www: articles, enquiries, subscribers, SeeCounter cases, statistics
   ASSETS: Fetcher;
+  GOOGLE_SITE_VERIFICATION?: string; // Search Console HTML-tag code (public)
+  BING_SITE_VERIFICATION?: string; // Bing Webmaster Tools code (public)
   CV?: R2Bucket; // kayaksa-careers: résumés attached to applications (private)
   SITE_URL: string; // https://www.kayaksa.com
   ENQUIRY_TO?: string; // where new enquiries are emailed (needs RESEND_API_KEY)

@@ -139,6 +139,8 @@ jobs:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION || secrets.GOOGLE_SITE_VERIFICATION }}
+          BING_SITE_VERIFICATION: ${{ vars.BING_SITE_VERIFICATION || secrets.BING_SITE_VERIFICATION }}
           CONTACT_PHONE: ${{ secrets.CONTACT_PHONE }}
         run: |
           set -eo pipefail
@@ -159,7 +161,7 @@ jobs:
           PREVIEW=$(grep -o 'https://kayaksa-www[^ ]*workers.dev' /tmp/d.log | head -1 || true)
           [ -n "$PREVIEW" ] && echo "Preview: $PREVIEW" >> "$GITHUB_STEP_SUMMARY" && echo "$PREVIEW" > /tmp/www-preview
           have=$(npx wrangler secret list --name kayaksa-www --format json 2>/dev/null | jq -r '.[].name' || true)
-          node scripts/secrets.mjs ANTHROPIC_API_KEY OPENAI_API_KEY XAI_API_KEY GEMINI_API_KEY RESEND_API_KEY CONTACT_PHONE > /tmp/s.json
+          node scripts/secrets.mjs ANTHROPIC_API_KEY OPENAI_API_KEY XAI_API_KEY GEMINI_API_KEY RESEND_API_KEY CONTACT_PHONE GOOGLE_SITE_VERIFICATION BING_SITE_VERIFICATION > /tmp/s.json
           echo "$have" | grep -qx STATS_SALT || node -e 'const f="/tmp/s.json";const j=JSON.parse(require("fs").readFileSync(f));j.STATS_SALT=require("crypto").randomBytes(24).toString("base64url");require("fs").writeFileSync(f,JSON.stringify(j))'
           npx wrangler secret bulk /tmp/s.json --name kayaksa-www; rm -f /tmp/s.json
           echo "### www.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
@@ -321,3 +323,12 @@ jobs:
           case ",${{ steps.apps.outputs.list }}," in *",internal,"*) curl -fsS https://internal.kayaksa.com/healthz && echo;; esac
           case ",${{ steps.apps.outputs.list }}," in *",toolbar,"*) curl -fsS https://toolbar.kayaksa.com/healthz && echo && NO_BROWSER=1 node scripts/check-toolbar.mjs https://toolbar.kayaksa.com || echo "toolbar.kayaksa.com is not answering yet (new address; give DNS a few minutes)";; esac
           case ",${{ steps.apps.outputs.list }}," in *",meet,"*) curl -fsS https://meet.kayaksa.com/healthz && echo || echo "meet.kayaksa.com is not answering yet (new address; give DNS a few minutes)";; esac
+
+      - name: Tell search engines about new and changed pages (IndexNow)
+        continue-on-error: true
+        run: |
+          H=""
+          case ",${{ steps.apps.outputs.list }}," in *",www,"*) H="$H www.kayaksa.com";; esac
+          case ",${{ steps.apps.outputs.list }}," in *",learn,"*) H="$H learn.kayaksa.com";; esac
+          case ",${{ steps.apps.outputs.list }}," in *",meet,"*) H="$H meet.kayaksa.com";; esac
+          [ -n "$H" ] && node scripts/indexnow.mjs $H | tee -a "$GITHUB_STEP_SUMMARY" || true

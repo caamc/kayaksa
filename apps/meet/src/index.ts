@@ -21,14 +21,14 @@ const ROOM_RE = /^[a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{3}$/;
 
 app.get("/healthz", (c) => c.json({ ok: true, site: "meet" }));
 // Public pages (product, download, sign-in) may be indexed; everything else stays out of search engines.
-const PUBLIC_PAGES = new Set(["/", "/download"]);
+const PUBLIC_PAGES = new Set(["/", "/download", "/robots.txt", "/sitemap.xml"]);
 app.use("*", async (c, next) => { await next(); if (!PUBLIC_PAGES.has(c.req.path) && c.res.status !== 101) { c.res = new Response(c.res.body, c.res); c.res.headers.set("X-Robots-Tag", "noindex, nofollow"); } });
 // 'wasm-unsafe-eval' lets the self-hosted MediaPipe model (backgrounds) compile its WebAssembly;
 // it does not allow eval() of JavaScript.
 app.use("*", securityHeaders({ noindex: false, script: ["'wasm-unsafe-eval'"], permissions: "camera=(self), microphone=(self), display-capture=(self), autoplay=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
 // A client office or a Kayak floor shares one address: chat refreshes every 4 s and live captions
 // post every few seconds per person, so Meet allows far more per address than the brochure sites.
-app.use("*", shield("meet", (e) => e.DB, { allowGoodBots: false, burstLimit: 1500 }));
+app.use("*", shield("meet", (e) => e.DB, { allowGoodBots: false, burstLimit: 1500, botPaths: (p) => p === "/" || p === "/download" || p === "/sitemap.xml" || p.startsWith("/assets/") || p.startsWith("/_shared/") || /^\/[0-9a-f]{32}\.txt$/.test(p) }));
 app.use("/api/*", sameOrigin());
 
 // ---------------------------------------------------------------- access
@@ -390,6 +390,11 @@ app.get("/download/:os/:file", async (c) => {
 });
 
 // ---------------------------------------------------------------- accounts and workspace
+// Search engines: only the product page and the download page are public; everything else is the app.
+const indexNowKey = async (host: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("indexnow:" + host)))].slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
+app.get("/robots.txt", (c) => c.text(`User-agent: *\nAllow: /$\nAllow: /download\nAllow: /assets/\nAllow: /_shared/\nDisallow: /\n\nSitemap: https://meet.kayaksa.com/sitemap.xml\n`, 200, { "Cache-Control": "public, max-age=3600" }));
+app.get("/sitemap.xml", (c) => c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"><url><loc>https://meet.kayaksa.com/</loc><lastmod>2026-11-12</lastmod>${["reveal", "meeting", "notes", "workspace", "languages", "plan"].map((k) => `<video:video><video:thumbnail_loc>https://meet.kayaksa.com/assets/video/${k}-poster.jpg</video:thumbnail_loc><video:title>Meet by Kayak: ${k === "reveal" ? "brand film" : k}</video:title><video:description>Meet by Kayak product film (${k}).</video:description><video:content_loc>https://meet.kayaksa.com/assets/video/${k}.mp4</video:content_loc></video:video>`).join("")}</url><url><loc>https://meet.kayaksa.com/download</loc><lastmod>2026-11-12</lastmod></url></urlset>`, 200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" }));
+app.get("/:file{[0-9a-f]+\\.txt}", async (c) => (c.req.param("file") === `${await indexNowKey(new URL(c.req.url).hostname)}.txt` ? c.text(await indexNowKey(new URL(c.req.url).hostname)) : c.notFound()));
 app.route("/", auth);
 app.route("/api/ws/calendar", calApi);
 app.route("/calendar", calPages);

@@ -95,17 +95,61 @@ async function siteData(c: any) {
   return data;
 }
 
+// ------------------------------------------------------------------ structured data (schema.org)
+const BASE = "https://www.kayaksa.com";
+const ORG_ID = `${BASE}/#org`, SITE_ID = `${BASE}/#website`;
+function orgNode(data: any) {
+  return {
+    "@type": ["Organization", "ProfessionalService"], "@id": ORG_ID, name: "Kayak Strategic Advisors Private Limited", alternateName: ["Kayak Strategic Advisors", "KSA", "Kayak"],
+    url: `${BASE}/`, email: "enquiries@kayaksa.com", logo: { "@type": "ImageObject", url: `${BASE}/assets/apple-touch-icon.png`, width: 180, height: 180 }, image: `${BASE}/assets/og.png`,
+    description: "Independent, senior-led advisory firm in Mumbai and Thane: strategy and deals, tax, legal and regulatory, crisis and resilience, technology and AI, managed services and an International Desk.",
+    address: { "@type": "PostalAddress", streetAddress: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road", addressLocality: "Mumbai", postalCode: "400013", addressRegion: "Maharashtra", addressCountry: "IN" },
+    areaServed: [{ "@type": "Country", name: "India" }, "Worldwide"], slogan: "Clear advice for consequential decisions", knowsAbout: data.clusters.map((c: any) => c.name),
+    contactPoint: [{ "@type": "ContactPoint", contactType: "sales", email: "enquiries@kayaksa.com", areaServed: "IN", availableLanguage: ["en", "hi", "mr"] }, { "@type": "ContactPoint", contactType: "careers", email: "careers@kayaksa.com" }],
+    ...(data.flags?.leadership ? { founder: { "@type": "Person", name: "Anuj Matushankar Choudhary" } } : {}),
+    subOrganization: [{ "@type": "Organization", name: "Kayak Learn", url: "https://learn.kayaksa.com/" }],
+    hasOfferCatalog: { "@type": "OfferCatalog", name: "Advisory services", itemListElement: data.clusters.map((c: any) => ({ "@type": "OfferCatalog", name: c.name, url: `${BASE}/services/${c.id}` })) },
+  };
+}
+const siteNode = () => ({ "@type": "WebSite", "@id": SITE_ID, url: `${BASE}/`, name: "Kayak Strategic Advisors", inLanguage: "en-IN", publisher: { "@id": ORG_ID } });
+function crumbs(list: [string, string][]) {
+  return { "@type": "BreadcrumbList", itemListElement: [["Home", "/"], ...list].map(([name, path], i) => ({ "@type": "ListItem", position: i + 1, name, item: `${BASE}${path}` })) };
+}
+/** Everything a page says about itself, as one graph linked to the organisation and the site. */
+function graph(data: any, meta: PageMeta, canonical: string) {
+  const nodes: any[] = [orgNode(data), siteNode()];
+  const pageNode: any = { "@type": meta.pageType || "WebPage", "@id": `${canonical}#page`, url: canonical, name: meta.title, description: meta.desc, isPartOf: { "@id": SITE_ID }, about: { "@id": ORG_ID }, inLanguage: "en-IN", primaryImageOfPage: `${BASE}/assets/og.png` };
+  if (meta.crumbs?.length) { const b = { ...crumbs(meta.crumbs), "@id": `${canonical}#breadcrumb` }; nodes.push(b); pageNode.breadcrumb = { "@id": b["@id"] }; }
+  nodes.push(pageNode);
+  for (const x of [meta.ld].flat().filter(Boolean)) { const { "@context": _c, ...rest } = x as any; nodes.push({ ...rest, mainEntityOfPage: { "@id": `${canonical}#page` } }); }
+  return { "@context": "https://schema.org", "@graph": nodes };
+}
+function jobPosting(j: any, data: any) {
+  const C = data.clusters.find((x: any) => x.id === j.cluster);
+  const months = (Number(String(j.experience).match(/\d+/)?.[0]) || 0) * 12;
+  const html = `<p>${esc(j.summary)}</p><p>${esc(j.about)}</p><h3>What you will do</h3><ul>${j.do.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h3>What you will bring</h3><ul>${j.must.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h3>Good to have</h3><ul>${j.nice.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><p>${esc(data.careers.eeo || "")}</p>`;
+  return {
+    "@type": "JobPosting", title: j.title, description: html, datePosted: j.posted, validThrough: `${j.validThrough}T23:59:59+05:30`, employmentType: "FULL_TIME",
+    hiringOrganization: { "@type": "Organization", name: "Kayak Strategic Advisors Private Limited", sameAs: `${BASE}/`, logo: `${BASE}/assets/apple-touch-icon.png` },
+    jobLocation: [{ "@type": "Place", address: { "@type": "PostalAddress", streetAddress: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road", addressLocality: "Mumbai", addressRegion: "Maharashtra", postalCode: "400013", addressCountry: "IN" } }, { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: "Thane", addressRegion: "Maharashtra", addressCountry: "IN" } }],
+    identifier: { "@type": "PropertyValue", name: "Kayak Strategic Advisors", value: j.id }, directApply: true, industry: "Professional services, management consulting", occupationalCategory: C?.name || "",
+    experienceRequirements: { "@type": "OccupationalExperienceRequirements", monthsOfExperience: months },
+    educationRequirements: { "@type": "EducationalOccupationalCredential", credentialCategory: "professional certificate", name: j.qualification },
+    qualifications: j.must.join(" "), responsibilities: j.do.join(" "), skills: j.nice.join(" "),
+  };
+}
+
 // ------------------------------------------------------------------ server rendering
-interface PageMeta { status: number; title: string; desc: string; ssr: string; ld?: object; type?: string }
+interface PageMeta { status: number; title: string; desc: string; ssr: string; ld?: object | object[]; type?: string; crumbs?: [string, string][]; pageType?: string; image?: string }
 const STATIC_PAGES: Record<string, [string, string]> = {
-  services: ["Services", "Six service clusters led by one partner: strategy and deals, tax and regulation, crisis and resilience, technology and AI, managed services and the International Desk."],
-  industries: ["Industries", "Wide industry and sector exposure, from financial services and healthcare to manufacturing, infrastructure, consumer and technology."],
-  insights: ["Confluence insights", "Confluence, the Kayak monthly on strategy, risk and the decisions between them."],
+  services: ["Advisory services: strategy, deals, tax, risk and technology", "Advisory services from Kayak Strategic Advisors, Mumbai: strategy and deals, tax, legal and regulatory, crisis and resilience, technology and AI, managed services and the International Desk, each led by one partner."],
+  industries: ["Industries we advise", "Advisory experience across financial services, healthcare and pharma, manufacturing, infrastructure, consumer, technology and the public sector in India."],
+  insights: ["Insights: Confluence, the Kayak monthly", "Confluence, the Kayak monthly on strategy, risk and regulation in India: analysis of new laws, deals, enforcement and technology, with scenarios for boards and promoters."],
   about: ["About us", "Kayak Strategic Advisors: independent, senior-led advisory from Mumbai and Thane. Our values, promises and standards."],
-  careers: ["Careers", "Open roles at Kayak Strategic Advisors: Senior Manager - Tax, Legal & Regulatory Services, and Manager - Crisis, Risk & Resilience Services. Mumbai and Thane."],
+  careers: ["Careers: advisory jobs in Mumbai", "Open roles at Kayak Strategic Advisors: Senior Manager - Tax, Legal & Regulatory Services, and Manager - Crisis, Risk & Resilience Services. Mumbai and Thane."],
   contact: ["Contact us", "Start a confidential conversation with Kayak Strategic Advisors. A senior member of the team replies within one working day."],
   legal: ["Privacy and terms", "How Kayak Strategic Advisors handles personal data, measures this site without cookies, and the terms of use."],
-  solutions: ["Kayak Solutions", "Thought, Designed and Developed in India for the World: SayUsNow, SeeCounter, NexaPair and DocuVow, platforms born of Kayak's advisory practice."],
+  solutions: ["Kayak Solutions: governance, risk and compliance software", "Thought, Designed and Developed in India for the World: SayUsNow, SeeCounter, NexaPair and DocuVow, platforms born of Kayak's advisory practice."],
 };
 
 function render(path: string, data: any): PageMeta {
@@ -118,32 +162,42 @@ function render(path: string, data: any): PageMeta {
     return {
       status: 200, title: "Kayak Strategic Advisors", desc: "Clear, evidence-led advice on strategy, deals, regulation, risk and technology for India's boards, promoters and investors. Mumbai and Thane.",
       ssr: `<h1>Kayak Strategic Advisors</h1><p>Clear, evidence-led advice on strategy, deals, regulation, risk and technology for India's boards, promoters and investors.</p><h2>Services</h2><ul>${data.clusters.map((c: any) => `<li><a href="/services/${c.id}">${esc(c.name)}</a></li>`).join("")}</ul><h2>Kayak Solutions</h2><p>Thought, Designed and Developed in India for the World.</p><ul>${data.tools.map((t: any) => `<li><a href="/solutions/${t.id}">${esc(t.name)}</a>: ${esc(t.kind)}</li>`).join("")}</ul><h2>Confluence</h2><ul>${data.articles.slice(0, 8).map((a: any) => `<li><a href="/insights/${a.id}">${esc(a.title)}</a></li>`).join("")}</ul><p><a href="/contact">Contact us</a></p>`,
-      ld: { "@context": "https://schema.org", "@type": "ProfessionalService", name: "Kayak Strategic Advisors Private Limited", url: "https://www.kayaksa.com/", email: "enquiries@kayaksa.com", logo: "https://www.kayaksa.com/assets/kayak-logo.svg", address: { "@type": "PostalAddress", streetAddress: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road", addressLocality: "Mumbai", postalCode: "400013", addressRegion: "Maharashtra", addressCountry: "IN" }, areaServed: "IN", ...(data.flags?.leadership ? { founder: { "@type": "Person", name: "Anuj Matushankar Choudhary" } } : {}), slogan: "Clear advice for consequential decisions", knowsAbout: data.clusters.map((c: any) => c.name), sameAs: [] },
+      ld: { "@type": "ItemList", name: "Kayak Strategic Advisors services", itemListElement: data.clusters.map((c: any, n: number) => ({ "@type": "ListItem", position: n + 1, name: c.name, url: `${BASE}/services/${c.id}` })) },
     };
   }
   if ((m = p.match(/^\/services\/([\w-]+)$/)) && C(m[1])) {
     const c = C(m[1]);
     return { status: 200, title: c.name, desc: (c.line || c.intro || "").slice(0, 300), ssr: `<h1>${esc(c.name)}</h1><p>${esc(c.intro || c.line || "")}</p><h2>Services</h2><ul>${SV.filter((v) => v.cluster === c.id).map((v) => `<li><a href="/services/${c.id}/${v.slug}">${esc(v.name)}</a>: ${esc(v.summary)}</li>`).join("")}</ul><p><a href="/contact">Talk to us about ${esc(c.name)}</a></p>`,
-      ld: { "@context": "https://schema.org", "@type": "Service", name: c.name, provider: { "@type": "Organization", name: "Kayak Strategic Advisors" }, areaServed: "IN", description: c.intro || c.line } };
+      crumbs: [["Services", "/services"], [c.name, `/services/${c.id}`]],
+      ld: { "@type": "Service", name: c.name, serviceType: c.name, provider: { "@id": ORG_ID }, areaServed: { "@type": "Country", name: "India" }, description: c.intro || c.line, url: `${BASE}/services/${c.id}`,
+        hasOfferCatalog: { "@type": "OfferCatalog", name: c.name, itemListElement: SV.filter((v) => v.cluster === c.id).map((v) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: v.name, url: `${BASE}/services/${c.id}/${v.slug}` } })) } } };
   }
   if ((m = p.match(/^\/services\/([\w-]+)\/([\w-]+)$/))) {
     const x = SV.find((v) => v.cluster === m![1] && v.slug === m![2]);
     if (x) {
       const cl = C(x.cluster);
-      return { status: 200, title: `${x.name} | ${cl.name}`, desc: x.summary, ssr: `<p><a href="/services/${cl.id}">${esc(cl.name)}</a></p><h1>${esc(x.name)}</h1><p><b>${esc(x.summary)}</b></p>${x.overview.map((o: string) => `<p>${esc(o)}</p>`).join("")}<h2>When to call us</h2><ul>${x.when.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>What we do</h2><ul>${x.what.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>How we work</h2><ol>${x.approach.map((a: string[]) => `<li><b>${esc(a[0])}</b>: ${esc(a[1])}</li>`).join("")}</ol><h2>What you receive</h2><ul>${x.deliverables.map((d: string) => `<li>${esc(d)}</li>`).join("")}</ul>${x.note ? `<p><small>${esc(x.note)}</small></p>` : ""}<p><a href="/contact">Start a confidential conversation</a></p>`,
-        ld: { "@context": "https://schema.org", "@type": "Service", name: x.name, serviceType: cl.name, description: x.summary, provider: { "@type": "ProfessionalService", name: "Kayak Strategic Advisors Private Limited", url: "https://www.kayaksa.com/" }, areaServed: ["IN", "Worldwide"] } };
+      return { status: 200, title: `${x.name} | ${cl.name}`, desc: x.summary, crumbs: [["Services", "/services"], [cl.name, `/services/${cl.id}`], [x.name, `/services/${cl.id}/${x.slug}`]], ssr: `<p><a href="/services/${cl.id}">${esc(cl.name)}</a></p><h1>${esc(x.name)}</h1><p><b>${esc(x.summary)}</b></p>${x.overview.map((o: string) => `<p>${esc(o)}</p>`).join("")}<h2>When to call us</h2><ul>${x.when.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>What we do</h2><ul>${x.what.map((w: string) => `<li>${esc(w)}</li>`).join("")}</ul><h2>How we work</h2><ol>${x.approach.map((a: string[]) => `<li><b>${esc(a[0])}</b>: ${esc(a[1])}</li>`).join("")}</ol><h2>What you receive</h2><ul>${x.deliverables.map((d: string) => `<li>${esc(d)}</li>`).join("")}</ul>${x.note ? `<p><small>${esc(x.note)}</small></p>` : ""}<p><a href="/contact">Start a confidential conversation</a></p>`,
+        ld: { "@context": "https://schema.org", "@type": "Service", name: x.name, serviceType: cl.name, description: x.summary, provider: { "@id": ORG_ID }, areaServed: ["IN", "Worldwide"] } };
     }
   }
   if ((m = p.match(/^\/solutions\/([\w-]+)$/)) && T(m[1])) {
     const t = T(m[1]);
     return { status: 200, title: `${t.name}: ${t.kind}`, desc: (t.line || "").slice(0, 300), ssr: `<h1>${esc(t.name)}</h1><p><b>${esc(t.kind)}.</b> ${esc(t.intro || t.line)}</p><ul>${(t.modules || []).map((x: any) => `<li><b>${esc(x[1])}</b>: ${esc(String(x[2]).replace(/^\[Planned\]\s*/, "Planned: "))}</li>`).join("")}</ul>`,
-      ld: { "@context": "https://schema.org", "@type": "SoftwareApplication", name: t.name, applicationCategory: "BusinessApplication", description: t.line, publisher: { "@type": "Organization", name: "Kayak Technology Solutions" } } };
+      crumbs: [["Kayak Solutions", "/solutions"], [t.name, `/solutions/${t.id}`]],
+      ld: { "@type": "SoftwareApplication", name: t.name, applicationCategory: "BusinessApplication", applicationSubCategory: t.kind, operatingSystem: "Web browser", description: t.intro || t.line, url: `${BASE}/solutions/${t.id}`,
+        featureList: (t.modules || []).map((x: any) => x[1]), publisher: { "@type": "Organization", name: "Kayak Technology Solutions", parentOrganization: { "@id": ORG_ID } }, provider: { "@id": ORG_ID } } };
   }
   if ((m = p.match(/^\/insights\/([\w-]+)$/)) && A(m[1])) {
     const a = A(m[1]);
     const body = (a.body || []).map((x: string) => (x.startsWith("## ") ? `<h2>${esc(x.slice(3))}</h2>` : `<p>${esc(x)}</p>`)).join("");
-    return { status: 200, title: a.title, desc: (a.dek || "").slice(0, 300), type: "article", ssr: `<article><p>${esc(a.section)} · Confluence</p><h1>${esc(a.title)}</h1><p><em>${esc(a.dek)}</em></p>${body}</article>`,
-      ld: { "@context": "https://schema.org", "@type": "Article", headline: a.title, description: a.dek, datePublished: a.published_at || "2026-11-03", publisher: { "@type": "Organization", name: "Kayak Strategic Advisors", logo: { "@type": "ImageObject", url: "https://www.kayaksa.com/assets/kayak-logo.svg" } }, mainEntityOfPage: `https://www.kayaksa.com/insights/${a.id}` } };
+    return { status: 200, title: a.title, desc: (a.dek || "").slice(0, 300), type: "article", crumbs: [["Insights", "/insights"], [a.title, `/insights/${a.id}`]], ssr: `<article><p>${esc(a.section)} · Confluence</p><h1>${esc(a.title)}</h1><p><em>${esc(a.dek)}</em></p>${body}</article>`,
+      ld: { "@type": "Article", "@id": `${BASE}/insights/${a.id}#article`, author: { "@id": ORG_ID }, isPartOf: { "@id": SITE_ID }, inLanguage: "en-IN", image: `${BASE}/assets/og.png`, articleSection: a.section, headline: a.title, description: a.dek, datePublished: a.published_at || "2026-11-03", publisher: { "@type": "Organization", name: "Kayak Strategic Advisors", logo: { "@type": "ImageObject", url: "https://www.kayaksa.com/assets/kayak-logo.svg" } }, mainEntityOfPage: `https://www.kayaksa.com/insights/${a.id}` } };
+  }
+  if ((m = p.match(/^\/careers\/([\w-]+)$/))) {
+    const j = (data.careers.jobs || []).find((x: any) => x.id === m![1]);
+    if (j) return { status: 200, title: `${j.title} (${j.experience})`, desc: `${j.summary} ${j.qualification}. ${j.location}.`.slice(0, 300), crumbs: [["Careers", "/careers"], [j.title, `/careers/${j.id}`]],
+      ssr: `<p><a href="/careers">Careers</a></p><h1>${esc(j.title)}</h1><p><b>${esc(j.summary)}</b></p><p>Experience: ${esc(j.experience)}. Qualification: ${esc(j.qualification)}. Location: ${esc(j.location)}. ${esc(j.type)}.</p><p>${esc(j.about)}</p><h2>What you will do</h2><ul>${j.do.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h2>What you will bring</h2><ul>${j.must.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h2>Good to have</h2><ul>${j.nice.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><p><a href="/careers#apply">Apply for this role</a></p>`,
+      ld: jobPosting(j, data) };
   }
   const key = p.slice(1);
   if (STATIC_PAGES[key]) {
@@ -155,7 +209,9 @@ function render(path: string, data: any): PageMeta {
     if (key === "industries") extra = data.groups.map((g: any) => `<h2>${esc(g.name)}</h2><p>${g.members.map((x: any) => esc(x.name)).join(", ")}</p>`).join("");
     if (key === "services") extra += SV.map((v) => `<p><a href="/services/${v.cluster}/${v.slug}">${esc(v.name)}</a></p>`).join("");
     if (key === "about") extra = `<h2>Values</h2><ul>${data.values.map((v: any) => `<li><b>${esc(v[1])}</b>: ${esc(v[2])}</li>`).join("")}</ul><h2>Promises</h2><ul>${data.promises.map((v: any) => `<li><b>${esc(v[0])}</b>: ${esc(v[1])}</li>`).join("")}</ul><h2>Affiliate entities</h2><ul><li><b>Kayak Innovations (OPC) Private Limited</b>: holds the intellectual property in every Kayak solution.</li><li><b>Brand Defence &amp; Integrity™</b>: the name belongs to Kayak's leadership and is currently used by Brand Defence Consulting Private Limited (Brand Defence India), known for market intelligence and IPR matters. <a href="https://www.bdiglobe.com">www.bdiglobe.com</a></li><li><b>Kayak Technology Solutions</b>: a partnership firm that develops and markets the Kayak Group's SaaS solutions, led by Tan.ai, CTO for the group.</li></ul>`;
-    return { status: 200, title, desc, ssr: `<h1>${esc(title)}</h1><p>${esc(desc)}</p>${extra}` };
+    if (key === "careers" && data.careers.jobs?.length) extra = `<h2>Open roles</h2><ul>${data.careers.jobs.map((j: any) => `<li><a href="/careers/${j.id}">${esc(j.title)}</a>: ${esc(j.summary)}</li>`).join("")}</ul>`;
+    const pageType = key === "about" ? "AboutPage" : key === "contact" ? "ContactPage" : ["services", "industries", "insights", "solutions", "careers"].includes(key) ? "CollectionPage" : "WebPage";
+    return { status: 200, title, desc, ssr: `<h1>${esc(title)}</h1><p>${esc(desc)}</p>${extra}`, crumbs: [[title.split(":")[0], `/${key}`]], pageType };
   }
   return { status: 404, title: "Page not found", desc: "The page you were looking for has moved or does not exist.", ssr: `<h1>Page not found</h1><p><a href="/">Go to the home page</a></p>` };
 }
@@ -167,12 +223,14 @@ function page(c: any, meta: PageMeta, data: any, path: string) {
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   const head = `<!doctype html><html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(full)}</title><meta name="description" content="${esc(meta.desc)}"><link rel="canonical" href="${esc(canonical)}">
-<meta property="og:site_name" content="Kayak Strategic Advisors"><meta property="og:title" content="${esc(meta.title)}"><meta property="og:description" content="${esc(meta.desc)}"><meta property="og:url" content="${esc(canonical)}"><meta property="og:type" content="${meta.type || "website"}"><meta property="og:image" content="${base}/assets/og.png"><meta property="og:locale" content="en_IN"><meta name="twitter:card" content="summary_large_image">
-${meta.status === 404 ? '<meta name="robots" content="noindex">' : ""}<meta name="theme-color" content="#0E2F3C">
+${c.env.GOOGLE_SITE_VERIFICATION ? `<meta name="google-site-verification" content="${esc(c.env.GOOGLE_SITE_VERIFICATION)}">` : ""}${c.env.BING_SITE_VERIFICATION ? `<meta name="msvalidate.01" content="${esc(c.env.BING_SITE_VERIFICATION)}">` : ""}
+<meta name="robots" content="${meta.status === 404 ? "noindex" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"}"><link rel="alternate" hreflang="en-IN" href="${esc(canonical)}"><link rel="alternate" hreflang="x-default" href="${esc(canonical)}">
+<meta property="og:site_name" content="Kayak Strategic Advisors"><meta property="og:title" content="${esc(meta.title)}"><meta property="og:description" content="${esc(meta.desc)}"><meta property="og:url" content="${esc(canonical)}"><meta property="og:type" content="${meta.type || "website"}"><meta property="og:image" content="${base}/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Kayak Strategic Advisors"><meta property="og:locale" content="en_IN"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(meta.title)}"><meta name="twitter:description" content="${esc(meta.desc)}"><meta name="twitter:image" content="${base}/assets/og.png">
+<meta name="theme-color" content="#0E2F3C">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 <link rel="preload" href="/_shared/fonts/Archivo.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/assets/logos.json" as="fetch" crossorigin><link rel="preload" href="/assets/services.json?v=2" as="fetch" crossorigin>${path === "/" ? '<link rel="preload" href="/assets/hero/kayak-1536.webp" as="image" media="(min-width: 761px)"><link rel="preload" href="/assets/hero/kayak-960.webp" as="image" media="(max-width: 760px)">' : ""}
 <link rel="stylesheet" href="/assets/site.css?v=${VERSION}">
-${meta.ld ? `<script type="application/ld+json">${JSON.stringify(meta.ld).replace(/</g, "\\u003c")}</script>` : ""}
+${meta.status === 200 ? `<script type="application/ld+json">${JSON.stringify(graph(data, meta, canonical)).replace(/</g, "\\u003c")}</script>` : ""}
 <script type="application/json" id="site-data">${json}</script>
 <script type="module" src="/assets/site.js?v=${VERSION}"></script>
 </head><body>`;
@@ -408,11 +466,25 @@ app.get("/services/tax-regulatory/:slug", (c) => c.redirect(`/services/tax-legal
 app.get("/privacy", (c) => c.redirect("/legal", 301));
 app.get("/terms", (c) => c.redirect("/legal#terms", 301));
 app.get("/robots.txt", (c) => c.text(`# Search engines and AI assistants are welcome. Scrapers and SEO harvesters are not, and are blocked.\n${["SemrushBot", "AhrefsBot", "MJ12bot", "DotBot", "Bytespider", "PetalBot", "BLEXBot", "DataForSeoBot", "serpstatbot", "MegaIndex", "CCBot", "Diffbot", "omgili", "Timpibot", "ImagesiftBot"].map((b) => `User-agent: ${b}\nDisallow: /\n`).join("\n")}\nUser-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${site(c)}/sitemap.xml\n`));
+// IndexNow (Bing, Yandex, Seznam and others): the key is public by design; the deploy pings it with the sitemap.
+export const indexNowKey = async (host: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("indexnow:" + host)))].slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
+app.use("/:file", async (c, next) => {
+  const f = c.req.param("file");
+  if (!/^[0-9a-f]{32}\.txt$/.test(f)) return next();
+  const key = await indexNowKey(new URL(c.req.url).hostname);
+  return f === `${key}.txt` ? c.text(key) : c.notFound();
+});
+// Bing's file-based verification, when the code is set.
+app.get("/BingSiteAuth.xml", (c) => (c.env.BING_SITE_VERIFICATION ? c.body(`<?xml version="1.0"?>\n<users><user>${esc(c.env.BING_SITE_VERIFICATION)}</user></users>`, 200, { "Content-Type": "application/xml" }) : c.notFound()));
 app.get("/sitemap.xml", async (c) => {
   const data = await siteData(c);
   const base = site(c);
-  const paths = ["/", ...Object.keys(STATIC_PAGES).map((k) => `/${k}`), ...data.clusters.map((x: any) => `/services/${x.id}`), ...SV.map((x) => `/services/${x.cluster}/${x.slug}`), ...data.tools.map((x: any) => `/solutions/${x.id}`), ...data.articles.map((x: any) => `/insights/${x.id}`), ...Object.keys(await releasedEditions(c)).map((id) => `/confluence/${id}`)];
-  return c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((p) => `<url><loc>${base}${p}</loc></url>`).join("")}</urlset>`, 200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+  const paths = ["/", ...Object.keys(STATIC_PAGES).map((k) => `/${k}`), ...(data.careers.jobs || []).map((j: any) => `/careers/${j.id}`), ...data.clusters.map((x: any) => `/services/${x.id}`), ...SV.map((x) => `/services/${x.cluster}/${x.slug}`), ...data.tools.map((x: any) => `/solutions/${x.id}`), ...data.articles.map((x: any) => `/insights/${x.id}`), ...Object.keys(await releasedEditions(c)).map((id) => `/confluence/${id}`)];
+  const mod: Record<string, string> = {};
+  for (const a of data.articles) if (a.published_at) mod[`/insights/${a.id}`] = String(a.published_at).slice(0, 10);
+  for (const j of data.careers.jobs || []) mod[`/careers/${j.id}`] = j.posted;
+  const built = VERSION.slice(0, 10);
+  return c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map((p) => `<url><loc>${base}${p}</loc><lastmod>${mod[p] || built}</lastmod></url>`).join("")}</urlset>`, 200, { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" });
 });
 // A plain-text summary for AI assistants (https://llmstxt.org), kept in step with the site.
 app.get("/llms.txt", async (c) => {

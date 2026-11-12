@@ -522,7 +522,7 @@ P.careers = () => `
 ${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Open roles</span><h2>Join us now</h2><p class="lead">${DATA.careers.jobs.length} ${DATA.careers.jobs.length === 1 ? "role is" : "roles are"} open. Read the full description, then apply below.</p></div></div>
   <div class="jobs">${DATA.careers.jobs.map((j) => `<article class="job" id="job-${esc(j.id)}">
-    <div class="job-top"><div><span class="job-cl">${esc(C[j.cluster]?.name || "")}</span><h3>${esc(j.title)}</h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button></div>
+    <div class="job-top"><div><span class="job-cl">${esc(C[j.cluster]?.name || "")}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button></div>
     <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li></ul>
     <details class="job-jd"><summary>Read the full description</summary><div class="job-body">
       <h4>About the role</h4><p>${esc(j.about)}</p>
@@ -654,6 +654,7 @@ function pathToKey(p) {
   if (p === "/") return "home";
   let m;
   if ((m = p.match(/^\/insights\/([\w-]+)$/))) return "insight-" + m[1];
+  if (/^\/careers\/[\w-]+$/.test(p)) return "careers";
   if ((m = p.match(/^\/services\/[\w-]+\/([\w-]+)$/))) return "svc-" + m[1];
   if (p === "/solutions" || p === "/tools") return "tools";
   if ((m = p.match(/^\/(?:tools|solutions|services)\/([\w-]+)$/))) return m[1];
@@ -691,6 +692,9 @@ function route() {
   armHero();
   bindPage();
   applyPhotos(key);
+  // A job's own address (/careers/<role>) opens that role.
+  const jm = location.pathname.match(/^\/careers\/([\w-]+)\/?$/);
+  if (key === "careers" && jm) { const card = document.getElementById("job-" + jm[1]); if (card) { card.querySelector("details").open = true; setTimeout(() => card.scrollIntoView({ block: "start" }), 60); } }
   armLogos();
   armReveals();
   afterRoute(key);

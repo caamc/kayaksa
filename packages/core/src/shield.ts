@@ -127,7 +127,7 @@ function blockedResponse(until: number) {
  * burstLimit: requests per minute from one network address before it is treated as a flood. Sites
  * used by whole offices behind one address (Meet: chat polling, live captions) set it higher.
  */
-export function shield(site: Site, db: (env: any) => D1Database, opts: { allowGoodBots: boolean; burstLimit?: number }): MiddlewareHandler {
+export function shield(site: Site, db: (env: any) => D1Database, opts: { allowGoodBots: boolean; burstLimit?: number; botPaths?: (path: string) => boolean }): MiddlewareHandler {
   const limit = opts.burstLimit || BURST_LIMIT;
   return async (c, next) => {
     const url = new URL(c.req.url);
@@ -168,10 +168,12 @@ export function shield(site: Site, db: (env: any) => D1Database, opts: { allowGo
     }
     // 4. Bots.
     const good = GOOD_BOTS.test(ua);
-    if (good && opts.allowGoodBots) return next();
-    if (good && !opts.allowGoodBots) return new Response("Not available.", { status: 403, headers: { "X-Robots-Tag": "noindex, nofollow" } });
+    // Sites closed to crawlers can still open their public marketing pages to them (botPaths).
+    const botsOk = opts.allowGoodBots || !!opts.botPaths?.(path);
+    if (good && botsOk) return next();
+    if (good && !botsOk) return new Response("Not available.", { status: 403, headers: { "X-Robots-Tag": "noindex, nofollow" } });
     if (!ua || BAD_BOTS.test(ua)) {
-      if (verifiedBot && opts.allowGoodBots) return next();
+      if (verifiedBot && botsOk) return next();
       // Mobile networks in India share one address across many people, so a scraper's address is
       // blocked only when it keeps coming back; its device signature is blocked straight away.
       const repeat = !(await rateLimit(D, `scraper:${ip}`, 3, BLOCK_HOURS * 3600));

@@ -9,6 +9,7 @@ import { createSession, readSession, endSession, endAllSessions, audit, SessionC
 import { mailEnabled, mailHtml, sendMail, MailEnv } from "../../../packages/core/src/mail";
 import { learnApi } from "../../../packages/learnkit/src/routes";
 import { getCatalog } from "../../../packages/learnkit/src/catalog";
+import { PRICING } from "../../../packages/learnkit/src/pricing";
 import { entitlements, type PayEnv } from "../../../packages/learnkit/src/commerce";
 import { payApi, invoicePage, razorpayWebhook } from "./pay";
 
@@ -283,10 +284,59 @@ app.get("/verify/:id", async (c) => {
   return r;
 });
 
-app.get("/robots.txt", (c) => c.text(`User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${site(c)}/sitemap.xml\n`));
+// ---------------------------------------------------------------- course pages for search engines
+// Every public course and path has its own address with the full outline, so it can be found and shared.
+// The interactive course itself opens in the app (/#/course/<id>).
+const LD = (o: object) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`;
+const rupee = (paise: number) => (paise / 100).toLocaleString("en-IN");
+const publicCourses = () => getCatalog().courses.filter((x) => x.audience === "public");
+const topicName = (id: string) => getCatalog().topics.find((t) => t.id === id)?.name || "";
+const ORG = { "@type": "Organization", "@id": "https://www.kayaksa.com/#org", name: "Kayak Strategic Advisors Private Limited", url: "https://www.kayaksa.com/" };
+function courseLd(base: string, x: any) {
+  return {
+    "@type": "Course", "@id": `${base}/courses/${x.id}#course`, name: x.title, description: x.summary, url: `${base}/courses/${x.id}`, inLanguage: "en-IN",
+    provider: { "@type": "EducationalOrganization", name: "Kayak Learn", url: "https://learn.kayaksa.com/", parentOrganization: ORG },
+    educationalLevel: x.level, about: topicName(x.topic), teaches: x.outcomes, timeRequired: `PT${x.minutes}M`, numberOfCredits: 0,
+    educationalCredentialAwarded: "Kayak Learn certificate of completion (verifiable)", isAccessibleForFree: false,
+    hasCourseInstance: { "@type": "CourseInstance", courseMode: "Online", courseWorkload: `PT${x.minutes}M`, inLanguage: "en" },
+    offers: { "@type": "Offer", category: "Paid", price: (PRICING.offerPaise / 100).toFixed(2), priceCurrency: "INR", availability: "https://schema.org/InStock", url: `${base}/courses/${x.id}`,
+      priceSpecification: { "@type": "UnitPriceSpecification", price: (PRICING.offerPaise / 100).toFixed(2), priceCurrency: "INR", valueAddedTaxIncluded: false } },
+  };
+}
+const SEO_HEAD = (canonical: string, title: string, desc: string) => `<link rel="canonical" href="${esc(canonical)}"><meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1"><meta property="og:site_name" content="Kayak Learn"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${esc(canonical)}"><meta property="og:type" content="website"><meta property="og:locale" content="en_IN"><meta name="twitter:card" content="summary">`;
+function seoPage(title: string, desc: string, canonical: string, body: string, ld: object) {
+  return shellPage(title, body, desc).replace("</head>", `${SEO_HEAD(canonical, title, desc)}${LD(ld)}</head>`).replace('<html lang="en">', '<html lang="en-IN">');
+}
+app.get("/courses", (c) => {
+  const base = site(c), cs = publicCourses();
+  const title = "Online courses on ethics, compliance, risk, governance and AI | Kayak Learn";
+  const desc = `${cs.length} assessed online courses with verifiable certificates: ethics and integrity, compliance, risk, corporate governance and responsible AI. ₹${rupee(PRICING.offerPaise)} plus GST per course, 12 months' access.`;
+  const body = `<div class="page"><h1>Courses</h1><p class="lead">${esc(desc)}</p>${getCatalog().topics.filter((t) => cs.some((x) => x.topic === t.id)).map((t) => `<h2>${esc(t.name)}</h2><ul>${cs.filter((x) => x.topic === t.id).map((x) => `<li><a href="/courses/${x.id}"><b>${esc(x.title)}</b></a>: ${esc(x.summary)} (${x.minutes} minutes, ${esc(x.level)})</li>`).join("")}</ul>`).join("")}</div>`;
+  return c.html(seoPage(title, desc, `${base}/courses`, body, { "@context": "https://schema.org", "@graph": [
+    { "@type": "ItemList", name: "Kayak Learn courses", itemListElement: cs.map((x, i) => ({ "@type": "ListItem", position: i + 1, url: `${base}/courses/${x.id}`, item: courseLd(base, x) })) },
+    { "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Kayak Learn", item: `${base}/` }, { "@type": "ListItem", position: 2, name: "Courses", item: `${base}/courses` }] }] }));
+});
+app.get("/courses/:id", (c) => {
+  const base = site(c), x = publicCourses().find((y) => y.id === c.req.param("id"));
+  if (!x) return c.html(shellPage("Course not found | Kayak Learn", `<div class="page"><h1>Course not found</h1><p><a href="/courses">See all courses</a></p></div>`), 404);
+  const title = `${x.title}: online course with certificate | Kayak Learn`;
+  const desc = `${x.summary} ${x.minutes} minutes, ${x.level}, assessed, with a verifiable certificate. ₹${rupee(PRICING.offerPaise)} plus GST.`.slice(0, 300);
+  const body = `<div class="page"><p><a href="/courses">Courses</a> › ${esc(topicName(x.topic))}</p><h1>${esc(x.title)}</h1><p class="lead">${esc(x.summary)}</p>
+    <p>${x.minutes} minutes · ${esc(x.level)} · ${x.lessons.length} lessons · assessment (pass mark ${x.quiz.pass}%) · verifiable certificate · ${PRICING.accessMonths} months' access</p>
+    <p><b>Launch offer ₹${rupee(PRICING.offerPaise)}</b> plus 18% GST (list price ₹${rupee(PRICING.listPaise)}).</p>
+    <h2>What you will learn</h2><ul>${x.outcomes.map((o: string) => `<li>${esc(o)}</li>`).join("")}</ul>
+    <h2>Lessons</h2><ol>${x.lessons.map((l: any) => `<li>${esc(l.title)} (${l.minutes} min)</li>`).join("")}</ol>
+    <p><a class="btn btn-primary" href="/#/course/${x.id}">Start this course</a></p></div>`;
+  return c.html(seoPage(title, desc, `${base}/courses/${x.id}`, body, { "@context": "https://schema.org", "@graph": [courseLd(base, x),
+    { "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Kayak Learn", item: `${base}/` }, { "@type": "ListItem", position: 2, name: "Courses", item: `${base}/courses` }, { "@type": "ListItem", position: 3, name: x.title, item: `${base}/courses/${x.id}` }] }] }));
+});
+const indexNowKey = async (host: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("indexnow:" + host)))].slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
+app.get("/:file{[0-9a-f]+\\.txt}", async (c) => (c.req.param("file") === `${await indexNowKey(new URL(c.req.url).hostname)}.txt` ? c.text(await indexNowKey(new URL(c.req.url).hostname)) : c.notFound()));
+
+app.get("/robots.txt", (c) => c.text(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /invoice/\nSitemap: ${site(c)}/sitemap.xml\n`));
 app.get("/sitemap.xml", (c) => {
   const base = site(c);
-  const urls = [`${base}/`, `${base}/verify`];
+  const urls = [`${base}/`, `${base}/courses`, ...publicCourses().map((x) => `${base}/courses/${x.id}`), `${base}/verify`];
   return c.body(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((u) => `<url><loc>${u}</loc></url>`).join("")}</urlset>`, 200, { "Content-Type": "application/xml" });
 });
 app.get("/login", (c) => c.redirect("/#/", 302));
