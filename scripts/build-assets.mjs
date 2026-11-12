@@ -26,7 +26,7 @@ const vendor = {
   "marked.umd.js": "node_modules/marked/lib/marked.umd.js",
   "purify.min.js": "node_modules/dompurify/dist/purify.min.js",
 };
-for (const app of ["internal", "learn"]) {
+for (const app of ["internal", "learn", "meet"]) {
   const dir = join(root, "apps", app, "public/vendor");
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });

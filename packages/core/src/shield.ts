@@ -123,7 +123,12 @@ function blockedResponse(until: number) {
  * Static files (anything with a file extension other than .html) skip the D1 checks to keep the site fast,
  * but still get the user-agent and probe checks, which are pure string tests.
  */
-export function shield(site: Site, db: (env: any) => D1Database, opts: { allowGoodBots: boolean }): MiddlewareHandler {
+/**
+ * burstLimit: requests per minute from one network address before it is treated as a flood. Sites
+ * used by whole offices behind one address (Meet: chat polling, live captions) set it higher.
+ */
+export function shield(site: Site, db: (env: any) => D1Database, opts: { allowGoodBots: boolean; burstLimit?: number }): MiddlewareHandler {
+  const limit = opts.burstLimit || BURST_LIMIT;
   return async (c, next) => {
     const url = new URL(c.req.url);
     const path = url.pathname;
@@ -154,7 +159,7 @@ export function shield(site: Site, db: (env: any) => D1Database, opts: { allowGo
       const m = Math.floor(Date.now() / 60000);
       const b = burst.get(ip);
       if (!b || b.m !== m) burst.set(ip, { m, n: 1 });
-      else if (++b.n > BURST_LIMIT) {
+      else if (++b.n > limit) {
         await blockClient(c, D, site, "flood", ip, fp);
         await securityEvent(c, D, site, { kind: "blocked.flood", severity: "high", detail: { perMinute: b.n } }, fp);
         return blockedResponse(Date.now() + BLOCK_HOURS * 3_600_000);

@@ -9,28 +9,38 @@ import { verifyMeet, type MeetClaims } from "../../../packages/core/src/meettoke
 import { Room } from "./room";
 export { Room };
 
-interface Env {
-  DB: D1Database;
-  ROOMS: DurableObjectNamespace;
-  REC: R2Bucket;
-  AI?: Ai;
-  ASSETS: Fetcher;
-  MEET_SIGNING_KEY?: string;
-  TURN_KEY_ID?: string;
-  TURN_KEY_API_TOKEN?: string;
-}
+import type { Env } from "./env";
+import { auth, currentMember, needMember } from "./auth";
+import { ws, serveFile, mayJoin } from "./workspace";
 type C = { Bindings: Env; Variables: { claims: MeetClaims; meeting: any } };
 const app = new Hono<C>();
 const ROOM_RE = /^[a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{3}$/;
 
 app.get("/healthz", (c) => c.json({ ok: true, site: "meet" }));
-app.use("*", securityHeaders({ noindex: true, permissions: "camera=(self), microphone=(self), display-capture=(self), autoplay=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
-app.use("*", shield("meet", (e) => e.DB, { allowGoodBots: false }));
+// Public pages (product, download, sign-in) may be indexed; everything else stays out of search engines.
+const PUBLIC_PAGES = new Set(["/", "/download"]);
+app.use("*", async (c, next) => { await next(); if (!PUBLIC_PAGES.has(c.req.path) && c.res.status !== 101) { c.res = new Response(c.res.body, c.res); c.res.headers.set("X-Robots-Tag", "noindex, nofollow"); } });
+app.use("*", securityHeaders({ noindex: false, permissions: "camera=(self), microphone=(self), display-capture=(self), autoplay=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
+// A client office or a Kayak floor shares one address: chat refreshes every 4 s and live captions
+// post every few seconds per person, so Meet allows far more per address than the brochure sites.
+app.use("*", shield("meet", (e) => e.DB, { allowGoodBots: false, burstLimit: 1500 }));
 app.use("/api/*", sameOrigin());
 
 // ---------------------------------------------------------------- access
-async function claimsFrom(c: any): Promise<MeetClaims | null> {
-  return verifyMeet(c.env.MEET_SIGNING_KEY, c.req.query("t") || c.req.header("X-Meet-Token"));
+// A meeting can be joined with a signed invitation link (guests, old links) or, when there is none,
+// with a Meet by Kayak account that is entitled to the meeting (host, Kayak employee, invited client,
+// or member of the channel the meeting belongs to).
+async function claimsFrom(c: any, roomId?: string): Promise<MeetClaims | null> {
+  const t = c.req.query("t") || c.req.header("X-Meet-Token");
+  if (t) return verifyMeet(c.env.MEET_SIGNING_KEY, t);
+  const id = roomId || c.req.param("room");
+  if (!id || !ROOM_RE.test(id)) return null;
+  const m = await currentMember(c);
+  if (!m) return null;
+  const mt: any = await c.env.DB.prepare("SELECT * FROM meetings WHERE id = ?").bind(id).first();
+  if (!mt || !(await mayJoin(c.env, m, mt))) return null;
+  const host = mt.host_email === m.email || (mt.parent_id && m.kind === "employee" && ((await c.env.DB.prepare("SELECT host_email FROM meetings WHERE id = ?").bind(mt.parent_id).first()) as any)?.host_email === m.email);
+  return { r: id, role: host ? "host" : m.kind === "employee" ? "member" : "guest", n: m.name, e: m.email, x: Date.now() + 12 * 3_600_000 };
 }
 async function needRoom(c: any, next: () => Promise<void>) {
   const cl = await claimsFrom(c);
@@ -65,8 +75,8 @@ app.get("/ws/:room", async (c) => {
   if (c.req.header("Upgrade") !== "websocket") return c.text("Expected a WebSocket", 426);
   const origin = c.req.header("Origin");
   if (origin && origin !== new URL(c.req.url).origin) return c.text("Forbidden", 403);
-  const cl = await claimsFrom(c);
   const id = c.req.param("room");
+  const cl = await claimsFrom(c, id);
   if (!cl || cl.r !== id) return c.text("Invalid invitation", 401);
   const m = await c.env.DB.prepare("SELECT id, title, kind, lobby, status FROM meetings WHERE id = ?").bind(id).first<any>();
   if (!m || m.status === "cancelled") return c.text("Not found", 404);
@@ -246,9 +256,18 @@ app.get("/download/:os/:file", async (c) => {
   } });
 });
 
+// ---------------------------------------------------------------- accounts and workspace
+app.route("/", auth);
+app.route("/api/ws", ws);
+app.get("/files/:fid", needMember, serveFile);
+
 // ---------------------------------------------------------------- pages
 const page = (c: any, file: string) => c.env.ASSETS.fetch(new Request(new URL(file, c.req.url)));
 app.get("/", (c) => page(c, "/index.html"));
+app.get("/login", async (c) => ((await currentMember(c)) ? c.redirect("/app", 302) : page(c, "/login.html")));
+app.get("/join/:token", (c) => page(c, "/login.html"));
+app.get("/join", (c) => page(c, "/login.html"));
+app.get("/app", async (c) => ((await currentMember(c)) ? page(c, "/app.html") : c.redirect("/login", 302)));
 app.get("/:room", (c) => (ROOM_RE.test(c.req.param("room")) ? page(c, "/room.html") : c.env.ASSETS.fetch(c.req.raw)));
 app.all("*", (c) => c.env.ASSETS.fetch(c.req.raw));
 

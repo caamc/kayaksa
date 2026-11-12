@@ -68,12 +68,41 @@ const initials = (n) => String(n || "?").split(/\s+/).filter(Boolean).slice(0, 2
 // ---------------------------------------------------------------- start
 init();
 async function init() {
-  if (!token) return fatal("This meeting needs an invitation link.", "Ask the host to send you the link again.");
+  // No invitation link: join with the Meet by Kayak account you are signed in with, if it is entitled.
   try { S.info = await api(`/api/room/${room}`); }
-  catch (e) { return fatal("We couldn't open this meeting.", e.message); }
+  catch (e) {
+    if (!token) return signInToJoin();
+    return fatal("We couldn't open this meeting.", e.message);
+  }
+  desktopBridge();
   document.title = `${S.info.title} · Meet by Kayak`;
   S.name = S.info.name || localStorage.getItem("km:name") || "";
   prejoin();
+}
+
+function signInToJoin() {
+  app.innerHTML = `<div class="km-center"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak" class="km-logo-big"><h1 style="font:800 1.5rem var(--display);margin:0">Sign in to join this meeting</h1><p class="km-muted">This meeting is for people signed in to Meet by Kayak who were invited to it. If you were sent a guest link, open that link instead.</p><a class="kb primary" href="/login?next=${encodeURIComponent("/" + room)}">Sign in</a></div>`;
+}
+
+// ---------------------------------------------------------------- Windows / Mac app
+// Tells the desktop app what is happening (taskbar buttons, tray, mini window, no sleep during calls)
+// and takes its commands from global shortcuts. Does nothing in a normal browser.
+const DESK = window.kayakDesktop || null;
+function deskState() {
+  DESK?.meeting({ inMeeting: !!S.me && !S.ended && !S.leaving, muted: !S.micOn, camera: S.camOn, sharing: !!S.screen, hand: S.hand, title: S.info?.title || "" });
+}
+function desktopBridge() {
+  if (!DESK) return;
+  DESK.onCommand((cmd, arg) => {
+    if (!S.me || S.ended) return;
+    if (cmd === "toggleMute") setMic(!S.micOn);
+    else if (cmd === "toggleCamera") setCam(!S.camOn);
+    else if (cmd === "raiseHand") toggleHand();
+    else if (cmd === "shareScreen") toggleScreen();
+    else if (cmd === "leave") leave();
+    else if (cmd === "mini") document.body.classList.toggle("mini", !!arg);
+  });
+  DESK.prefs().then((p) => { if (p?.joinMuted) S.micOn = false; if (p?.joinCameraOff) S.camOn = false; }).catch(() => {});
 }
 
 function fatal(title, detail) {
@@ -158,7 +187,7 @@ async function prejoin() {
 // ---------------------------------------------------------------- signalling
 function connect() {
   const proto = location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${proto}://${location.host}/ws/${room}?t=${encodeURIComponent(token)}&name=${encodeURIComponent(S.name)}`);
+  const ws = new WebSocket(`${proto}://${location.host}/ws/${room}?t=${encodeURIComponent(token || "")}&name=${encodeURIComponent(S.name)}`);
   S.ws = ws;
   ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch { return; } onMsg(m); };
   ws.onclose = (e) => {
@@ -194,7 +223,7 @@ function onMsg(m) {
     case "muteRequest": if (S.micOn) { setMic(false); toast(`${m.by} muted you. Unmute when you're ready to speak.`); } return;
     case "removed": S.ended = true; cleanup(); return fatal("The host removed you from this meeting.", "");
     case "denied": S.ended = true; cleanup(); return fatal("The host didn't admit you to this meeting.", "If you think this is a mistake, contact the host.");
-    case "full": S.ended = true; cleanup(); return fatal("This meeting is full.", `Kayak Meet rooms hold up to ${m.limit} people. Ask the host about a Kayak Stream webinar for larger audiences.`);
+    case "full": S.ended = true; cleanup(); return fatal("This meeting is full.", `Meet by Kayak rooms hold up to ${m.limit} people with video. Ask the host to run it as a webinar for larger audiences.`);
     case "ended": S.ended = true; cleanup(); return endScreen(`The meeting was ended by ${m.by}.`);
   }
 }
@@ -351,6 +380,7 @@ function roomUi() {
 
 const isHost = () => S.me?.role === "host";
 function bar() {
+  deskState();
   const b = $("#bar"); if (!b) return;
   b.innerHTML = `
     <button class="kc ${S.micOn ? "" : "off"}" id="bmic" data-tip="${S.micOn ? "Mute" : "Unmute"} (Ctrl+D)" aria-label="${S.micOn ? "Mute" : "Unmute"}" aria-pressed="${!S.micOn}">${ic(S.micOn ? "mic" : "micOff")}</button>
@@ -647,7 +677,7 @@ function flushRec(rec, last = false) {
   if (!rec.buf.length) return rec.chain || Promise.resolve();
   const blob = new Blob(rec.buf, { type: "video/webm" }); rec.buf = []; rec.bufSize = 0;
   const n = rec.part++;
-  rec.chain = (rec.chain || Promise.resolve()).then(() => fetch(`/api/rec/${room}/${rec.id}/${n}`, { method: "PUT", headers: { "X-Meet-Token": token }, body: blob }).then((r) => { if (!r.ok) throw new Error("upload"); }).catch(() => toast("Part of the recording failed to upload. Keep this tab open.", "warn")));
+  rec.chain = (rec.chain || Promise.resolve()).then(() => fetch(`/api/rec/${room}/${rec.id}/${n}`, { method: "PUT", headers: { "X-Meet-Token": token || "" }, body: blob }).then((r) => { if (!r.ok) throw new Error("upload"); }).catch(() => toast("Part of the recording failed to upload. Keep this tab open.", "warn")));
   return rec.chain;
 }
 async function stopRecording() {
@@ -695,6 +725,7 @@ async function leave() {
   endScreen("You left the meeting.");
 }
 function cleanup() {
+  S.ended = S.ended || S.leaving; deskState();
   stopCaptions();
   for (const id of [...S.peers.keys()]) dropPeer(id);
   S.local?.getTracks().forEach((t) => t.stop());
@@ -710,18 +741,18 @@ function endScreen(msg) {
     <img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak" style="width:220px">
     <h1 style="font:800 1.6rem var(--display);margin:0">${esc(msg)}</h1>
     <form id="fb" class="pre-side" style="text-align:left;width:100%">
-      <p class="km-muted">How was this meeting? Your answers help Kayak Meet improve. Every change is reviewed by Kayak before it goes live.</p>
+      <p class="km-muted">How was this meeting? Your answers help Meet by Kayak improve. Every change is reviewed by Kayak before it goes live.</p>
       ${stars("overall", "Overall")}${stars("audio", "Sound")}${stars("video", "Video")}${stars("ease", "Ease of use")}
       <div class="field"><label>Anything go wrong?</label><div class="chips">${ISSUES.map((i) => `<button type="button" class="chip" data-i="${esc(i)}">${esc(i)}</button>`).join("")}</div></div>
       <div class="field"><label for="fc">Tell us more (optional)</label><textarea class="input" id="fc" rows="3" maxlength="2000" style="padding:10px"></textarea></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="kb primary">Send feedback</button><button class="kb" type="button" id="rejoin">Rejoin</button>${isHost() ? `<button class="kb" type="button" id="mins">Write the minutes</button>` : ""}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="kb primary">Send feedback</button><button class="kb" type="button" id="rejoin">Rejoin</button>${token ? "" : `<a class="kb" href="/app">Back to workspace</a>`}${isHost() ? `<button class="kb" type="button" id="mins">Write the minutes</button>` : ""}</div>
     </form><div id="minbox"></div></div></div>`;
   $$(".stars").forEach((s) => s.addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; fb[s.dataset.k] = +b.dataset.n; $$("button", s).forEach((x) => x.classList.toggle("on", +x.dataset.n <= fb[s.dataset.k])); }));
   $$(".chip").forEach((c) => (c.onclick = () => { c.classList.toggle("on"); fb.issues = $$(".chip.on").map((x) => x.dataset.i); }));
   $("#rejoin").onclick = () => location.reload();
   $("#mins") && ($("#mins").onclick = async (e) => {
     e.target.disabled = true; e.target.textContent = "Writing…";
-    try { const r = await api(`/api/minutes/${room}`, { method: "POST" }); $("#minbox").innerHTML = r.summary ? `<h2 style="font:700 1.1rem var(--sans)">Minutes</h2><div class="minutes">${esc(r.summary)}</div><p class="km-small">Saved to Kayak Meet in the internal portal. Check before sharing.</p>` : `<p class="note">${esc(r.error)}</p>`; }
+    try { const r = await api(`/api/minutes/${room}`, { method: "POST" }); $("#minbox").innerHTML = r.summary ? `<h2 style="font:700 1.1rem var(--sans)">Minutes</h2><div class="minutes">${esc(r.summary)}</div><p class="km-small">Saved with the meeting in your workspace. Check before sharing.</p>` : `<p class="note">${esc(r.error)}</p>`; }
     catch (x) { $("#minbox").innerHTML = `<p class="note">${esc(x.message)}</p>`; }
     e.target.textContent = "Write the minutes"; e.target.disabled = false;
   });

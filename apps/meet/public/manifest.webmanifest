@@ -1,0 +1,15 @@
+{
+  "name": "Meet by Kayak",
+  "short_name": "Meet",
+  "description": "Private meetings, chat, channels and tasks for Kayak and its clients.",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0E2F3C",
+  "theme_color": "#0E2F3C",
+  "icons": [
+    { "src": "/_shared/logos/AppIcon_192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/_shared/logos/AppIcon_512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/_shared/logos/MeetByKayak_AppIcon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

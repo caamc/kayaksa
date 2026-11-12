@@ -112,3 +112,10 @@ a{color:var(--km-accent)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}.chip{border:1px solid var(--km-line);padding:6px 12px;border-radius:999px;cursor:pointer;font-size:.85rem;background:none;color:var(--km-fg)}.chip.on{background:var(--km-accent);color:#06171E;border-color:var(--km-accent)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .minutes{text-align:left;white-space:pre-wrap;background:var(--km-panel);padding:16px;border:1px solid var(--km-line);line-height:1.5;max-height:50vh;overflow:auto}
+/* Desktop app: mini window while sharing, and room for the window controls */
+body.mini .top,body.mini #side,body.mini .caps{display:none!important}
+body.mini .stage{padding:4px!important}
+[data-desktop=darwin] .top{padding-left:84px}
+[data-desktop] .top{-webkit-app-region:drag}
+[data-desktop] .top button,[data-desktop] .top a{-webkit-app-region:no-drag}
+[data-desktop=win32] .top{padding-right:150px}

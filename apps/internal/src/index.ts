@@ -1,6 +1,6 @@
 // internal.kayaksa.com — Kayak's staff portal. Everything except the sign-in pages requires a
 // password plus TOTP two-factor session.
-import { shield, pruneSecurity } from "../../../packages/core/src/shield";
+import { shield, pruneSecurity, auditFull } from "../../../packages/core/src/shield";
 import { Hono } from "hono";
 import { securityHeaders, sameOrigin, HttpError } from "../../../packages/core/src/http";
 import { learnApi } from "../../../packages/learnkit/src/routes";
@@ -24,6 +24,7 @@ import { clientTools, runChecks } from "./clienttools";
 import { grow, checkCompetitors } from "./grow";
 import { people, runCelebrations } from "./people";
 import { vault } from "./vault";
+import { signMeet } from "../../../packages/core/src/meettoken";
 
 type V = { Bindings: Env; Variables: { user: User } };
 const app = new Hono<V>();
@@ -134,6 +135,22 @@ app.get("/setup", (c) => page(c, "/auth.html"));
 app.get("/welcome", (c) => page(c, "/auth.html"));
 app.get("/app", (c) => page(c, "/app/index.html"));
 app.get("/app/", (c) => page(c, "/app/index.html"));
+
+// Single sign-on to Meet by Kayak. Staff are already signed in here with password + two-factor; this
+// hands Meet a one-time ticket that is valid for 60 seconds. Meet refuses a ticket it has seen before.
+app.use("/sso/meet", guard);
+app.get("/sso/meet", async (c) => {
+  const u = c.get("user") as any;
+  if (!c.env.MEET_SIGNING_KEY) return c.text("Meet by Kayak is not connected yet. Run the deploy workflow with meet included.", 503);
+  const j = crypto.randomUUID();
+  const t = await signMeet(c.env.MEET_SIGNING_KEY, { r: "sso", role: "member", n: u.name || u.email, e: u.email, x: Date.now() + 60_000, j });
+  await auditFull(c as any, c.env.DB, u.id, "meet.sso.issued", null);
+  const next = c.req.query("next");
+  const meet = new URL(c.req.url).hostname.endsWith("kayaksa.com") ? "https://meet.kayaksa.com" : "http://localhost:8704";
+  c.header("Cache-Control", "no-store");
+  c.header("Referrer-Policy", "no-referrer");
+  return c.redirect(`${meet}/auth/sso?t=${encodeURIComponent(t)}${next && /^\/[a-z0-9#/_-]*$/i.test(next) ? `&next=${encodeURIComponent(next)}` : ""}`, 302);
+});
 
 // Static files. App code and the shared design system are public (they hold no data); /app/* is guarded above.
 app.all("*", async (c) => {

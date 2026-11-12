@@ -1,7 +1,7 @@
 // Signed Kayak Meet invitations. internal.kayaksa.com issues them; meet.kayaksa.com checks them.
 // A token says which room, which role and (for staff) who; it expires. HMAC-SHA256 with MEET_SIGNING_KEY.
 export type MeetRole = "host" | "member" | "guest";
-export interface MeetClaims { r: string; role: MeetRole; n?: string; e?: string; x: number }
+export interface MeetClaims { r: string; role: MeetRole; n?: string; e?: string; x: number; j?: string } // j: one-time ticket id (single sign-on)
 
 const b64u = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b instanceof Uint8Array ? b : new Uint8Array(b)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const unb64u = (s: string) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (ch) => ch.charCodeAt(0));
