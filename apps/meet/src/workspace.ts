@@ -663,6 +663,36 @@ ws.get("/planner", async (c) => {
   return c.json({ items, today: new Date().toISOString().slice(0, 10) });
 });
 
+// ------------------------------------------------------------------ Kayakers: whiteboards and games (Kayak team only)
+const SPACE_KINDS = ["board", "chess", "carrom", "four"];
+ws.get("/kayakers", employeeOnly, async (c) => {
+  const { results } = await c.env.DB.prepare("SELECT id, kind, title, mode, created_by, created_by_name, created_at, updated_at FROM spaces WHERE archived = 0 ORDER BY updated_at DESC LIMIT 200").all<any>();
+  return c.json({ spaces: results });
+});
+ws.post("/kayakers", employeeOnly, async (c) => {
+  const m = me(c);
+  const b = await readJson<any>(c, 2048);
+  const kind = SPACE_KINDS.includes(b.kind) ? b.kind : "board";
+  const def = { board: "Whiteboard", chess: "Chess", carrom: "Carrom", four: "Kayak Four" } as Record<string, string>;
+  const title = str(b.title, 80) || `${def[kind]} · ${m.name.split(" ")[0]}`;
+  const id = id8();
+  await c.env.DB.prepare("INSERT INTO spaces (id, kind, title, mode, created_by, created_by_name, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)")
+    .bind(id, kind, title, b.mode === "ai" ? "ai" : "team", m.id, m.name, now(), now()).run();
+  return c.json({ id });
+});
+ws.get("/kayakers/:id", employeeOnly, async (c) => {
+  const sp = await c.env.DB.prepare("SELECT id, kind, title, mode, created_by, created_by_name, created_at FROM spaces WHERE id = ? AND archived = 0").bind(c.req.param("id")).first();
+  if (!sp) throw err("Not found.", 404);
+  return c.json({ space: sp, me: me(c) });
+});
+ws.delete("/kayakers/:id", employeeOnly, async (c) => {
+  const sp: any = await c.env.DB.prepare("SELECT created_by FROM spaces WHERE id = ?").bind(c.req.param("id")).first();
+  if (!sp) throw err("Not found.", 404);
+  if (sp.created_by !== me(c).id) throw err("Only the person who created it can remove it.", 403);
+  await c.env.DB.prepare("UPDATE spaces SET archived = 1 WHERE id = ?").bind(c.req.param("id")).run();
+  return c.json({ ok: true });
+});
+
 // ------------------------------------------------------------------ people and data rights
 ws.get("/people", async (c) => c.json({ people: await visiblePeople(c.env, me(c)) }));
 ws.post("/people/:id/reset", employeeOnly, async (c) => {

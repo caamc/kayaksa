@@ -7,7 +7,8 @@ import { securityHeaders, sameOrigin, str, rateLimit } from "../../../packages/c
 import { shield, auditFull } from "../../../packages/core/src/shield";
 import { verifyMeet, type MeetClaims } from "../../../packages/core/src/meettoken";
 import { Room } from "./room";
-export { Room };
+import { Space } from "./space";
+export { Room, Space };
 
 import type { Env } from "./env";
 import { auth, currentMember, needMember } from "./auth";
@@ -267,6 +268,27 @@ app.get("/download/:os/:file", async (c) => {
 app.route("/", auth);
 app.route("/api/ws", ws);
 app.get("/files/:fid", needMember, serveFile);
+
+// Kayakers spaces: the page, and the live connection to the space's Durable Object (Kayak team only).
+app.get("/kayakers/:id", async (c) => {
+  const m = await currentMember(c);
+  if (!m) return c.redirect(`/login?next=${encodeURIComponent("/kayakers/" + c.req.param("id"))}`, 302);
+  return page(c, "/kayakers.html");
+});
+app.get("/kayakers/ws/:id", async (c) => {
+  if (c.req.header("Upgrade") !== "websocket") return c.text("Expected a WebSocket", 426);
+  const origin = c.req.header("Origin");
+  if (origin && origin !== new URL(c.req.url).origin) return c.text("Forbidden", 403);
+  const m = await currentMember(c);
+  if (!m || m.kind !== "employee") return c.text("Kayakers is for the Kayak team.", 403);
+  const sp = await c.env.DB.prepare("SELECT id, kind, created_by FROM spaces WHERE id = ? AND archived = 0").bind(c.req.param("id")).first();
+  if (!sp) return c.text("Not found", 404);
+  const stub = c.env.SPACES.get(c.env.SPACES.idFromName(String(sp.id)));
+  const h = new Headers(c.req.raw.headers);
+  h.set("X-Member", JSON.stringify({ id: m.id, name: m.name }));
+  h.set("X-Space", JSON.stringify(sp));
+  return stub.fetch(new Request(c.req.url, { headers: h }));
+});
 
 // ---------------------------------------------------------------- product videos with byte ranges
 // Browsers seek and loop video with Range requests, and Safari (iPhone, iPad, Mac) will not play a

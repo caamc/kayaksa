@@ -19,6 +19,7 @@ const P = {
   link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.8 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 14H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 3V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 10h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1z"/>',
   download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  kayakers: '<rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="4"/><rect x="3" y="13" width="8" height="8" rx="4"/><path d="M17 13v8M13 17h8"/>',
 };
 const ic = (n, cls = "ico") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n] || ""}</svg>`;
 const LANGS = { en: "English", hi: "Hindi", mr: "Marathi", gu: "Gujarati", ta: "Tamil", te: "Telugu", kn: "Kannada", ml: "Malayalam", bn: "Bengali", pa: "Punjabi", ur: "Urdu", ar: "Arabic", fr: "French", de: "German", es: "Spanish", it: "Italian", pt: "Portuguese", nl: "Dutch", ru: "Russian", uk: "Ukrainian", pl: "Polish", tr: "Turkish", fa: "Persian", he: "Hebrew", ja: "Japanese", zh: "Chinese", ko: "Korean", id: "Indonesian", ms: "Malay", th: "Thai", vi: "Vietnamese", sw: "Swahili", el: "Greek", sv: "Swedish", da: "Danish", fi: "Finnish", no: "Norwegian", cs: "Czech", ro: "Romanian", hu: "Hungarian", ne: "Nepali", si: "Sinhala", fil: "Filipino" };
@@ -113,7 +114,7 @@ function route() {
   const h = location.hash.slice(1);
   if (h === "new") { history.replaceState(null, "", "#meetings"); go("meetings"); return newMeeting(); }
   if (h === "join") { history.replaceState(null, "", "#meetings"); go("meetings"); return joinCode(); }
-  if (["meetings","tasks","todo","planner"].includes(h)) return go(h);
+  if (["meetings","tasks","todo","planner"].includes(h) || (h === "kayakers" && isEmp())) return go(h);
   const m = h.match(/^c\/([a-z0-9]+)(?:\/(tasks|files))?$/);
   if (m) return openChannel(m[1], m[2] || "chat");
   const first = S.channels.find((c) => c.kind !== "dm") || S.channels[0];
@@ -135,6 +136,7 @@ function shell() {
       <button data-v="meetings" ${S.view === "meetings" ? 'aria-current="page"' : ""}>${ic("video")}Meetings</button>
       <button data-v="todo" ${S.view === "todo" ? 'aria-current="page"' : ""}>${ic("tasks")}To-Do${S.todoDue ? `<span class="dot">${S.todoDue > 99 ? "99+" : S.todoDue}</span>` : ""}</button>
       <button data-v="planner" ${S.view === "planner" ? 'aria-current="page"' : ""}>${ic("cal")}Planner</button>
+      ${isEmp() ? `<button data-v="kayakers" ${S.view === "kayakers" ? 'aria-current="page"' : ""}>${ic("kayakers")}Kayakers</button>` : ""}
       <span class="sp"></span>
       <button id="meBtn" aria-label="Profile and settings">${av(S.me.id, S.me.name, "sm")}<span>You</span></button>
     </nav>
@@ -204,6 +206,7 @@ function renderMain() {
   if (S.view === "meetings") return renderMeetings(main);
   if (S.view === "todo") return renderTodo(main);
   if (S.view === "planner") return renderPlanner(main);
+  if (S.view === "kayakers") return renderKayakers(main);
   const ch = S.cur;
   if (!ch) { main.innerHTML = `<div class="empty"><img src="/_shared/logos/MeetByKayak_Mark_FullColour.svg" width="96" alt=""><h3>Welcome, ${esc(S.me.name.split(" ")[0])}</h3><p>${isEmp() ? "Pick a conversation, or start a channel for a client engagement." : "Pick a conversation to continue working with Kayak."}</p></div>`; return; }
   const members = (ch.member_ids || []).length;
@@ -712,6 +715,42 @@ async function renderPlanner(main) {
     else if (type === "task" && el.dataset.ch) openChannel(el.dataset.ch, "tasks");
     else go("todo");
   }));
+}
+// ------------------------------------------------------------------ Kayakers (Kayak team only)
+const KX = {
+  board: ["Whiteboard", "#17807E", "Draw, sketch, add sticky notes and shapes together, live."],
+  chess: ["Chess", "#2D6A9F", "Full rules — castling, en passant, promotion. Play a colleague or Kayak AI."],
+  carrom: ["Carrom", "#9C630E", "Real physics on a classic board. Flick the striker and pocket your coins."],
+  four: ["Kayak Four", "#B4472F", "Line up four discs before the other side does. Quick and addictive."],
+};
+const KXI = {
+  board: '<path d="M3 5h18v11H3z"/><path d="M8 21l4-5 4 5M7 12l3-3 2 2 4-4"/>',
+  chess: '<path d="M8 21h8M9 18h6l-1-6h2l-2-3c1-1 1-3-1-4-1-1-3 0-3 1-2 0-3 2-2 3l-2 3h2z"/>',
+  carrom: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="3"/><circle cx="6" cy="6" r="1.3"/><circle cx="18" cy="6" r="1.3"/><circle cx="6" cy="18" r="1.3"/><circle cx="18" cy="18" r="1.3"/>',
+  four: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="1.6"/><circle cx="12" cy="9" r="1.6"/><circle cx="16" cy="9" r="1.6"/><circle cx="8" cy="15" r="1.6"/><circle cx="12" cy="15" r="1.6"/><circle cx="16" cy="15" r="1.6"/>',
+};
+async function renderKayakers(main) {
+  main.innerHTML = `<header class="top"><div class="t"><h2>Kayakers</h2><small>Joint visuals and games for the Kayak team — work together, then take a break together</small></div><button class="btn p" id="kxNewB">${ic("plus")}<span class="lbl">New whiteboard</span></button></header>
+    <div class="body" id="body"><div class="mt-wrap kx-hub">
+      <section><h3 class="sec">Joint visuals</h3><div class="kx-grid" id="kxBoards"><p class="mk-small">Loading…</p></div></section>
+      <section><h3 class="sec">Games</h3><div class="kx-games">${["chess", "carrom", "four"].map((k) => `<div class="kx-game" style="--c:${KX[k][1]}"><span class="kx-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${KXI[k]}</svg></span><b>${KX[k][0]}</b><small>${KX[k][2]}</small><div class="kx-btns"><button class="btn sm p" data-new="${k}" data-mode="team">${ic("people")} With colleagues</button><button class="btn sm" data-new="${k}" data-mode="ai">${ic("ai")} vs Kayak AI</button></div></div>`).join("")}</div>
+        <h3 class="sec" style="margin-top:22px">Recent games</h3><div class="kx-grid" id="kxGames"></div></section>
+    </div></div>`;
+  const create = async (kind, mode, title) => {
+    const r = await post("/kayakers", { kind, mode, title }).catch((e) => toast(e.message));
+    if (r?.id) location.href = `/kayakers/${r.id}`;
+  };
+  $("#kxNewB").onclick = () => dialog(`<form><h3>New whiteboard</h3><div class="fld"><label for="kxt">Name</label><input id="kxt" maxlength="80" placeholder="e.g. Diligence plan — Project Falcon" required></div><p class="mk-small">Everyone in the Kayak team can open and draw on it. Don't put client-confidential material on a shared board unless the whole team may see it.</p><div class="foot"><button class="btn" data-close>Cancel</button><button class="btn p">Create</button></div></form>`, (d) => {
+    $("form", d).onsubmit = (e) => { e.preventDefault(); const t = $("#kxt", d).value.trim(); if (t) create("board", "team", t); };
+    $("#kxt", d).focus();
+  });
+  $$("[data-new]", main).forEach((b) => (b.onclick = () => create(b.dataset.new, b.dataset.mode, `${KX[b.dataset.new][0]}${b.dataset.mode === "ai" ? " vs Kayak AI" : ""} · ${S.me.name.split(" ")[0]}`)));
+  const r = await api("/kayakers").catch((e) => toast(e.message)); if (!r) return;
+  const card = (sp) => `<a class="kx-card" href="/kayakers/${esc(sp.id)}" style="--c:${KX[sp.kind]?.[1] || "#17807E"}"><span class="kx-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${KXI[sp.kind] || ""}</svg></span><span class="kx-t"><b>${esc(sp.title)}</b><small>${KX[sp.kind]?.[0] || ""}${sp.kind !== "board" ? (sp.mode === "ai" ? " · vs AI" : " · team") : ""} · ${esc(sp.created_by_name || "")} · ${fmtDay(sp.updated_at)}</small></span>${sp.created_by === S.me.id ? `<button class="ib" data-del="${esc(sp.id)}" aria-label="Remove" title="Remove">${ic("x")}</button>` : ""}</a>`;
+  const boards = r.spaces.filter((x) => x.kind === "board"), games = r.spaces.filter((x) => x.kind !== "board");
+  $("#kxBoards").innerHTML = boards.length ? boards.map(card).join("") : `<div class="kx-none"><b>No whiteboards yet</b><small>Start one for a workshop, a case map or a quick sketch — colleagues who open it draw with you live.</small></div>`;
+  $("#kxGames").innerHTML = games.length ? games.slice(0, 12).map(card).join("") : `<div class="kx-none"><small>No games yet. Pick one above.</small></div>`;
+  $$("[data-del]", main).forEach((b) => (b.onclick = async (e) => { e.preventDefault(); e.stopPropagation(); await post(`/kayakers/${b.dataset.del}`, {}, "DELETE").catch((x) => toast(x.message)); renderKayakers(main); }));
 }
 async function renderFiles(body) {
   const r = await api(`/channels/${S.cur.id}/files`).catch((e) => toast(e.message)); if (!r) return;

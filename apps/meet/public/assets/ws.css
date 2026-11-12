@@ -293,3 +293,18 @@ dialog{border-radius:22px;animation:dlgIn .22s cubic-bezier(.2,.8,.2,1.1)}
 .ext,.pill-d,.td-pri{border-radius:999px}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .btn:not(.p):not(.s){background:linear-gradient(180deg,#1B3A44eb,#14303Aeb);color:var(--fg)} :root:not([data-theme=light]) .menu{background:#102830e6}}
 @media (prefers-reduced-motion:reduce){.btn,.task,.mt-act,dialog,.toast{transition:none;animation:none}}
+
+/* Kayakers hub */
+.kx-hub section{margin-bottom:8px}
+.kx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.kx-games{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.kx-game,.kx-card,.kx-none{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:22px;background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px -18px #0E2F3C55;transition:transform .2s cubic-bezier(.3,1.4,.6,1),box-shadow .2s}
+.kx-game{background:linear-gradient(160deg,color-mix(in srgb,var(--c) 14%,var(--surface)),var(--surface) 70%)}
+.kx-game:hover,.kx-card:hover{transform:translateY(-3px);box-shadow:0 18px 40px -18px #0E2F3C77}
+.kx-game small,.kx-card small,.kx-none small{color:var(--muted);line-height:1.45}
+.kx-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--c);color:#fff;box-shadow:inset 0 1px 0 #ffffff55,0 6px 14px -6px var(--c)}
+.kx-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.kx-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+.kx-card{flex-direction:row;align-items:center;color:inherit;text-decoration:none}
+.kx-card .kx-t{display:grid;min-width:0;flex:1}.kx-card .kx-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kx-none{border-style:dashed;box-shadow:none}

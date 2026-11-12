@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
   ROOMS: DurableObjectNamespace;
+  SPACES: DurableObjectNamespace;
   REC: R2Bucket;
   AI?: Ai;
   ASSETS: Fetcher;
