@@ -13,16 +13,22 @@ const COMPANY = {
 };
 // Eight designs. o: l = landscape, p = portrait. Every shape comes from the Kayak identifier
 // (two blades and a stem), the pattern library and the navigator's marks in the brand manual.
+// Ten designs in the manner of Tier 1 law and advisory firms: cotton and ivory stock, a serif name,
+// tracked small capitals, hairline rules, one foil at most, and a great deal of quiet space.
+// Every mark is the Kayak identifier or wordmark. o: l = landscape, p = portrait.
 const DESIGNS = {
-  heritage: { label: "Heritage", o: "l", note: "Deep Current with a double gold-foil frame" },
-  signature: { label: "Signature", o: "p", note: "Portrait. The two blades cropped large, gold-foil wordmark" },
-  confluence: { label: "Confluence", o: "l", note: "Half Confluence pattern, half cotton paper" },
-  navigator: { label: "Navigator", o: "l", note: "Cotton white, navigator's marks, saffron painted edge" },
-  monogram: { label: "Monogram", o: "p", note: "Portrait. Blind-embossed identifier on cotton white" },
-  contour: { label: "Contour", o: "l", note: "Deep Current with chart-contour lines" },
-  openwater: { label: "Open Water", o: "l", note: "Light, with a band of Kayak blades" },
-  minimal: { label: "Minimal", o: "l", note: "White, the wordmark and one saffron rule" },
+  chambers: { label: "Chambers", o: "l", note: "Ivory cotton, the wordmark alone; the back engraved and centred" },
+  counsel: { label: "Counsel", o: "l", note: "White, your name on the front; a Deep Current back with the wordmark" },
+  ink: { label: "Ink", o: "l", note: "Deep Current, a tone-on-tone identifier and a gold-foil hairline" },
+  bar: { label: "Bar", o: "l", note: "White, one saffron rule down the margin, Swiss and exact" },
+  letterhead: { label: "Letterhead", o: "l", note: "Ivory, the firm's full name across the head, like its letter" },
+  partner: { label: "Partner", o: "l", note: "White, two columns, the wordmark low in the corner" },
+  gilt: { label: "Gilt", o: "l", note: "White duplex, the identifier in gold foil, a Deep Current back" },
+  harbour: { label: "Harbour", o: "l", note: "Ivory front; a Deep Current back with blind 62-degree wake lines" },
+  monolith: { label: "Monolith", o: "p", note: "Portrait. Deep Current, the identifier small and centred" },
+  folio: { label: "Folio", o: "p", note: "Portrait. Ivory, set like the title page of an opinion" },
 };
+const IVORY = "#F7F3EA", WHITE = "#FFFFFF", DEEP = "#0E2F3C", DEEPER = "#0B2733", GOLD = "#B08D57", HAIR = "#C9A25A", MUTED = "#55666E";
 const FINISH = {
   stock: { cotton: "Cotton 700 gsm, letterpress", duplex: "Duplex 1000 gsm (two 500 gsm sheets, Deep Current core)", soft: "700 gsm board, soft-touch laminate with spot UV on the blades" },
   foil: { gold: "Gold hot-foil on the frame, rules and gold lettering", none: "No foil (print the gold as Pantone 7563 C)" },
@@ -30,8 +36,8 @@ const FINISH = {
 };
 const DEFAULTS = {
   name: "", title: "Founder & Director", department: "", phones: ["", ""], whatsapp: "", linkedin: "", email: "", website: "www.kayaksa.com",
-  address: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road, Mumbai 400013", locations: "Mumbai · Thane", company: "ksa", design: "heritage",
-  stock: "cotton", foil: "gold", edge: "saffron",
+  address: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road, Mumbai 400013", locations: "Mumbai · Thane", company: "ksa", design: "chambers",
+  stock: "cotton", foil: "gold", edge: "none",
 };
 const dims = (d) => (DESIGNS[d.design]?.o === "p" ? [H, W] : [W, H]);
 
@@ -53,7 +59,7 @@ function identifier(ink, left, under = "stem", right = "#EE9B1E") {
 }
 const E = (s) => esc(s ?? "");
 const T = (x, y, text, o = {}) =>
-  text ? `<text x="${x}" y="${y}" font-family="Archivo" font-size="${o.size || 8}" font-weight="${o.weight || 400}"${o.stretch ? ` font-stretch="${o.stretch}"` : ""} fill="${o.fill || "#0E2F3C"}"${o.anchor ? ` text-anchor="${o.anchor}"` : ""}${o.ls ? ` letter-spacing="${o.ls}"` : ""}>${E(text)}</text>` : "";
+  text ? `<text x="${x}" y="${y}" font-family="${o.serif ? "'Source Serif 4', Georgia, serif" : "Archivo"}" font-size="${o.size || 8}" font-weight="${o.weight || 400}"${o.stretch ? ` font-stretch="${o.stretch}"` : ""} fill="${o.fill || "#0E2F3C"}"${o.anchor ? ` text-anchor="${o.anchor}"` : ""}${o.ls ? ` letter-spacing="${o.ls}"` : ""}>${E(text)}</text>` : "";
 
 // ---- Contact icons (24-unit grid, filled, so they print as clean vector) ----
 const ICON = {
@@ -130,62 +136,146 @@ function navMarks(w, h, m, len, col) {
   const c = (x, y, dx, dy) => `<path d="M${x} ${y + dy * len} V${y} H${x + dx * len}" fill="none" stroke="${col}" stroke-width="0.8"/>`;
   return c(m, m, 1, 1) + c(w - m, m, -1, 1) + c(m, h - m, 1, -1) + c(w - m, h - m, -1, -1);
 }
-function lightLogo(d, co, x, y, s, desc = "#17807E") {
-  return `<g transform="translate(${x} ${y}) scale(${s})">${wordmark("#0E2F3C", "#17807E", co.under, "#17807E")}</g><text x="${x}" y="${y + 134 * s}" font-family="Archivo" font-size="${13.2 * s}" font-weight="600" fill="${desc}" textLength="${416 * s}" lengthAdjust="spacing">${E(co.descriptor)}</text>`;
+function lightLogo(d, co, x, y, s, desc = "#17807E", ink = DEEP) {
+  return `<g transform="translate(${x} ${y}) scale(${s})">${wordmark(ink, "#17807E", co.under, "#17807E")}</g><text x="${x}" y="${y + 134 * s}" font-family="Archivo" font-size="${13.2 * s}" font-weight="600" fill="${desc}" textLength="${416 * s}" lengthAdjust="spacing">${E(d.company === "group" ? "GROUP" : co.descriptor)}</text>`;
 }
 function darkLogo(d, co, x, y, s) {
   if (d.company === "ksa") return `<g transform="translate(${x} ${y}) scale(${s})">${MASTER_REVERSED}</g>`;
-  return `<g transform="translate(${x} ${y}) scale(${s})">${wordmark("#FFFFFF", "#3FB0A9", co.under)}</g>` + (d.company === "group" ? T(x + 1, y + 134 * s, "G R O U P", { size: 22 * s, weight: 600, fill: "#E2C07A", ls: 8 * s }) : `<text x="${x}" y="${y + 134 * s}" font-family="Archivo" font-size="${13.2 * s}" font-weight="600" fill="#CDE8E3" textLength="${416 * s}" lengthAdjust="spacing">${E(co.descriptor)}</text>`);
+  return `<g transform="translate(${x} ${y}) scale(${s})">${wordmark("#FFFFFF", "#3FB0A9", co.under)}</g><text x="${x}" y="${y + 134 * s}" font-family="Archivo" font-size="${13.2 * s}" font-weight="600" fill="#CDE8E3" textLength="${416 * s}" lengthAdjust="spacing">${E(d.company === "group" ? "GROUP" : co.descriptor)}</text>`;
 }
+const LOGO_W = 416;
+const centredLogo = (d, co, w, y, s, dark) => (dark ? darkLogo(d, co, (w - LOGO_W * s) / 2, y, s) : lightLogo(d, co, (w - LOGO_W * s) / 2, y, s));
+const legalLine = (d) => (d.company === "group" ? "Kayak Strategic Advisors · Kayak Innovations · Kayak Technology Solutions" : (COMPANY[d.company] || COMPANY.ksa).footer || (COMPANY[d.company] || COMPANY.ksa).legal);
+const caps = (x, y, t, fill, o = {}) => T(x, y, (t || "").toUpperCase(), { size: o.size || 4.8, weight: 600, fill, ls: o.ls ?? 1.5, anchor: o.anchor });
+const hair = (x1, y1, x2, y2, c = HAIR, w = 0.45) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}"/>`;
 
 function front(d, B) {
   const co = COMPANY[d.company] || COMPANY.ksa;
-  const web = (d.website || "www.kayaksa.com").toUpperCase();
-  const loc = (d.locations || "").toUpperCase();
+  const web = (d.website || "www.kayaksa.com").replace(/^https?:\/\//, "");
+  const loc = d.locations || "";
   switch (d.design) {
-    case "openwater": return svg(B, d, `${bg(W, H, B, "#FBFAF5")}${lightLogo(d, co, 64, 44, 0.5)}${bladeBand(150, 48 + B, B)}${T(W - 22, 30, loc, { size: 5.6, weight: 600, fill: "#9C630E", anchor: "end", ls: 1.6 })}${T(22, 132, web, { size: 6.6, weight: 600, fill: "#0E2F3C", ls: 2.2 })}`);
-    case "minimal": return svg(B, d, `${bg(W, H, B, "#FFFFFF")}${lightLogo(d, co, 76, 58, 0.44)}<rect x="76" y="132" width="40" height="1.6" fill="#EE9B1E"/>${T(76, 150, web, { size: 6.4, weight: 600, fill: "#3E5563", ls: 2 })}`);
-    case "contour": return svg(B, d, `${bg(W, H, B, "#0E2F3C")}${contours(B)}<rect x="22" y="40" width="${416 * 0.44 + 28}" height="76" fill="#0E2F3C"/>${darkLogo(d, co, 36, 50, 0.44)}${T(W - 22, H - 22, web, { size: 6.4, weight: 600, fill: "#F5C46D", anchor: "end", ls: 2 })}`);
-    case "confluence": {
-      const half = W * 0.42;
-      return svg(B, d, `${bg(W, H, B, "#FBFAF5")}<clipPath id="cfl"><rect x="${-B}" y="${-B}" width="${half + B}" height="${H + 2 * B}"/></clipPath><g clip-path="url(#cfl)">${bg(half, H, B, "#0E2F3C")}${confluenceRepeat(-B, -B, half + B, H + 2 * B, 0.5)}</g>
-        <rect x="${half}" y="${-B}" width="1.2" height="${H + 2 * B}" fill="#C9A25A"/>${lightLogo(d, co, half + 24, 66, 0.3)}
-        <rect x="${half + 24}" y="${118}" width="28" height="1.4" fill="#EE9B1E"/>${T(half + 24, 134, web, { size: 6, weight: 600, fill: "#0E2F3C", ls: 2 })}${T(half + 24, 146, loc, { size: 5.2, weight: 600, fill: "#9C630E", ls: 1.4 })}`);
-    }
-    case "navigator": return svg(B, d, `${bg(W, H, B, "#FBFAF5")}${navMarks(W, H, 16, 12, "#9C630E")}${lightLogo(d, co, (W - 416 * 0.42) / 2, 60, 0.42)}
-      <g transform="translate(${W / 2} 134)"><line x1="-36" y1="0" x2="-7" y2="0" stroke="#17807E" stroke-width="0.6"/><rect x="-2" y="-2" width="4" height="4" fill="#EE9B1E" transform="rotate(45)"/><line x1="7" y1="0" x2="36" y2="0" stroke="#17807E" stroke-width="0.6"/></g>
-      ${T(W / 2, 152, web, { size: 6.2, weight: 600, fill: "#0E2F3C", anchor: "middle", ls: 2.2 })}${T(W / 2, 30, loc, { size: 5, weight: 600, fill: "#9C630E", anchor: "middle", ls: 1.6 })}`);
-    case "signature": {
-      const [w, h] = [H, W];
-      return svg(B, d, `${bg(w, h, B, "#0B2733")}<g transform="translate(${w / 2 - 92 * 1.45} ${-26}) scale(2.9)" opacity="0.98">${identifier("#0B2733", "#17807E", "stem")}</g>
-        <rect x="10" y="10" width="${w - 20}" height="${h - 20}" fill="none" stroke="#C9A25A" stroke-width="0.6"/>
-        ${darkLogo(d, co, (w - 416 * 0.34) / 2, 214, 0.34)}
-        <g transform="translate(${w / 2} 278)"><line x1="-30" y1="0" x2="-6" y2="0" stroke="#C9A25A" stroke-width="0.5"/><rect x="-2" y="-2" width="4" height="4" fill="#F5C46D" transform="rotate(45)"/><line x1="6" y1="0" x2="30" y2="0" stroke="#C9A25A" stroke-width="0.5"/></g>
-        ${T(w / 2, 296, web, { size: 6, weight: 600, fill: "#F5C46D", anchor: "middle", ls: 2 })}${T(w / 2, 308, loc, { size: 4.8, weight: 600, fill: "#A9C0C6", anchor: "middle", ls: 1.4 })}`);
-    }
-    case "monogram": {
-      const [w, h] = [H, W];
-      return svg(B, d, `${bg(w, h, B, "#FBFAF5")}<g transform="translate(${w / 2 - 92 * 0.85} 52) scale(1.7)">${identifier("#E6ECEA", "#E1E9E7", "stem", "#ECE7DA")}</g>
-        ${lightLogo(d, co, (w - 416 * 0.34) / 2, 238, 0.34)}<rect x="${w / 2 - 14}" y="${276}" width="28" height="1.4" fill="#EE9B1E"/>
-        ${T(w / 2, 294, web, { size: 6, weight: 600, fill: "#0E2F3C", anchor: "middle", ls: 2 })}${T(w / 2, 306, loc, { size: 4.8, weight: 600, fill: "#9C630E", anchor: "middle", ls: 1.4 })}`);
-    }
+    case "counsel": // the personal side faces front; the brand is the back
+      return personal(d, B, { bg: WHITE, ink: DEEP, accent: GOLD, sub: MUTED, mark: true });
+    case "ink": return svg(B, d, `${bg(W, H, B, DEEP)}<g transform="translate(${W - 150} -34) scale(2.7)">${identifier("#12394A", "#12394A", "stem", "#12394A")}</g>
+      ${darkLogo(d, co, 30, 70, 0.27)}${hair(30, 116, 30 + 34, 116, HAIR, 0.6)}${caps(30, 132, web, "#E2C07A", { size: 4.6, ls: 1.8 })}${caps(30, H - 26, loc, "#9FB4BA", { size: 4.2, ls: 1.6 })}`);
+    case "bar": return svg(B, d, `${bg(W, H, B, WHITE)}<rect x="26" y="26" width="1.3" height="${H - 52}" fill="#EE9B1E"/>${lightLogo(d, co, 38, 30, 0.2)}
+      ${T(38, H - 50, d.name || "Your Name", { serif: true, size: fitSerif(d.name, 12, 250), weight: 600, fill: DEEP })}${caps(38, H - 38, [d.title, d.department].filter(Boolean).join(" · "), GOLD, { size: 4.6 })}${caps(W - 26, H - 26, loc, MUTED, { size: 4.2, anchor: "end" })}`);
+    case "letterhead": return svg(B, d, `${bg(W, H, B, IVORY)}${caps(W / 2, 30, legalLine(d), DEEP, { size: 4.4, ls: 1.6, anchor: "middle" })}${hair(28, 37, W - 28, 37)}
+      ${centredLogo(d, co, W, 70, 0.27)}${hair(28, H - 36, W - 28, H - 36)}${caps(W / 2, H - 24, [web, loc].filter(Boolean).join("   ·   "), MUTED, { size: 4.4, ls: 1.6, anchor: "middle" })}`);
+    case "partner": return svg(B, d, `${bg(W, H, B, WHITE)}${lightLogo(d, co, 30, H - 60, 0.2)}${caps(W - 30, H - 32, loc, MUTED, { size: 4.2, anchor: "end" })}${caps(W - 30, H - 42, web, DEEP, { size: 4.2, anchor: "end" })}`);
+    case "gilt": return svg(B, d, `${bg(W, H, B, WHITE)}<g transform="translate(${W / 2 - 92 * 0.42} 54) scale(0.42)">${identifier(GOLD, GOLD, co.under, GOLD)}</g>
+      ${caps(W / 2, 118, d.company === "group" ? "Kayak Group" : co.label, GOLD, { size: 6, ls: 3.2, anchor: "middle" })}${caps(W / 2, 132, co.form || "", "#9A8A6E", { size: 4, ls: 1.8, anchor: "middle" })}`);
+    case "harbour": return svg(B, d, `${bg(W, H, B, IVORY)}${lightLogo(d, co, 30, 68, 0.27)}${hair(30, 114, 64, 114)}${caps(30, 128, web, DEEP, { size: 4.6, ls: 1.8 })}${caps(W - 30, H - 26, loc, MUTED, { size: 4.2, anchor: "end" })}`);
+    case "monolith": { const [w, h] = [H, W];
+      return svg(B, d, `${bg(w, h, B, DEEP)}<g transform="translate(${w / 2 - 92 * 0.36} 92) scale(0.36)">${identifier("#FFFFFF", "#3FB0A9", co.under)}</g>${hair(w / 2 - 14, 150, w / 2 + 14, 150, HAIR, 0.6)}
+        ${centredLogo(d, co, w, 236, 0.28, true)}${caps(w / 2, h - 30, web, "#E2C07A", { size: 4.4, ls: 1.8, anchor: "middle" })}`); }
+    case "folio": { const [w, h] = [H, W];
+      return svg(B, d, `${bg(w, h, B, IVORY)}${centredLogo(d, co, w, 140, 0.3)}${hair(w / 2 - 14, 196, w / 2 + 14, 196)}${caps(w / 2, h - 30, loc, MUTED, { size: 4.2, anchor: "middle" })}`); }
   }
-  // heritage
-  let logo = darkLogo(d, co, d.company === "group" ? 30 : 76, d.company === "group" ? 36 : d.company === "ksa" ? 50 : 54, d.company === "group" ? 0.395 : 0.44);
-  let foot = "";
-  if (d.company === "group") {
-    const ents = [["stem", "STRATEGIC ADVISORS"], ["spark", "INNOVATIONS"], ["build", "TECHNOLOGY SOLUTIONS"]];
-    foot = `<line x1="30" y1="148" x2="${W - 30}" y2="148" stroke="#C9A25A" stroke-width="0.5"/>` +
-      ents.map(([u, n], i) => `<g transform="translate(${30 + i * 96} 156) scale(0.11)">${identifier("#FFFFFF", "#3FB0A9", u)}</g>${T(43 + i * 96, 165, n, { size: 5.2, weight: 600, fill: "#FFFFFF", ls: 0.9 })}`).join("");
-  } else {
-    foot = `<g transform="translate(${W / 2} 150)"><line x1="-44" y1="0" x2="-8" y2="0" stroke="#C9A25A" stroke-width="0.5"/><rect x="-2.2" y="-2.2" width="4.4" height="4.4" fill="#F5C46D" transform="rotate(45)"/><line x1="8" y1="0" x2="44" y2="0" stroke="#C9A25A" stroke-width="0.5"/></g>` +
-      T(W / 2, 168, web, { size: 6.6, weight: 600, fill: "#F5C46D", anchor: "middle", ls: 2.2 });
-  }
-  const wm = d.company === "group" ? `<g transform="translate(${W - 150} -20) scale(2.4)" opacity="0.55">${identifier("#123A49", "#123A49", "stem", "#123A49")}</g>` : "";
-  return svg(B, d, `${frame(B)}${wm}${logo}${loc ? T(W - 24, 26, loc, { size: 5.6, weight: 600, fill: "#E2C07A", anchor: "end", ls: 1.6 }) : ""}${foot}`);
+  // chambers
+  return svg(B, d, `${bg(W, H, B, IVORY)}${centredLogo(d, co, W, 62, 0.3)}${caps(W / 2, H - 26, loc, GOLD, { size: 4.4, ls: 2, anchor: "middle" })}`);
 }
 
-// Contact rows: an icon for each channel, so a WhatsApp number is never mistaken for a call line.
+function back(d, B) {
+  const co = COMPANY[d.company] || COMPANY.ksa;
+  switch (d.design) {
+    case "counsel": return svg(B, d, `${bg(W, H, B, DEEP)}${centredLogo(d, co, W, 70, 0.3, true)}`);
+    case "ink": return personal(d, B, { bg: IVORY, ink: DEEP, accent: GOLD, sub: MUTED });
+    case "bar": return personal(d, B, { bg: WHITE, ink: DEEP, accent: GOLD, sub: MUTED, rule: true });
+    case "letterhead": return centred(d, B, { bg: IVORY, ink: DEEP, accent: GOLD, sub: MUTED, head: true });
+    case "partner": return twoCol(d, B);
+    case "gilt": return personal(d, B, { bg: DEEP, ink: WHITE, accent: "#E2C07A", sub: "#B9CBCF", dark: true });
+    case "harbour": return personal(d, B, { bg: DEEP, ink: WHITE, accent: "#E2C07A", sub: "#B9CBCF", dark: true, wake: true });
+    case "monolith": return portraitBack(d, B, { bg: IVORY, ink: DEEP, accent: GOLD, sub: MUTED });
+    case "folio": return portraitBack(d, B, { bg: IVORY, ink: DEEP, accent: GOLD, sub: MUTED, head: true });
+  }
+  return centred(d, B, { bg: IVORY, ink: DEEP, accent: GOLD, sub: MUTED });
+}
+
+// Archivo Expanded-like widths for caps aside, a serif name runs about 0.5 em a character.
+function fitSerif(name, max, width) { return Math.min(max, width / (Math.max(8, (name || "Your Name").length) * 0.56)); }
+function contactLines(d, x, y, o) {
+  let out = "";
+  const lh = o.lh || 10.5, size = o.size || 6.6;
+  for (const [k, v] of rows(d)) {
+    if (o.anchor === "middle") out += T(x, y, v, { size, fill: o.ink, anchor: "middle" }) + icon(k, x - v.length * size * 0.27 - 9, y - size * 0.82, size * 0.95, k === "whatsapp" ? o.ink : o.accent);
+    else out += icon(k, x, y - size * 0.82, size * 0.95, k === "whatsapp" ? o.ink : o.accent) + T(x + size * 1.55, y, v, { size, fill: o.ink });
+    y += lh;
+  }
+  return { out, y };
+}
+function address(d, x, y, o, max) {
+  if (!d.address) return { out: "", y };
+  const parts = splitAddress(d.address, max);
+  let out = o.anchor === "middle" ? "" : icon("pin", x, y - 5, 5.6, o.accent);
+  parts.forEach((p, i) => (out += T(o.anchor === "middle" ? x : x + 10, y + i * 8, p, { size: 5.6, fill: o.sub, anchor: o.anchor })));
+  return { out, y: y + parts.length * 8 };
+}
+function qrSmall(d, x, y, size, o) {
+  const url = cleanLinkedIn(d.linkedin);
+  if (!url) return "";
+  return `${o.dark ? `<rect x="${x - 2.5}" y="${y - 2.5}" width="${size + 5}" height="${size + 5}" fill="#FFFFFF"/>` : ""}${qrSvg(url, x, y, size, DEEP)}${caps(x + size / 2, y + size + 9, "LinkedIn", o.sub, { size: 3.8, ls: 1.4, anchor: "middle" })}`;
+}
+// The personal side, left-aligned: serif name, small-caps title, hairline, contacts; QR low right.
+function personal(d, B, o) {
+  const x0 = o.rule ? 38 : 30, qr = cleanLinkedIn(d.linkedin) ? 44 : 0;
+  let s = bg(W, H, B, o.bg);
+  if (o.wake) for (let i = -12; i < 30; i++) s += `<line x1="${i * 18}" y1="${H + B}" x2="${i * 18 + (H + 2 * B) / Math.tan(62 * Math.PI / 180)}" y2="${-B}" stroke="#12394A" stroke-width="0.6"/>`;
+  if (o.rule) s += `<rect x="26" y="26" width="1.3" height="${H - 52}" fill="#EE9B1E"/>`;
+  if (o.mark) s += `<g transform="translate(${W - 30 - 92 * 0.16} 26) scale(0.16)">${identifier(DEEP, "#17807E", (COMPANY[d.company] || COMPANY.ksa).under)}</g>`;
+  s += T(x0, 44, d.name || "Your Name", { serif: true, size: fitSerif(d.name, 13.5, W - x0 - 60), weight: 600, fill: o.ink });
+  s += caps(x0, 56, [d.title, d.department].filter(Boolean).join(" · "), o.accent, { size: 4.8 });
+  s += hair(x0, 66, x0 + 30, 66, o.dark ? HAIR : HAIR, 0.5);
+  const c = contactLines(d, x0, 84, { ink: o.ink, accent: o.accent, lh: 10.5, size: 6.4 });
+  s += c.out;
+  s += address(d, x0, c.y + 1, { accent: o.accent, sub: o.sub }, qr ? 46 : 60).out;
+  if (qr) s += qrSmall(d, W - 30 - qr, H - 30 - qr - 6, qr, o);
+  s += caps(x0, H - 22, legalLine(d), o.sub, { size: 3.9, ls: 1.2 });
+  return svg(B, d, s);
+}
+// Centred, engraved: the classic law-firm back.
+function centred(d, B, o) {
+  const qr = cleanLinkedIn(d.linkedin) ? 42 : 0;
+  let s = bg(W, H, B, o.bg);
+  let y = 40;
+  if (o.head) { s += caps(W / 2, 26, legalLine(d), o.ink, { size: 4.2, ls: 1.6, anchor: "middle" }) + hair(28, 33, W - 28, 33); y = 54; }
+  s += T(W / 2, y, d.name || "Your Name", { serif: true, size: fitSerif(d.name, 14, 260), weight: 600, fill: o.ink, anchor: "middle" });
+  s += caps(W / 2, y + 12, [d.title, d.department].filter(Boolean).join(" · "), o.accent, { size: 4.8, anchor: "middle" });
+  s += hair(W / 2 - 14, y + 21, W / 2 + 14, y + 21);
+  const c = contactLines(d, W / 2, y + 37, { ink: o.ink, accent: o.accent, lh: 9.6, size: 6.2, anchor: "middle" });
+  s += c.out;
+  s += address(d, W / 2, c.y + 1, { accent: o.accent, sub: o.sub, anchor: "middle" }, 72).out;
+  if (qr) s += qrSmall(d, W - 24 - qr, H - 24 - qr - 6, qr, o);
+  if (!o.head) s += caps(W / 2, H - 16, legalLine(d), o.sub, { size: 3.8, ls: 1.2, anchor: "middle" });
+  return svg(B, d, s);
+}
+function twoCol(d, B) {
+  const qr = cleanLinkedIn(d.linkedin) ? 42 : 0;
+  let s = bg(W, H, B, WHITE);
+  s += T(30, 50, d.name || "Your Name", { serif: true, size: fitSerif(d.name, 13, 150), weight: 600, fill: DEEP });
+  s += caps(30, 62, d.title, GOLD, { size: 4.6 }) + caps(30, 71, d.department, MUTED, { size: 4.2 });
+  s += hair(176, 36, 176, H - 40);
+  const c = contactLines(d, 188, 46, { ink: DEEP, accent: GOLD, lh: 10.5, size: 6.2 });
+  s += c.out + address(d, 188, c.y + 1, { accent: GOLD, sub: MUTED }, 30).out;
+  if (qr) s += qrSmall(d, 30, H - 30 - qr - 6, qr, {});
+  s += caps(qr ? 74 : 30, H - 26, legalLine(d), MUTED, { size: 3.8, ls: 1.2 });
+  return svg(B, d, s);
+}
+function portraitBack(d, B, o) {
+  const [w, h] = [H, W], qr = cleanLinkedIn(d.linkedin) ? 50 : 0;
+  let s = bg(w, h, B, o.bg), y = 64;
+  if (o.head) { s += caps(w / 2, 28, d.company === "group" ? "Kayak Group" : (COMPANY[d.company] || COMPANY.ksa).label, o.ink, { size: 4.2, ls: 1.6, anchor: "middle" }) + hair(24, 35, w - 24, 35); y = 70; }
+  else s += `<g transform="translate(${w / 2 - 92 * 0.16} 24) scale(0.16)">${identifier(DEEP, "#17807E", (COMPANY[d.company] || COMPANY.ksa).under)}</g>`;
+  s += T(w / 2, y, d.name || "Your Name", { serif: true, size: fitSerif(d.name, 13, w - 36), weight: 600, fill: o.ink, anchor: "middle" });
+  s += caps(w / 2, y + 12, d.title, o.accent, { size: 4.6, anchor: "middle" }) + caps(w / 2, y + 21, d.department, o.sub, { size: 4.2, anchor: "middle" });
+  s += hair(w / 2 - 14, y + 30, w / 2 + 14, y + 30);
+  const c = contactLines(d, w / 2, y + 48, { ink: o.ink, accent: o.accent, lh: 10, size: 6.2, anchor: "middle" });
+  s += c.out + address(d, w / 2, c.y + 2, { accent: o.accent, sub: o.sub, anchor: "middle" }, 38).out;
+  if (qr) s += qrSmall(d, (w - qr) / 2, h - 40 - qr - 8, qr, o);
+  s += caps(w / 2, h - 22, legalLine(d), o.sub, { size: 3.4, ls: 1, anchor: "middle" });
+  return svg(B, d, s);
+}
+
 function rows(d) {
   const r = [];
   const phones = (d.phones || []).filter(Boolean);
@@ -194,66 +284,6 @@ function rows(d) {
   if (d.email) r.push(["mail", d.email]);
   if (d.website) r.push(["web", d.website]);
   return r;
-}
-function contactBlock(d, x0, y, maxChars, ink = "#0E2F3C", ic = "#17807E", sub = "#3E5563") {
-  let out = "";
-  for (const [k, v] of rows(d)) { out += icon(k, x0, y - 6.3, 7.2, k === "whatsapp" ? ink : ic) + T(x0 + 12, y, v, { size: 7.4, fill: ink }); y += 12; }
-  if (d.address) {
-    const parts = splitAddress(d.address, maxChars);
-    out += icon("pin", x0, y - 6.3, 7.2, ic);
-    parts.forEach((p, i) => (out += T(x0 + 12, y + i * 8.4, p, { size: 6.2, fill: sub })));
-    y += parts.length * 8.4 + 4;
-  }
-  return { out, y };
-}
-function nameBlock(d, x0, y, ink = "#0E2F3C", accent = "#9C630E", size, maxW = 230) {
-  // Archivo Expanded Bold runs about 0.78 em per character: shrink long names to fit the width.
-  const nameSize = Math.min(size || 12.5, maxW / (Math.max(8, (d.name || "Your Name").length) * 0.78));
-  const dept = [d.title, d.department].filter(Boolean).join(" · ").toUpperCase();
-  return T(x0, y, d.name || "Your Name", { size: nameSize, weight: 700, stretch: "125%", fill: ink }) +
-    `<rect x="${x0}" y="${y + 9.8}" width="3.4" height="3.4" fill="#EE9B1E" transform="rotate(45 ${x0 + 1.7} ${y + 11.5})"/>` + T(x0 + 9, y + 13, dept, { size: 6.2, weight: 600, fill: accent, ls: 1.3 });
-}
-
-function back(d, B) {
-  const co = COMPANY[d.company] || COMPANY.ksa;
-  const hasQr = !!cleanLinkedIn(d.linkedin);
-  if (DESIGNS[d.design]?.o === "p") {
-    const [w, h] = [H, W], dark = d.design === "signature";
-    const ink = dark ? "#FFFFFF" : "#0E2F3C", ic = dark ? "#F5C46D" : "#17807E", sub = dark ? "#CDE0DD" : "#3E5563";
-    let s = bg(w, h, B, dark ? "#0B2733" : "#FBFAF5");
-    s += `<g transform="translate(18 20) scale(0.26)">${identifier(dark ? "#FFFFFF" : "#0E2F3C", dark ? "#3FB0A9" : "#17807E", co.under)}</g>`;
-    s += nameBlock(d, 18, 62, ink, dark ? "#E2C07A" : "#9C630E", 11.5, w - 36);
-    s += `<line x1="18" y1="86" x2="${w - 18}" y2="86" stroke="#C9A25A" stroke-width="0.5"/>`;
-    const c = contactBlock(d, 18, 104, 34, ink, ic, sub); s += c.out;
-    if (hasQr) s += qrBlock(d, (w - 62) / 2, Math.max(c.y + 8, 196), 62, dark);
-    s += T(18, h - 22, (co.footer || co.legal).toUpperCase(), { size: 4.6, weight: 600, fill: ink, ls: 0.8 });
-    s += `<rect x="${-B}" y="${h - 6}" width="${w + 2 * B}" height="${6 + B}" fill="${dark ? "#C9A25A" : "#0E2F3C"}"/><rect x="${w - 46}" y="${h - 6}" width="${46 + B}" height="${6 + B}" fill="#EE9B1E"/>`;
-    return svg(B, d, s);
-  }
-  let x0 = 22, panel = "";
-  const right = W - 20, qr = hasQr ? (d.company === "group" ? 46 : 52) : 0;
-  if (d.company === "group") {
-    x0 = 130;
-    const ents = [["stem", "Kayak Strategic Advisors", COMPANY.ksa.form], ["spark", "Kayak Innovations", COMPANY.innovations.form], ["build", "Kayak Technology Solutions", COMPANY.technology.form]];
-    panel = `<rect x="${-B}" y="${-B}" width="${112 + B}" height="${H + 2 * B}" fill="#0B2733"/><rect x="112" y="${-B}" width="1" height="${H + 2 * B}" fill="#C9A25A"/>
-      <g transform="translate(15 18) scale(0.17)">${wordmark("#FFFFFF", "#3FB0A9")}</g>${T(15.5, 41, "G R O U P", { size: 4.2, weight: 600, fill: "#E2C07A", ls: 1.6 })}
-      ${d.locations ? T(15, 96, d.locations.toUpperCase(), { size: 5, weight: 600, fill: "#E2C07A", ls: 1.4 }) : ""}
-      ${ents.map(([u, a, b], i) => `<g transform="translate(15 ${108 + i * 24}) scale(0.1)">${identifier("#FFFFFF", "#3FB0A9", u)}</g>${T(27, 114 + i * 24, a, { size: 5.7, weight: 600, fill: "#FFFFFF" })}${T(27, 121 + i * 24, b, { size: 4.8, fill: "#A9C6C4" })}`).join("")}`;
-  }
-  let body = nameBlock(d, x0, 30, "#0E2F3C", "#9C630E", 12.5, (d.company !== "group" ? right - 44 : right) - x0);
-  if (d.company !== "group") body += `<g transform="translate(${right - 34} 17) scale(0.37)">${identifier("#0E2F3C", "#17807E", co.under)}</g>`;
-  body += `<line x1="${x0}" y1="57" x2="${right}" y2="57" stroke="#C9A25A" stroke-width="0.5"/>`;
-  const maxChars = Math.floor(((qr ? right - qr - 12 : right) - x0 - 12) / 3.3);
-  const c = contactBlock(d, x0, 72, maxChars);
-  body += c.out;
-  if (qr) body += qrBlock(d, right - qr, 66, qr);
-  let footer = "";
-  if (d.company !== "group") {
-    footer = T(x0, H - 20, (co.footer || co.legal).toUpperCase(), { size: 5.2, weight: 600, fill: "#0E2F3C", ls: 0.9 }) + (d.locations && !qr ? T(right, H - 20, d.locations.toUpperCase(), { size: 5.2, weight: 600, fill: "#9C630E", anchor: "end", ls: 1.2 }) : "");
-    footer += `<rect x="${-B}" y="${H - 5}" width="${W + 2 * B}" height="${5 + B}" fill="#0E2F3C"/><rect x="${W - 64}" y="${H - 5}" width="${64 + B}" height="${5 + B}" fill="#EE9B1E"/>`;
-  }
-  const accent = d.company === "group" ? "" : d.design === "openwater" ? `<rect x="${-B}" y="${-B}" width="${W + 2 * B}" height="${4 + B}" fill="#17807E"/>` : d.design === "contour" ? `<g opacity="0.14">${contours(B)}</g>` : d.design === "navigator" ? navMarks(W, H, 8, 8, "#C9A25A") : d.design === "confluence" ? `<g opacity="0.08">${confluenceRepeat(-B, -B, W + 2 * B, H + 2 * B, 0.35)}</g>` : "";
-  return svg(B, d, `${bg(W, H, B, d.design === "minimal" ? "#FFFFFF" : "#FBFAF5")}${accent}${panel}${body}${footer}`);
 }
 
 function splitAddress(a, max) {
@@ -289,9 +319,8 @@ function vcard(d) {
 let fontCss = "";
 async function fontFaceCss() {
   if (fontCss) return fontCss;
-  const b = await (await fetch("/_shared/fonts/Archivo.woff2")).arrayBuffer();
-  let s = ""; const u = new Uint8Array(b); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000));
-  fontCss = `@font-face{font-family:"Archivo";src:url(data:font/woff2;base64,${btoa(s)}) format("woff2");font-weight:100 900;font-stretch:62% 125%}`;
+  const b64 = async (u) => { const u8 = new Uint8Array(await (await fetch(u)).arrayBuffer()); let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+  fontCss = `@font-face{font-family:"Archivo";src:url(data:font/woff2;base64,${await b64("/_shared/fonts/Archivo.woff2")}) format("woff2");font-weight:100 900;font-stretch:62% 125%}@font-face{font-family:"Source Serif 4";src:url(data:font/woff2;base64,${await b64("/_shared/fonts/SourceSerif4.woff2")}) format("woff2");font-weight:200 900}`;
   return fontCss;
 }
 async function withFonts(svgText) {
@@ -318,7 +347,7 @@ async function raster(svgText, type, dpi) {
 
 let pdfReady = null;
 function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("Could not load " + src)); document.head.append(s); }); }
-const FONT_FILES = { "Arch-R": "Archivo-Regular.ttf", "Arch-SB": "Archivo-SemiBold.ttf", "Arch-B": "Archivo-Bold.ttf", "ArchX-SB": "ArchivoExpanded-SemiBold.ttf", "ArchX-B": "ArchivoExpanded-Bold.ttf" };
+const FONT_FILES = { "SS4-R": "SourceSerif4-Regular.ttf", "SS4-SB": "SourceSerif4-SemiBold.ttf", "Arch-R": "Archivo-Regular.ttf", "Arch-SB": "Archivo-SemiBold.ttf", "Arch-B": "Archivo-Bold.ttf", "ArchX-SB": "ArchivoExpanded-SemiBold.ttf", "ArchX-B": "ArchivoExpanded-Bold.ttf" };
 async function pdfLibs() {
   if (!pdfReady) pdfReady = (async () => {
     await loadScript("/vendor/jspdf.umd.min.js");
@@ -334,6 +363,7 @@ async function pdfLibs() {
   return pdfReady;
 }
 function pdfFamily(el) {
+  if ((el.getAttribute("font-family") || "").includes("Serif")) return Number(el.getAttribute("font-weight") || 400) >= 600 ? "SS4-SB" : "SS4-R";
   const w = Number(el.getAttribute("font-weight") || 400), x = (el.getAttribute("font-stretch") || "") === "125%";
   if (x) return w >= 700 ? "ArchX-B" : "ArchX-SB";
   return w >= 700 ? "Arch-B" : w >= 600 ? "Arch-SB" : "Arch-R";
@@ -446,6 +476,7 @@ export async function render(main, ctx) {
   };
   form.oninput = () => { read(); draw(); };
   fill(); draw();
+  document.fonts?.load('600 12px "Source Serif 4"').then(() => draw()).catch(() => {});
 
   // 3D: click or Enter turns the card; the sheen follows the pointer like light on foil.
   const card = $("#card3d"), stage = $("#stage");
@@ -459,7 +490,7 @@ export async function render(main, ctx) {
 
   const drawSaved = (list) => {
     $("#saved").innerHTML = list.length ? list.map((c) => `<div class="row between" style="border-bottom:1px solid var(--line);padding:6px 0"><button class="btn btn-quiet btn-sm" data-open="${esc(c.id)}">${esc(c.label)}</button><span class="small faint">${esc(fmtDate(c.updated_at))}</span><button class="btn btn-quiet btn-sm" data-rm="${esc(c.id)}" aria-label="Delete">${ico("trash")}</button></div>`).join("") : `<p class="small muted">Cards you save appear here.</p>`;
-    $$("[data-open]", main).forEach((b) => (b.onclick = () => { const c = list.find((x) => x.id === b.dataset.open); d = { ...DEFAULTS, ...JSON.parse(c.data) }; if (!DESIGNS[d.design]) d.design = "heritage"; savedId = c.id; fill(); draw(); }));
+    $$("[data-open]", main).forEach((b) => (b.onclick = () => { const c = list.find((x) => x.id === b.dataset.open); d = { ...DEFAULTS, ...JSON.parse(c.data) }; if (!DESIGNS[d.design]) d.design = "chambers"; savedId = c.id; fill(); draw(); }));
     $$("[data-rm]", main).forEach((b) => (b.onclick = async () => { if (!(await confirmDialog("Delete this saved card?", "This only removes the saved details.", "Delete", true))) return; await api(`/api/cards/${b.dataset.rm}`, { method: "DELETE" }); drawSaved((await api("/api/cards")).items); }));
   };
   drawSaved(items);
@@ -500,7 +531,7 @@ export async function render(main, ctx) {
         const bleed = k === "pdf-print";
         const B = bleed ? 3 / UNIT_MM : 0;
         const [w, h] = dims(d);
-        const spec = bleed ? [["Name", d.name], ["Company", COMPANY[d.company].footer || COMPANY[d.company].legal], ["Design", `${DESIGNS[d.design].label}: ${DESIGNS[d.design].note}`], ["Trim size", `${(w * UNIT_MM).toFixed(1)} × ${(h * UNIT_MM).toFixed(1)} mm, with 3 mm bleed on every side`], ["Paper", FINISH.stock[d.stock]], ["Foil", FINISH.foil[d.foil]], ["Edge", FINISH.edge[d.edge]], ["Colours", "Deep Current #0E2F3C (Pantone 7546 C), Open Water #17807E (Pantone 7716 C), Saffron #EE9B1E (Pantone 7409 C)"], ["QR code", cleanLinkedIn(d.linkedin) ? `Opens ${cleanLinkedIn(d.linkedin)}. Print at 100%, never smaller than 16 mm, and test-scan the proof.` : "None"], ["Proof", "Send a printed proof for approval before the run."]] : null;
+        const spec = bleed ? [["Name", d.name], ["Company", COMPANY[d.company].footer || COMPANY[d.company].legal], ["Design", `${DESIGNS[d.design].label}: ${DESIGNS[d.design].note}`], ["Trim size", `${(w * UNIT_MM).toFixed(1)} × ${(h * UNIT_MM).toFixed(1)} mm, with 3 mm bleed on every side`], ["Paper", FINISH.stock[d.stock]], ["Foil", FINISH.foil[d.foil]], ["Edge", FINISH.edge[d.edge]], ["Colours", "Deep Current #0E2F3C (Pantone 7546 C), Open Water #17807E (Pantone 7716 C), Saffron #EE9B1E (Pantone 7409 C)"], ["QR code", cleanLinkedIn(d.linkedin) ? `Opens ${cleanLinkedIn(d.linkedin)}. Print at 100%, never smaller than 11 mm across, and test-scan the proof.` : "None"], ["Proof", "Send a printed proof for approval before the run."]] : null;
         download(await toPdf([front(d, B), back(d, B)], `Kayak card — ${d.name}`, bleed, spec), `${slug()}${bleed ? "_print-bleed" : ""}.pdf`);
       }
     } catch (err) { toast(err.message || "Export failed.", "err"); }
