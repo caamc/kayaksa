@@ -111,6 +111,9 @@ jobs:
       - name: Upload to meet.kayaksa.com/download
         run: |
           set -e
+          # The meet bucket holds recordings and installers; create it if this account doesn't have it yet.
+          npx wrangler r2 bucket list 2>/dev/null | grep -qE "^name:\s+kayaksa-meet$" || npx wrangler r2 bucket create kayaksa-meet || true
+          npx wrangler r2 bucket info kayaksa-meet || true
           put() { npx wrangler r2 object put "kayaksa-meet/desktop/$1/$(basename "$2")" --file "$2" --remote >/dev/null && echo "  $1/$(basename "$2")"; }
           # Installers first, update manifests (*.yml) last, so no client sees an update before its files exist.
           for f in out/meet-macOS/*; do case "$f" in *.yml) ;; *) put mac "$f";; esac; done
