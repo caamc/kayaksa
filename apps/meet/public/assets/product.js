@@ -66,11 +66,73 @@
   nums.forEach((n) => io.observe(n));
 })();
 
-// Notes.AI demo: cycle a few languages being "auto-detected" in the mock transcript.
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Mega menus: click on any device, hover on desktop pointers; Escape or an outside click closes.
 (() => {
-  const el = document.getElementById("naiLang");
-  if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const langs = ["Hindi", "English", "Marathi", "Tamil", "Arabic", "Gujarati", "Bengali", "Telugu", "Kannada", "French"];
-  let i = 0;
-  setInterval(() => { i = (i + 1) % langs.length; el.textContent = langs[i]; }, 1600);
+  const menus = [...document.querySelectorAll(".mm")];
+  if (!menus.length) return;
+  const hover = matchMedia("(hover: hover) and (min-width: 901px)");
+  const close = (except) => menus.forEach((m) => { if (m === except) return; m.querySelector(".mm-btn").setAttribute("aria-expanded", "false"); m.querySelector(".mm-panel").hidden = true; m.classList.remove("open"); });
+  const open = (m) => { close(m); m.querySelector(".mm-btn").setAttribute("aria-expanded", "true"); m.querySelector(".mm-panel").hidden = false; m.classList.add("open"); };
+  menus.forEach((m) => {
+    const btn = m.querySelector(".mm-btn");
+    btn.addEventListener("click", (e) => { e.stopPropagation(); m.classList.contains("open") ? close() : open(m); });
+    let t;
+    m.addEventListener("mouseenter", () => { if (!hover.matches) return; clearTimeout(t); open(m); });
+    m.addEventListener("mouseleave", () => { if (!hover.matches) return; t = setTimeout(() => close(), 160); });
+    m.querySelector(".mm-panel").addEventListener("click", (e) => { if (e.target.closest("a")) close(); });
+  });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".mm")) close(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+})();
+
+// A set of videos shown one at a time, each played to its end and then the next, with a progress bar
+// per step (hero and the "better conversations" switcher). Pauses when off screen.
+function rotator(root, { onShow } = {}) {
+  if (!root) return;
+  const vids = [...root.querySelectorAll("video[data-k]")];
+  const steps = [...root.querySelectorAll("[data-go]")];
+  let i = 0, visible = false, raf = 0;
+  const bar = (k, f) => { const b = steps.find((s) => s.dataset.go === k)?.querySelector("i b, .sw-bar b"); if (b) b.style[b.parentElement.classList.contains("sw-bar") ? "height" : "width"] = (f * 100).toFixed(1) + "%"; };
+  const show = (n, play = true) => {
+    i = (n + vids.length) % vids.length;
+    vids.forEach((v, j) => { v.classList.toggle("on", j === i); if (j !== i) { v.pause(); try { v.currentTime = 0; } catch {} } });
+    steps.forEach((s) => { const on = s.dataset.go === vids[i].dataset.k; s.setAttribute("aria-selected", on); s.classList.toggle("on", on); if (!on) bar(s.dataset.go, 0); });
+    onShow?.(vids[i].dataset.k);
+    const v = vids[i];
+    if (v.preload === "none") v.preload = "auto";
+    // Warm the next one up so the switch is instant.
+    const nx = vids[(i + 1) % vids.length]; if (nx.preload === "none") nx.preload = "metadata";
+    if (play && visible && !REDUCED) v.play().catch(() => {});
+  };
+  vids.forEach((v, j) => v.addEventListener("ended", () => { if (j === i) show(i + 1); }));
+  steps.forEach((s) => s.addEventListener("click", () => show(vids.findIndex((v) => v.dataset.k === s.dataset.go))));
+  const tick = () => { const v = vids[i]; if (v && v.duration) bar(v.dataset.k, REDUCED ? 1 : v.currentTime / v.duration); raf = requestAnimationFrame(tick); };
+  const io = new IntersectionObserver(([e]) => {
+    visible = e.isIntersecting;
+    if (visible) { if (!REDUCED) vids[i].play().catch(() => {}); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); }
+    else { vids[i].pause(); cancelAnimationFrame(raf); }
+  }, { threshold: 0.25 });
+  io.observe(root);
+  show(0, false);
+}
+// Hero: the headline word changes with the video.
+rotator(document.querySelector(".hero-stage"), {
+  onShow: (k) => document.querySelectorAll(".rot-w").forEach((w) => w.classList.toggle("on", w.dataset.for === k)),
+});
+rotator(document.getElementById("switcher"));
+
+// Single looping videos elsewhere: load and play only while on screen.
+(() => {
+  const vids = document.querySelectorAll("video[data-lazy]");
+  if (!vids.length || !("IntersectionObserver" in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      const v = e.target;
+      if (e.isIntersecting) { if (v.preload === "none") v.preload = "auto"; if (!REDUCED) v.play().catch(() => {}); }
+      else v.pause();
+    }
+  }, { threshold: 0.2 });
+  vids.forEach((v) => { v.removeAttribute("autoplay"); io.observe(v); });
 })();

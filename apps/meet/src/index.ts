@@ -266,6 +266,26 @@ app.route("/", auth);
 app.route("/api/ws", ws);
 app.get("/files/:fid", needMember, serveFile);
 
+// ---------------------------------------------------------------- product videos with byte ranges
+// Browsers seek and loop video with Range requests, and Safari (iPhone, iPad, Mac) will not play a
+// video at all without them. The files are small, so the worker slices them itself.
+app.get("/assets/video/:file", async (c) => {
+  const file = c.req.param("file");
+  if (!/^[a-z0-9-]+\.(webm|mp4|jpg)$/.test(file)) return c.text("Not found", 404);
+  const r = await c.env.ASSETS.fetch(new Request(new URL(`/assets/video/${file}`, c.req.url)));
+  if (!r.ok) return c.text("Not found", 404);
+  const type = file.endsWith(".webm") ? "video/webm" : file.endsWith(".mp4") ? "video/mp4" : "image/jpeg";
+  const base = { "Content-Type": type, "Accept-Ranges": "bytes", "Cache-Control": "public, max-age=86400", ETag: r.headers.get("ETag") || "" };
+  const buf = await r.arrayBuffer();
+  const size = buf.byteLength;
+  const m = /^bytes=(\d*)-(\d*)$/.exec(c.req.header("Range") || "");
+  if (!m || (!m[1] && !m[2])) return new Response(buf, { headers: { ...base, "Content-Length": String(size) } });
+  let start = m[1] ? Number(m[1]) : Math.max(0, size - Number(m[2]));
+  let end = m[1] && m[2] ? Math.min(Number(m[2]), size - 1) : size - 1;
+  if (start >= size || start > end) return new Response(null, { status: 416, headers: { ...base, "Content-Range": `bytes */${size}` } });
+  return new Response(buf.slice(start, end + 1), { status: 206, headers: { ...base, "Content-Range": `bytes ${start}-${end}/${size}`, "Content-Length": String(end - start + 1) } });
+});
+
 // ---------------------------------------------------------------- pages
 const page = (c: any, file: string) => c.env.ASSETS.fetch(new Request(new URL(file, c.req.url)));
 app.get("/", (c) => page(c, "/index.html"));

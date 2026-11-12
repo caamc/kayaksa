@@ -1,0 +1,283 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Archivo;src:url(../../apps/meet/public/_shared/fonts/Archivo.woff2) format("woff2");font-weight:100 900;font-stretch:62% 125%}
+html,body{margin:0;width:1280px;height:720px;overflow:hidden;background:#06171E}
+*{box-sizing:border-box}
+body{font-family:Archivo,Arial,sans-serif;color:#E8F0EF}
+#stage{position:absolute;inset:0}
+.scene{position:absolute;inset:0;display:none}
+.top{position:absolute;left:0;right:0;top:0;height:56px;display:flex;align-items:center;gap:14px;padding:0 24px;background:#0B2530;border-bottom:1px solid #1F4352}
+.top img{height:28px}
+.top .t{font-weight:700;font-size:17px;flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;background:#0F2E3B;border:1px solid #1F4352}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:#E5484D}
+.pill.ai{color:#EE9B1E;border-color:#EE9B1E66}
+.bar{position:absolute;left:0;right:0;bottom:0;height:76px;display:flex;justify-content:center;align-items:center;gap:14px}
+.kc{width:50px;height:50px;border-radius:50%;background:#0F2E3B;border:1px solid #1F4352;display:grid;place-items:center}
+.kc svg{width:22px;height:22px;stroke:#E8F0EF;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.kc.red{background:#D9604A;border-color:#D9604A;width:64px;border-radius:26px}
+.grid{position:absolute;left:24px;right:24px;top:72px;bottom:92px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px}
+.tile{position:relative;border-radius:14px;overflow:hidden;background:#0F2E3B}
+.tile svg.p{position:absolute;inset:0;width:100%;height:100%}
+.tile .nm{position:absolute;left:12px;bottom:10px;font-size:14px;font-weight:700;background:#06171Ecc;padding:4px 10px;border-radius:8px;display:flex;gap:7px;align-items:center}
+.tile .org{font-weight:500;color:#9FB5BC}
+.tile .ring{position:absolute;inset:0;border-radius:14px;border:4px solid #5DB2AB;opacity:0}
+.tile .wave{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;background:#17807E;display:none;align-items:center;justify-content:center;gap:3px}
+.tile .wave i{display:block;width:4px;border-radius:2px;background:#fff}
+.cap{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);width:760px;background:#06171Eee;border-radius:14px;padding:14px 18px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 10px 30px #0008;opacity:0}
+.cap .av{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:13px}
+.cap b{display:block;font-size:14px;margin-bottom:3px}
+.cap .tx{font-size:19px;line-height:1.35}
+.cap .tr{font-size:16px;color:#5DB2AB;margin-top:4px}
+.cap .lang{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#EE9B1E;margin-left:8px}
+/* notes */
+.np{position:absolute;right:24px;top:72px;bottom:24px;width:520px;background:#0B2530;border:1px solid #1F4352;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.np h3{margin:0;font-size:15px;color:#EE9B1E;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.ln{display:flex;gap:10px;opacity:0}
+.ln .av{width:32px;height:32px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:12px}
+.ln .who{font-size:13px;font-weight:700;display:flex;gap:8px;align-items:center}
+.chip{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:#EE9B1E22;color:#EE9B1E}
+.ln .t1{font-size:15px;line-height:1.4;margin-top:2px}
+.ln .t2{font-size:14px;color:#5DB2AB;margin-top:2px}
+.ln .ts{font-size:11px;color:#9FB5BC;font-weight:500}
+.sum{margin-top:auto;background:#EE9B1E14;border:1px solid #EE9B1E55;border-radius:12px;padding:14px 16px;opacity:0}
+.sum h4{margin:0 0 8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#EE9B1E}
+.sum .it{font-size:14.5px;line-height:1.45;opacity:0;margin-top:4px}
+.sum .it b{color:#fff}
+.bigtile{position:absolute;left:24px;top:72px;bottom:24px;right:568px;border-radius:16px;overflow:hidden;background:#0F2E3B}
+.bigtile svg{position:absolute;inset:0;width:100%;height:100%}
+.minis{position:absolute;left:40px;bottom:40px;display:flex;gap:10px}
+.minis .mt{width:150px;height:96px;border-radius:10px;overflow:hidden;position:relative;border:2px solid #ffffff33}
+.minis .mt svg{position:absolute;inset:0;width:100%;height:100%}
+.scan{position:absolute;left:0;right:0;height:120px;background:linear-gradient(180deg,transparent,#EE9B1E22,transparent);top:0}
+/* workspace */
+.ws{position:absolute;inset:0;background:#F7FAF9;color:#0E2F3C;display:grid;grid-template-columns:64px 230px 1fr 360px}
+.ws .rail{background:#0E2F3C;display:flex;flex-direction:column;align-items:center;padding-top:16px;gap:20px}
+.ws .rail img{width:36px}
+.ws .rail i{width:26px;height:26px;border-radius:7px;background:#ffffff24;display:block}
+.ws .rail i.on{background:#EE9B1E}
+.ws .side{background:#F3F7F6;border-right:1px solid #D4DEE2;padding:18px 14px}
+.ws .side h4{margin:0 0 12px;font-size:20px}
+.ws .side .g{font-size:11px;font-weight:800;letter-spacing:.1em;color:#7A8F98;margin:16px 0 8px}
+.ws .side .it{font-size:14px;padding:7px 8px;color:#4E6470;display:flex;justify-content:space-between}
+.ws .side .it.on{background:#DCEBE8;color:#0E2F3C;font-weight:700}
+.ws .side .n{background:#17807E;color:#fff;border-radius:9px;font-size:11px;font-weight:800;padding:1px 6px}
+.ws .main{display:flex;flex-direction:column;background:#fff;border-right:1px solid #D4DEE2}
+.ws .hd{padding:14px 20px;border-bottom:1px solid #D4DEE2;display:flex;align-items:center;gap:10px}
+.ws .hd b{font-size:18px;flex:1}
+.ws .ext{font-size:10px;font-weight:800;letter-spacing:.06em;background:#FBEBCD;color:#9C630E;padding:2px 6px}
+.ws .meetbtn{background:#EE9B1E;color:#0E2F3C;font-weight:800;font-size:14px;padding:9px 14px;display:flex;gap:7px;align-items:center}
+.ws .msgs{flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.ws .m{display:flex;gap:10px;opacity:0}
+.ws .m .av{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px}
+.ws .m b{font-size:14px}
+.ws .m .tm{font-size:11px;color:#7A8F98;margin-left:6px}
+.ws .m p{margin:3px 0 0;font-size:15px;line-height:1.45}
+.ws .m .file{margin-top:6px;border:1px solid #D4DEE2;padding:8px 12px;display:inline-flex;gap:10px;align-items:center;font-size:13px;font-weight:700}
+.ws .m .file i{width:24px;height:30px;background:#EEF4F1;border:1px solid #D4DEE2;display:block}
+.ws .comp{margin:0 20px 18px;border:2px solid #17807E;padding:12px;font-size:15px;color:#7A8F98}
+.ws .board{background:#F3F7F6;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative}
+.ws .board h5{margin:0;font-size:12px;letter-spacing:.1em;color:#4E6470}
+.ws .col{background:#fff;border:1px solid #D4DEE2;padding:10px;min-height:150px;display:flex;flex-direction:column;gap:8px}
+.ws .card{border:1px solid #D4DEE2;border-left:3px solid #EE9B1E;padding:9px 10px;background:#fff;font-size:13.5px;font-weight:600}
+.ws .card small{display:block;color:#7A8F98;font-weight:500;margin-top:3px}
+.ws .card.fly{position:absolute;left:26px;width:308px;z-index:3;box-shadow:0 14px 30px #0E2F3C33}
+.ws .toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#0E2F3C;color:#fff;font-weight:700;padding:12px 18px;opacity:0;display:flex;gap:8px;align-items:center}
+.fade{position:absolute;inset:0;background:#06171E;pointer-events:none}
+</style></head>
+<body><div id="stage"></div>
+<script>
+// ------------------------------------------------------------------ fictional cast (illustrated, not real people)
+const CAST = {
+  aarav:  { name: "Aarav",  org: "Kayak",   skin: "#C68A5E", hair: "#1B1410", style: "short",  shirt: "#1F3A5F", collar: "#ffffff", bg: ["#2B4A58", "#1B3540"], room: "shelf" },
+  meera:  { name: "Meera",  org: "Client CFO", skin: "#B97850", hair: "#2A1810", style: "long",  shirt: "#EE9B1E", collar: "#C77D10", bg: ["#3F5246", "#26342B"], room: "plant", earrings: true },
+  daniel: { name: "Daniel", org: "Kayak",   skin: "#EBC3A3", hair: "#7A5532", style: "side",   shirt: "#17807E", collar: "#0B5654", bg: ["#3A3F57", "#23273A"], room: "window", glasses: true, beard: "#7A5532" },
+  zara:   { name: "Zara",   org: "Counsel", skin: "#D9A47F", hair: "#17807E", style: "scarf",  shirt: "#5E4B78", collar: "#47385C", bg: ["#4A3A40", "#2B2126"], room: "art" },
+};
+const INI = (n) => n.slice(0, 2).toUpperCase();
+const ease = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+const ramp = (t, a, b) => ease((t - a) / (b - a));
+// Deterministic "speech" amplitude.
+const amp = (t, seed) => Math.max(0, 0.55 * Math.sin(t * 17 + seed) + 0.35 * Math.sin(t * 29.3 + seed * 2) + 0.25 * Math.sin(t * 7.1 + seed * 3));
+
+function roomBg(c, id) {
+  const [a, b] = c.bg;
+  let deco = "";
+  if (c.room === "shelf") deco = `<g opacity=".55"><rect x="40" y="70" width="190" height="10" fill="#0E2A33"/><rect x="40" y="150" width="190" height="10" fill="#0E2A33"/>${[0,1,2,3,4,5,6].map(i=>`<rect x="${48+i*24}" y="${30+(i%3)*6}" width="16" height="${40-(i%3)*6}" fill="${["#EE9B1E","#5DB2AB","#C9D8DC","#9C630E"][i%4]}"/>`).join("")}${[0,1,2,3,4].map(i=>`<rect x="${52+i*30}" y="${110+(i%2)*6}" width="22" height="${40-(i%2)*6}" fill="${["#5DB2AB","#EE9B1E","#C9D8DC"][i%3]}"/>`).join("")}</g>`;
+  if (c.room === "plant") deco = `<g opacity=".6"><rect x="440" y="190" width="70" height="80" rx="8" fill="#6B4A2E"/>${[0,1,2,3,4].map(i=>`<ellipse cx="${475+(i-2)*20}" cy="${150-Math.abs(i-2)*16}" rx="18" ry="46" transform="rotate(${(i-2)*22} ${475+(i-2)*20} 190)" fill="#4B7A4E"/>`).join("")}</g>`;
+  if (c.room === "window") deco = `<g opacity=".5"><rect x="360" y="30" width="190" height="150" fill="#8FB8D0"/><rect x="452" y="30" width="6" height="150" fill="#23273A"/><rect x="360" y="102" width="190" height="6" fill="#23273A"/><circle cx="410" cy="70" r="18" fill="#F5C46D"/></g>`;
+  if (c.room === "art") deco = `<g opacity=".55"><rect x="60" y="40" width="120" height="90" fill="#EE9B1E"/><circle cx="120" cy="85" r="26" fill="#17807E"/><rect x="420" y="50" width="90" height="120" fill="#C9D8DC"/><path d="M430 160 L465 90 L500 160Z" fill="#5E4B78"/></g>`;
+  return `<defs><linearGradient id="bg${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="600" height="340" fill="url(#bg${id})"/>${deco}`;
+}
+// A fictional person, head-and-shoulders, in a 600x340 frame. talk = 0..1 mouth open, blink = 0..1 closed, tilt in degrees.
+function person(c, { talk = 0, blink = 0, tilt = 0, smile = 0.6, nod = 0 }) {
+  const cx = 300, cy = 150 + nod;
+  const hairBack = c.style === "long" ? `<path d="M${cx-78} ${cy-10} Q${cx-92} ${cy+90} ${cx-70} ${cy+150} L${cx+70} ${cy+150} Q${cx+92} ${cy+90} ${cx+78} ${cy-10} Z" fill="${c.hair}"/>`
+    : c.style === "scarf" ? `<path d="M${cx-86} ${cy-20} Q${cx-100} ${cy+80} ${cx-110} ${cy+170} L${cx+110} ${cy+170} Q${cx+100} ${cy+80} ${cx+86} ${cy-20} Q${cx} ${cy-130} ${cx-86} ${cy-20}Z" fill="${c.hair}"/>` : "";
+  const hairTop = c.style === "short" ? `<path d="M${cx-70} ${cy-18} Q${cx-74} ${cy-92} ${cx} ${cy-96} Q${cx+74} ${cy-92} ${cx+70} ${cy-18} Q${cx+58} ${cy-58} ${cx} ${cy-60} Q${cx-58} ${cy-58} ${cx-70} ${cy-18}Z" fill="${c.hair}"/>`
+    : c.style === "side" ? `<path d="M${cx-70} ${cy-10} Q${cx-78} ${cy-96} ${cx+6} ${cy-96} Q${cx+80} ${cy-90} ${cx+70} ${cy-14} Q${cx+40} ${cy-70} ${cx-30} ${cy-58} Q${cx-58} ${cy-50} ${cx-70} ${cy-10}Z" fill="${c.hair}"/>`
+    : c.style === "long" ? `<path d="M${cx-72} ${cy+6} Q${cx-80} ${cy-96} ${cx} ${cy-98} Q${cx+80} ${cy-96} ${cx+72} ${cy+6} Q${cx+60} ${cy-50} ${cx+10} ${cy-62} Q${cx-30} ${cy-40} ${cx-72} ${cy+6}Z" fill="${c.hair}"/>`
+    : c.style === "scarf" ? `<path d="M${cx-76} ${cy-6} Q${cx-80} ${cy-104} ${cx} ${cy-106} Q${cx+80} ${cy-104} ${cx+76} ${cy-6} Q${cx+64} ${cy-74} ${cx} ${cy-76} Q${cx-64} ${cy-74} ${cx-76} ${cy-6}Z" fill="${c.hair}"/>` : "";
+  const eyeH = 9 * (1 - blink) + 0.8;
+  const mouthOpen = talk * 16;
+  const mouth = mouthOpen > 1.5
+    ? `<ellipse cx="${cx}" cy="${cy+44}" rx="${14 + talk * 3}" ry="${mouthOpen / 2 + 2}" fill="#5A2328"/><rect x="${cx-11}" y="${cy+40 - mouthOpen/2}" width="22" height="4" rx="2" fill="#fff" opacity=".9"/>`
+    : `<path d="M${cx-16} ${cy+42} Q${cx} ${cy+42 + 10 * smile} ${cx+16} ${cy+42}" stroke="#6B2E2E" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+  return `<g transform="rotate(${tilt} ${cx} ${cy+150})">
+    ${hairBack}
+    <path d="M${cx-150} 340 Q${cx-140} ${cy+110} ${cx} ${cy+102} Q${cx+140} ${cy+110} ${cx+150} 340Z" fill="${c.shirt}"/>
+    <path d="M${cx-36} ${cy+100} L${cx} ${cy+150} L${cx+36} ${cy+100}Z" fill="${c.collar}"/>
+    <rect x="${cx-26}" y="${cy+60}" width="52" height="50" rx="10" fill="${c.skin}" style="filter:brightness(.9)"/>
+    <ellipse cx="${cx-70}" cy="${cy+6}" rx="12" ry="18" fill="${c.skin}"/><ellipse cx="${cx+70}" cy="${cy+6}" rx="12" ry="18" fill="${c.skin}"/>
+    ${c.earrings ? `<circle cx="${cx-72}" cy="${cy+28}" r="5" fill="#F5C46D"/><circle cx="${cx+72}" cy="${cy+28}" r="5" fill="#F5C46D"/>` : ""}
+    <ellipse cx="${cx}" cy="${cy}" rx="70" ry="84" fill="${c.skin}"/>
+    ${c.beard ? `<path d="M${cx-62} ${cy+10} Q${cx-58} ${cy+86} ${cx} ${cy+88} Q${cx+58} ${cy+86} ${cx+62} ${cy+10} Q${cx+44} ${cy+54} ${cx} ${cy+56} Q${cx-44} ${cy+54} ${cx-62} ${cy+10}Z" fill="${c.beard}" opacity=".85"/>` : ""}
+    ${hairTop}
+    <path d="M${cx-40} ${cy-26} q14 -8 28 -2" stroke="${c.style === "scarf" ? "#3A2418" : c.hair}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M${cx+12} ${cy-28} q14 -6 28 2" stroke="${c.style === "scarf" ? "#3A2418" : c.hair}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="${cx-26}" cy="${cy-6}" rx="7" ry="${eyeH}" fill="#1A1A1A"/><ellipse cx="${cx+26}" cy="${cy-6}" rx="7" ry="${eyeH}" fill="#1A1A1A"/>
+    ${blink < 0.5 ? `<circle cx="${cx-23}" cy="${cy-9}" r="2.2" fill="#fff"/><circle cx="${cx+29}" cy="${cy-9}" r="2.2" fill="#fff"/>` : ""}
+    ${c.glasses ? `<g stroke="#1A1A1A" stroke-width="4" fill="#ffffff18"><circle cx="${cx-26}" cy="${cy-6}" r="19"/><circle cx="${cx+26}" cy="${cy-6}" r="19"/><path d="M${cx-7} ${cy-8} h14"/></g>` : ""}
+    <path d="M${cx-2} ${cy+4} q-8 18 0 20 q6 1 10 -2" stroke="#000" stroke-opacity=".22" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="${cx-44}" cy="${cy+22}" rx="13" ry="8" fill="#E5484D" opacity=".14"/><ellipse cx="${cx+44}" cy="${cy+22}" rx="13" ry="8" fill="#E5484D" opacity=".14"/>
+    ${mouth}
+  </g>`;
+}
+const blinkAt = (t, seed) => { const p = (t + seed) % 3.7; return p < 0.12 ? Math.sin((p / 0.12) * Math.PI) : 0; };
+function face(key, t, speaking, id) {
+  const c = CAST[key], s = key.length * 1.3;
+  const talk = speaking ? Math.min(1, amp(t, s)) : 0;
+  const tilt = Math.sin(t * 0.9 + s) * (speaking ? 2.4 : 1.2);
+  const nod = speaking ? Math.sin(t * 3.1 + s) * 3 : Math.sin(t * 0.8 + s) * 1.2;
+  return `<svg class="p" viewBox="0 0 600 340" preserveAspectRatio="xMidYMid slice">${roomBg(c, id)}${person(c, { talk, blink: blinkAt(t, s), tilt, nod, smile: speaking ? 0.4 : 0.7 })}</svg>`;
+}
+const ICON = {
+  mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>',
+  cam: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/>',
+  share: '<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4M9 10l3-3 3 3M12 7v6"/>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  cc: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 10.5a2 2 0 1 0 0 3M16 10.5a2 2 0 1 0 0 3"/>',
+  hand: '<path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8a8 8 0 0 0 16 0v-4a2 2 0 0 0-4 0"/>',
+  phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" transform="rotate(135 12 12)"/>',
+  video: '<rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/>',
+};
+const ic = (n) => `<svg viewBox="0 0 24 24">${ICON[n]}</svg>`;
+const LOGO = "../../apps/meet/public/_shared/logos/MeetByKayak_Logo_Reversed.svg";
+const MARK = "../../apps/meet/public/_shared/logos/MeetByKayak_Mark_Reversed.svg";
+const typed = (s, k) => { const n = Math.floor([...s].length * Math.max(0, Math.min(1, k))); return [...s].slice(0, n).join(""); };
+
+// ------------------------------------------------------------------ scenes
+const SCENES = {
+  // 1. A client meeting: live captions with translation into English.
+  meeting: { dur: 10, lines: [
+    { who: "aarav", a: 0.4, b: 3.3, text: "Thanks for joining. Let's lock the FY27 scope today." },
+    { who: "meera", a: 3.5, b: 6.5, text: "हम सारे दस्तावेज़ 15 तारीख तक भेज देंगे।", lang: "Hindi", tr: "We'll send all the documents by the 15th." },
+    { who: "daniel", a: 6.7, b: 9.5, text: "Perfect — I'll prepare the GST reconciliation." },
+  ],
+  render(t) {
+    const L = this.lines, cur = L.find((l) => t >= l.a && t <= l.b);
+    const order = ["aarav", "meera", "daniel", "zara"];
+    const tiles = order.map((k, i) => {
+      const sp = cur && cur.who === k;
+      const w = sp ? [0, 1, 2].map((j) => `<i style="height:${6 + amp(t * 1.3, j * 2) * 14}px"></i>`).join("") : "";
+      return `<div class="tile">${face(k, t, sp, "m" + i)}<div class="ring" style="opacity:${sp ? 1 : 0}"></div><div class="wave" style="display:${sp ? "flex" : "none"}">${w}</div><div class="nm">${CAST[k].name}<span class="org">${CAST[k].org}</span></div></div>`;
+    }).join("");
+    let cap = "";
+    if (cur) {
+      const k = (t - cur.a) / (cur.b - cur.a - 0.6);
+      const c = CAST[cur.who];
+      const op = ramp(t, cur.a, cur.a + 0.25) * (1 - ramp(t, cur.b - 0.15, cur.b));
+      cap = `<div class="cap" style="opacity:${op}"><span class="av" style="background:${c.shirt};color:#fff">${INI(c.name)}</span><div><b>${c.name}${cur.lang ? `<span class="lang">${cur.lang} · translated</span>` : ""}</b><div class="tx">${typed(cur.text, k * 1.4)}</div>${cur.tr ? `<div class="tr">${typed(cur.tr, (k - 0.3) * 1.6)}</div>` : ""}</div></div>`;
+    }
+    return `<div class="top"><img src="${LOGO}"><span class="t">Acme · FY27 scope review</span><span class="pill ai">✦ Notes.AI on</span><span class="pill"><span class="dot"></span>Captions · English</span><span class="pill">🔒 Encrypted</span></div>
+      <div class="grid">${tiles}</div>${cap}
+      <div class="bar"><span class="kc">${ic("mic")}</span><span class="kc">${ic("cam")}</span><span class="kc">${ic("share")}</span><span class="kc">${ic("cc")}</span><span class="kc">${ic("hand")}</span><span class="kc">${ic("chat")}</span><span class="kc red">${ic("phone")}</span></div>`;
+  } },
+  // 2. Notes.AI: language auto-detected per speaker, transcript, then the notes.
+  notes: { dur: 10, lines: [
+    { who: "zara", at: 0.5, lang: "English", ts: "10:02", t1: "Can we confirm who signs the engagement letter?" },
+    { who: "meera", at: 2.2, lang: "Hindi", ts: "10:03", t1: "हस्ताक्षर हमारे निदेशक करेंगे।", t2: "Our director will sign it." },
+    { who: "aarav", at: 3.9, lang: "Tamil", ts: "10:03", t1: "நான் வரைவை இன்று அனுப்புகிறேன்.", t2: "I'll send the draft today." },
+  ],
+  render(t) {
+    const cur = t < 2.1 ? "zara" : t < 3.8 ? "meera" : t < 5.6 ? "aarav" : null;
+    const ln = this.lines.map((l) => { const c = CAST[l.who]; const o = ramp(t, l.at, l.at + 0.35);
+      return `<div class="ln" style="opacity:${o};transform:translateY(${(1 - o) * 10}px)"><span class="av" style="background:${c.shirt};color:#fff">${INI(c.name)}</span><div><div class="who">${c.name}<span class="chip">${l.lang}${t > l.at + 0.5 ? " ✓" : " …"}</span><span class="ts">${l.ts}</span></div><div class="t1">${l.t1}</div>${l.t2 ? `<div class="t2" style="opacity:${ramp(t, l.at + 0.6, l.at + 1)}">${l.t2}</div>` : ""}</div></div>`; }).join("");
+    const items = [["Decision:", "Meera's director signs the engagement letter."], ["Action:", "Aarav sends the draft letter today."], ["Open:", "Confirm the signing date with Zara."]];
+    const sum = `<div class="sum" style="opacity:${ramp(t, 6, 6.4)}"><h4>✦ Notes.AI summary</h4>${items.map(([a, b], i) => `<div class="it" style="opacity:${ramp(t, 6.5 + i * 0.6, 6.9 + i * 0.6)}"><b>${a}</b> ${b}</div>`).join("")}</div>`;
+    const mini = ["zara", "meera", "aarav"].filter((k) => k !== (cur || "aarav")).map((k, i) => `<div class="mt">${face(k, t, false, "nm" + i)}</div>`).join("");
+    const scanY = ((t * 160) % 760) - 120;
+    return `<div class="top"><img src="${LOGO}"><span class="t">Engagement letter · Notes.AI</span><span class="pill ai">✦ Auto-detecting language</span><span class="pill">● Rec notice shown to all</span></div>
+      <div class="bigtile">${face(cur || "aarav", t, !!cur, "nb")}<div class="minis">${mini}</div><div class="nm" style="position:absolute;left:16px;top:16px;font-weight:700;background:#06171Ecc;padding:5px 12px;border-radius:8px">${CAST[cur || "aarav"].name} · ${CAST[cur || "aarav"].org}</div></div>
+      <div class="np"><div class="scan" style="top:${scanY}px"></div><h3>✦ Live transcript</h3>${ln}${sum}</div>`;
+  } },
+  // 3. The workspace: messages, a task struck through, then Meet now.
+  workspace: { dur: 10,
+  render(t) {
+    const msgs = [
+      { who: "meera", at: 0.4, p: "Uploaded the FY26 returns for review.", file: "GSTR-9 FY26.pdf" },
+      { who: "daniel", at: 2.0, p: "Thanks! Reconciliation is done — moving it to Done." },
+      { who: "aarav", at: 3.6, p: "Great work. Let's walk the client through it now." },
+    ].map((m) => { const c = CAST[m.who], o = ramp(t, m.at, m.at + 0.35);
+      return `<div class="m" style="opacity:${o};transform:translateY(${(1 - o) * 12}px)"><span class="av" style="background:${c.shirt}">${INI(c.name)}</span><div><b>${c.name}</b><span class="tm">${c.org}</span><p>${m.p}</p>${m.file ? `<div class="file"><i></i>${m.file}</div>` : ""}</div></div>`; }).join("");
+    const k = ramp(t, 4.6, 6.0);
+    const y = 52 + k * 189;
+    const struck = t > 6.0;
+    const pulse = t > 7 && t < 8.6 ? 1 + 0.06 * Math.sin((t - 7) * 12) : 1;
+    return `<div class="ws"><div class="rail"><img src="${MARK}"><i class="on"></i><i></i><i></i><i></i></div>
+      <div class="side"><h4>Chat</h4><div class="g">PROJECTS</div><div class="it on">◆ Acme · FY27 review</div><div class="it">◆ Orion · Due diligence <span class="n">3</span></div><div class="g">CHANNELS</div><div class="it"># Kayakers</div><div class="it"># Tax desk <span class="n">1</span></div><div class="g">DIRECT</div><div class="it">Meera</div><div class="it">Zara</div></div>
+      <div class="main"><div class="hd"><b>◆ Acme · FY27 review</b><span class="ext">EXTERNAL</span><span class="meetbtn" style="transform:scale(${pulse})">▶ Meet now</span></div><div class="msgs">${msgs}</div><div class="comp">Message ◆ Acme · FY27 review</div></div>
+      <div class="board"><h5>IN PROGRESS</h5><div class="col"><div class="card" style="visibility:hidden">x<small>x</small></div><div class="card">Draft engagement letter<small>Aarav · due Fri</small></div></div>
+        <h5>DONE</h5><div class="col">${struck ? `<div class="card" style="border-left-color:#4B7A4E"><s>GST reconciliation</s><small>Daniel · done</small></div>` : ""}<div class="card" style="border-left-color:#4B7A4E"><s>Collect FY26 returns</s><small>Meera · done</small></div></div>
+        ${struck ? "" : `<div class="card fly" style="top:${y}px">GST reconciliation<small>Daniel · due today</small></div>`}</div>
+      <div class="toast" style="opacity:${ramp(t, 8.6, 8.9)}">🎥 Meeting started · 3 people joining</div></div>`;
+  } },
+  // 4. Captions in your own language: the viewer switches language while Zara speaks.
+  languages: { dur: 10, langs: [
+    { a: 0, b: 3.4, code: "Hindi", text: "फाइलिंग की अंतिम तिथि 31 मार्च है। हम समय पर रहेंगे।" },
+    { a: 3.4, b: 6.7, code: "Arabic", text: "الموعد النهائي للتقديم هو 31 مارس. سنلتزم بالموعد.", rtl: true },
+    { a: 6.7, b: 10, code: "Tamil", text: "தாக்கல் செய்வதற்கான கடைசி தேதி மார்ச் 31. நாங்கள் சரியான நேரத்தில் முடிப்போம்." },
+  ],
+  render(t) {
+    const cur = this.langs.find((l) => t >= l.a && t < l.b) || this.langs[2];
+    const k = (t - cur.a) / (cur.b - cur.a);
+    const en = "The filing deadline is the 31st of March. We'll be on time.";
+    const list = ["English", "Hindi", "Marathi", "Arabic", "Tamil", "Gujarati", "French", "Bengali"];
+    return `<div class="top"><img src="${LOGO}"><span class="t">Captions in your language</span><span class="pill ai">✦ 50 languages</span><span class="pill">🔒 Encrypted</span></div>
+      <div class="bigtile" style="right:400px;bottom:92px">${face("zara", t, true, "lz")}<div class="nm" style="position:absolute;left:16px;top:16px;font-weight:700;background:#06171Ecc;padding:5px 12px;border-radius:8px">Zara · Counsel</div></div>
+      <div class="np" style="width:352px;bottom:92px"><h3>✦ Show captions in</h3>${list.map((l) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;font-size:16px;font-weight:${l === cur.code ? 800 : 500};background:${l === cur.code ? "#17807E" : "transparent"};color:${l === cur.code ? "#fff" : "#C9D8DC"}">${l}${l === cur.code ? "<span>✓</span>" : ""}</div>`).join("")}</div>
+      <div class="cap" style="opacity:1;left:24px;transform:none;width:856px;bottom:110px"><span class="av" style="background:#5E4B78;color:#fff">ZA</span><div style="flex:1"><b>Zara<span class="lang">English → ${cur.code}</span></b><div class="tx" dir="${cur.rtl ? "rtl" : "ltr"}" style="opacity:${ramp(t, cur.a + 0.15, cur.a + 0.5)};text-align:${cur.rtl ? "right" : "left"}">${typed(cur.text, k * 2.2)}</div><div class="tr" style="color:#9FB5BC;font-size:14px">${en}</div></div></div>
+      <div class="bar"><span class="kc">${ic("mic")}</span><span class="kc">${ic("cam")}</span><span class="kc">${ic("share")}</span><span class="kc" style="background:#17807E;border-color:#17807E">${ic("cc")}</span><span class="kc">${ic("chat")}</span><span class="kc red">${ic("phone")}</span></div>`;
+  } },
+  // 5. To-Do and Planner: items struck through, the timeline clears.
+  plan: { dur: 10,
+  render(t) {
+    const todos = [["Draft the FY27 engagement letter", "Deliverable", 1.2], ["Review the GST reconciliation", "Today", 2.6], ["Send the signed NDA to Orion", "Deliverable", 4.0], ["Book the board-pack review", "Tomorrow", 99]];
+    const due = todos.filter(([, , at]) => t < at && at < 99).length + 0;
+    const row = ([txt, tag, at], i) => { const d = t > at, k = ramp(t, at, at + 0.35);
+      return `<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid #D4DEE2;background:${d ? "#F3F7F6" : "#fff"}">
+        <span style="width:26px;height:26px;border-radius:50%;border:2px solid ${d ? "#17807E" : "#B9C9CF"};background:${d ? "#17807E" : "#fff"};display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px;transform:scale(${1 + 0.25 * Math.sin(k * Math.PI)})">${d ? "✓" : ""}</span>
+        <span style="flex:1"><span style="font-size:17px;font-weight:600;color:${d ? "#7A8F98" : "#0E2F3C"};position:relative;display:inline-block">${txt}<i style="position:absolute;left:0;top:52%;height:2px;background:#7A8F98;width:${k * 100}%"></i></span></span>
+        <span style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;background:${tag === "Deliverable" ? "#FBEBCD" : "#EEF4F1"};color:${tag === "Deliverable" ? "#9C630E" : "#4E6470"}">${tag}</span></div>`; };
+    const plan = [["Overdue", [["Draft the FY27 engagement letter", 1.2, "#9C630E"]]], ["Today", [["Review the GST reconciliation", 2.6, "#17807E"], ["Acme · FY27 scope review · 3:00 PM", 99, "#0E2F3C"]]], ["This week", [["Send the signed NDA to Orion", 4.0, "#9C630E"], ["Book the board-pack review", 99, "#17807E"]]]];
+    const pl = plan.map(([h, items]) => { const open = items.filter(([, at]) => t < at).length; if (!open && h === "Overdue" && t > 1.6) return `<div style="font-size:14px;font-weight:800;color:#4B7A4E;margin:14px 0 6px">✓ Nothing overdue</div>`;
+      return `<div style="font-size:14px;font-weight:800;color:${h === "Overdue" ? "#B4472F" : "#0E2F3C"};margin:14px 0 6px">${h}</div>` + items.map(([x, at, col]) => `<div style="display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid #D4DEE2;margin-bottom:6px;background:#fff;opacity:${t > at + 0.4 ? 0 : 1 - ramp(t, at, at + 0.4)};height:${t > at + 0.4 ? 0 : 42}px;padding-top:${t > at + 0.4 ? 0 : 10}px;padding-bottom:${t > at + 0.4 ? 0 : 10}px;overflow:hidden;border-width:${t > at + 0.4 ? 0 : 1}px"><span style="width:22px;height:22px;background:${col};flex:none"></span><span style="font-size:14px;font-weight:600">${x}</span></div>`).join(""); }).join("");
+    return `<div class="ws" style="grid-template-columns:64px 1fr 440px"><div class="rail"><img src="${MARK}"><i></i><i></i><i class="on"></i><i></i></div>
+      <div class="main"><div class="hd"><b>To-Do</b><span style="font-size:13px;font-weight:800;color:#fff;background:${due ? "#EE9B1E" : "#4B7A4E"};padding:4px 10px">${due ? `${due} due` : "All done ✓"}</span></div>
+        <div style="margin:16px 20px;border:2px solid #17807E;padding:13px 14px;font-size:15px;color:#7A8F98">Add a quick to-do and press Enter</div>
+        <div style="margin:0 20px">${todos.map(row).join("")}</div></div>
+      <div class="board" style="gap:0"><h5 style="font-size:20px;letter-spacing:0;color:#0E2F3C">Planner</h5><div style="font-size:13px;color:#7A8F98;margin-top:4px">Every due date, in one place</div>${pl}</div>
+      <div class="toast" style="opacity:${ramp(t, 4.7, 5.0) * (1 - ramp(t, 8.8, 9.2))}">🎉 Today's deliverables are done</div></div>`;
+  } },
+};
+
+// Seamless loops: a short fade to and from the background at each end.
+window.seek = (name, t) => {
+  const s = SCENES[name];
+  const el = document.getElementById("stage");
+  const f = Math.max(1 - ramp(t, 0, 0.35), ramp(t, s.dur - 0.35, s.dur));
+  el.innerHTML = `<div class="scene" style="display:block">${s.render(t)}</div><div class="fade" style="opacity:${f}"></div>`;
+};
+window.SCENES = Object.fromEntries(Object.entries(SCENES).map(([k, v]) => [k, v.dur]));
+</script></body></html>
