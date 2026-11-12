@@ -208,6 +208,17 @@ jobs:
             echo "First-run set-up code (works once, only for the SuperAdmin emails): \`$NEWBOOT\`. Open https://internal.kayaksa.com/setup to create your account and two-factor sign-in." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Add the background-segmentation model to Meet
+        if: contains(format(',{0},', steps.apps.outputs.list), ',meet,')
+        # Google's open-source MediaPipe selfie segmentation (Apache-2.0), served from meet.kayaksa.com
+        # itself so no third party sees the call. Pinned version; never fails the deploy.
+        run: |
+          set +e
+          D=apps/meet/public/seg; mkdir -p "$D" /tmp/mp && cd /tmp/mp
+          npm pack @mediapipe/selfie_segmentation@0.1.1675465747 --silent >/dev/null 2>&1 || npm pack @mediapipe/selfie_segmentation --silent >/dev/null 2>&1
+          tar xzf mediapipe-selfie_segmentation-*.tgz 2>/dev/null && cd package && cp -f *.js *.wasm *.tflite *.binarypb *.data LICENSE "$GITHUB_WORKSPACE/$D/" 2>/dev/null
+          ls -la "$GITHUB_WORKSPACE/$D" || true
+          [ -f "$GITHUB_WORKSPACE/$D/selfie_segmentation.js" ] && echo "### Meet backgrounds: segmentation model added" >> "$GITHUB_STEP_SUMMARY" || echo "::warning::Could not add the segmentation model; Meet backgrounds will be unavailable until the next deploy."
       - name: Publish meet.kayaksa.com
         if: contains(format(',{0},', steps.apps.outputs.list), ',meet,')
         run: |

@@ -11,3 +11,4 @@ __pycache__/
 apps/*/wrangler.local.jsonc
 desktop/node_modules/
 desktop/dist/
+apps/meet/public/seg/

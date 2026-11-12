@@ -20,7 +20,9 @@ app.get("/healthz", (c) => c.json({ ok: true, site: "meet" }));
 // Public pages (product, download, sign-in) may be indexed; everything else stays out of search engines.
 const PUBLIC_PAGES = new Set(["/", "/download"]);
 app.use("*", async (c, next) => { await next(); if (!PUBLIC_PAGES.has(c.req.path) && c.res.status !== 101) { c.res = new Response(c.res.body, c.res); c.res.headers.set("X-Robots-Tag", "noindex, nofollow"); } });
-app.use("*", securityHeaders({ noindex: false, permissions: "camera=(self), microphone=(self), display-capture=(self), autoplay=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
+// 'wasm-unsafe-eval' lets the self-hosted MediaPipe model (backgrounds) compile its WebAssembly;
+// it does not allow eval() of JavaScript.
+app.use("*", securityHeaders({ noindex: false, script: ["'wasm-unsafe-eval'"], permissions: "camera=(self), microphone=(self), display-capture=(self), autoplay=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
 // A client office or a Kayak floor shares one address: chat refreshes every 4 s and live captions
 // post every few seconds per person, so Meet allows far more per address than the brochure sites.
 app.use("*", shield("meet", (e) => e.DB, { allowGoodBots: false, burstLimit: 1500 }));

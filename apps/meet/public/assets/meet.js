@@ -7,6 +7,7 @@ const app = $("#app");
 
 // ---------------------------------------------------------------- icons
 const P = {
+  sparkle: '<path d="M12 3l1.9 4.8L19 9.5l-4.1 3.2L16.2 18 12 15.3 7.8 18l1.3-5.3L5 9.5l5.1-1.7z"/>',
   mic: '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/>',
   micOff: '<path d="M3 3l18 18M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V6a3 3 0 0 0-5.9-.8M19 11a7 7 0 0 1-1.1 3.8M5 11a7 7 0 0 0 10.6 6M12 18v3"/>',
   cam: '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/>',
@@ -136,6 +137,7 @@ function meter(stream, el) {
 
 async function prejoin() {
   S.local = await getMedia();
+  await applyStudio();
   const devs = await navigator.mediaDevices.enumerateDevices().catch(() => []);
   const label = { audioinput: "Microphone", videoinput: "Camera", audiooutput: "Speaker" };
   const opt = (kind, cur) => devs.filter((d) => d.kind === kind).map((d, i) => `<option value="${esc(d.deviceId)}"${d.deviceId === cur ? " selected" : ""}>${esc(d.label || `${label[kind]} ${i + 1}`)}</option>`).join("");
@@ -146,7 +148,7 @@ async function prejoin() {
   <div class="top"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"><span class="title"></span><span class="pill e2e">${ic("lock")} End-to-end encrypted</span></div>
   <div class="pre">
     <div class="pre-video"><video id="pv" autoplay playsinline muted></video><div class="off" id="poff" hidden>Camera is off</div><div class="meter" aria-hidden="true"><i id="pm"></i></div>
-      <div class="pre-bar"><button class="kc" id="pmic" aria-pressed="true" aria-label="Microphone">${ic("mic")}</button><button class="kc" id="pcam" aria-pressed="true" aria-label="Camera">${ic("cam")}</button></div></div>
+      <div class="pre-bar"><button class="kc" id="pmic" aria-pressed="true" aria-label="Microphone">${ic("mic")}</button><button class="kc" id="pcam" aria-pressed="true" aria-label="Camera">${ic("cam")}</button><button class="kc" id="pstudio" aria-label="Camera studio and backgrounds" data-tip="Camera studio">${ic("sparkle")}</button></div></div>
     <div class="pre-side">
       <span class="pill" style="justify-self:start">${isClient ? "Client meeting" : S.info.kind === "webinar" ? "Webinar" : "Kayak meeting"}${S.info.startsAt ? " · " + new Date(S.info.startsAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : ""}</span>
       <h1>${esc(S.info.title)}</h1>
@@ -173,10 +175,11 @@ async function prejoin() {
   const swap = async () => {
     S.devices = { mic: $("#dmic").value, cam: $("#dcam").value };
     try { localStorage.setItem("km:mic", S.devices.mic); localStorage.setItem("km:cam", S.devices.cam); } catch {}
-    S.local.getTracks().forEach((t) => t.stop());
-    S.local = await getMedia(); v.srcObject = S.local; meter(S.local, $("#pm")); sync();
+    stopCamTracks(); S.local.getTracks().forEach((t) => t.stop());
+    S.local = await getMedia(); await applyStudio(); v.srcObject = S.local; meter(S.local, $("#pm")); sync();
   };
   $("#dmic").onchange = swap; $("#dcam").onchange = swap;
+  $("#pstudio").onclick = () => openStudio();
   if (canPickSpeaker) {
     $("#dspk").onchange = () => setSpeaker($("#dspk").value);
     $("#dtest").onclick = async () => {
@@ -315,6 +318,128 @@ function dropPeer(id) {
   tuneBitrate();
 }
 
+// ---------------------------------------------------------------- camera studio and backgrounds
+// A processing step between the camera and the call: light, contrast, colour, warmth, soft focus,
+// framing, and a background (blur or a Kayak office). Nothing is processed until someone changes a
+// setting; untouched, the camera goes out exactly as it comes in. Backgrounds use Google's open-source
+// MediaPipe selfie segmentation, served from Kayak's own site; if it can't load, the rest still works.
+const STUDIO0 = { bright: 0, contrast: 0, sat: 0, warm: 0, soft: 0, light: false, zoom: 1, bg: "none" };
+S.studio = (() => { try { return { ...STUDIO0, ...JSON.parse(localStorage.getItem("km:studio") || "{}") }; } catch { return { ...STUDIO0 }; } })();
+const BACKGROUNDS = [["boardroom", "Boardroom"], ["meeting-room", "Meeting room"], ["open-office", "Open office"], ["lounge", "Lounge"], ["teal-studio", "Teal studio"], ["window-desk", "Window desk"], ["deep-current", "Deep Current"], ["open-water", "Open Water"], ["sea-mist", "Sea Mist"]];
+const canStudio = (() => { try { return "filter" in document.createElement("canvas").getContext("2d"); } catch { return false; } })();
+const studioOn = () => { const t = S.studio; return !!(t.bright || t.contrast || t.sat || t.warm || t.soft || t.light || t.zoom > 1.001 || t.bg !== "none"); };
+let PROC = null; // { raw, video, canvas, ctx, out, timer, busy }
+let bgImg = null, bgKey = "";
+function saveStudio() { try { localStorage.setItem("km:studio", JSON.stringify(S.studio)); } catch {} }
+function filterOf(t) {
+  const b = 1 + t.bright / 100 + (t.light ? 0.12 : 0), c = 1 + t.contrast / 100 - (t.light ? 0.04 : 0), sat = 1 + t.sat / 100;
+  return `brightness(${b.toFixed(3)}) contrast(${c.toFixed(3)}) saturate(${sat.toFixed(3)})${t.warm > 0 ? ` sepia(${(t.warm / 260).toFixed(3)})` : t.warm < 0 ? ` hue-rotate(${(t.warm / 6).toFixed(1)}deg) saturate(${(1 + t.warm / 400).toFixed(3)})` : ""}`;
+}
+function loadBg(key) {
+  if (!key.startsWith("kayak-") || bgKey === key) return;
+  bgKey = key; const im = new Image(); im.onload = () => { if (bgKey === key) bgImg = im; }; im.src = `/assets/bg/${key}.jpg`;
+}
+function loadScript(src) { return new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = () => rej(new Error("load")); document.head.append(el); }); }
+async function loadSegmenter() {
+  if (S.seg) return S.seg;
+  if (S.segLoading) return S.segLoading;
+  S.segLoading = (async () => {
+    await loadScript("/seg/selfie_segmentation.js");
+    const seg = new window.SelfieSegmentation({ locateFile: (f) => `/seg/${f}` });
+    seg.setOptions({ modelSelection: 1 });
+    seg.onResults((r) => { S.segMask = r.segmentationMask; });
+    await seg.initialize();
+    S.seg = seg;
+    return seg;
+  })();
+  try { return await S.segLoading; } catch (e) { S.segLoading = null; throw e; }
+}
+function startProc(raw) {
+  const st = raw.getSettings ? raw.getSettings() : {};
+  const W = st.width || 1280, H = st.height || 720;
+  const video = document.createElement("video"); video.muted = true; video.playsInline = true; video.srcObject = new MediaStream([raw]); video.play().catch(() => {});
+  const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d", { alpha: false });
+  const out = canvas.captureStream(24).getVideoTracks()[0];
+  PROC = { raw, video, canvas, ctx, out, busy: false };
+  PROC.timer = setInterval(drawProc, 1000 / 24);
+}
+function stopProc() {
+  if (!PROC) return;
+  clearInterval(PROC.timer); PROC.video.srcObject = null;
+  const p = PROC; PROC = null; return p;
+}
+function drawProc() {
+  const p = PROC; if (!p) return;
+  const { video, ctx, canvas } = p, W = canvas.width, H = canvas.height, t = S.studio;
+  if (video.readyState < 2 || !video.videoWidth) return;
+  const z = Math.max(1, Math.min(1.8, t.zoom)), vw = video.videoWidth, vh = video.videoHeight;
+  const sw = vw / z, sh = vh / z, sx = (vw - sw) / 2, sy = Math.max(0, (vh - sh) / 2 - (vh - sh) * 0.15); // keep a little headroom
+  const f = filterOf(t);
+  const useBg = t.bg !== "none" && S.segMask;
+  if (useBg) {
+    ctx.save();
+    ctx.globalCompositeOperation = "copy"; ctx.filter = "blur(3px)";
+    ctx.drawImage(S.segMask, sx, sy, sw, sh, 0, 0, W, H);          // the person, as a soft-edged mask
+    ctx.globalCompositeOperation = "source-in"; ctx.filter = f;
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, W, H);              // the person, with the studio look
+    ctx.globalCompositeOperation = "destination-over";
+    if (t.bg === "blur") { ctx.filter = "blur(16px)"; ctx.drawImage(video, sx, sy, sw, sh, 0, 0, W, H); }
+    else if (bgImg) { ctx.filter = "none"; const r = Math.max(W / bgImg.width, H / bgImg.height), bw = bgImg.width * r, bh = bgImg.height * r; ctx.drawImage(bgImg, (W - bw) / 2, (H - bh) / 2, bw, bh); }
+    else { ctx.filter = "none"; ctx.fillStyle = "#0E2F3C"; ctx.fillRect(0, 0, W, H); }
+    ctx.restore();
+  } else { ctx.filter = f; ctx.drawImage(video, sx, sy, sw, sh, 0, 0, W, H); ctx.filter = "none"; }
+  if (t.soft > 0) { ctx.save(); ctx.globalAlpha = (t.soft / 100) * 0.42; ctx.filter = `blur(${2 + t.soft / 30}px)`; ctx.globalCompositeOperation = "lighten"; ctx.drawImage(p.canvas, 0, 0); ctx.restore(); }
+  if (t.bg !== "none" && S.seg && !p.busy) { p.busy = true; S.seg.send({ image: video }).catch(() => {}).finally(() => { if (PROC === p) p.busy = false; }); }
+}
+function swapVideo(oldT, newT) {
+  if (oldT) S.local.removeTrack(oldT);
+  if (newT) S.local.addTrack(newT);
+  for (const { pc } of S.peers.values()) for (const sd of pc.getSenders()) if (oldT && sd.track === oldT) sd.replaceTrack(newT);
+  const pv = $("#pv"); if (pv) { pv.srcObject = null; pv.srcObject = S.local; }
+  if ($("#grid")) render();
+}
+// Turn the processing on or off to match the settings (called after any camera change).
+async function applyStudio() {
+  const want = canStudio && studioOn() && S.camOn;
+  const cur = S.local?.getVideoTracks()[0];
+  if (want && !PROC && cur && cur.readyState === "live") { startProc(cur); swapVideo(cur, PROC.out); }
+  else if (!want && PROC) { const p = stopProc(); swapVideo(p.out, p.raw.readyState === "live" ? p.raw : null); p.out.stop(); }
+  if (want && S.studio.bg.startsWith("kayak-")) loadBg(S.studio.bg);
+  if (want && S.studio.bg !== "none" && !S.seg) {
+    try { await loadSegmenter(); }
+    catch { toast("Backgrounds aren't available on this device right now. Your other camera settings still apply.", "warn", 7000); S.studio.bg = "none"; saveStudio(); }
+  }
+}
+// The raw camera track behind the studio (or the camera itself when the studio is off).
+const rawCam = () => PROC?.raw || S.local?.getVideoTracks()[0];
+function stopCamTracks() { const p = stopProc(); if (p) { p.out.stop(); p.raw.stop(); S.local.removeTrack(p.out); } }
+
+function openStudio() {
+  const d = document.createElement("dialog"); d.className = "studio";
+  const t = S.studio;
+  const slider = (k, label, min, max, step = 1) => `<label class="sl"><span>${label}<output id="o-${k}">${t[k]}</output></span><input type="range" id="s-${k}" min="${min}" max="${max}" step="${step}" value="${t[k]}"></label>`;
+  d.innerHTML = `<div class="st-wrap"><div class="st-prev"><video id="stv" autoplay playsinline muted></video><span class="st-tag">${ic("lock")} Preview · only you see this</span></div>
+    <div class="st-side"><header><h2>Camera studio</h2><button class="kb sm" id="stx" aria-label="Close">${ic("x")}</button></header>
+    ${canStudio ? `<p class="km-muted st-note">Look your best on every call. Leave everything untouched and your camera works exactly as normal.</p>
+    <div class="st-group"><h3>Light</h3>${slider("bright", "Brightness", -40, 40)}${slider("contrast", "Contrast", -40, 40)}<label class="tg"><input type="checkbox" id="s-light" ${t.light ? "checked" : ""}> Low-light boost</label></div>
+    <div class="st-group"><h3>Colour</h3>${slider("sat", "Colour", -50, 50)}${slider("warm", "Warmth", -50, 50)}</div>
+    <div class="st-group"><h3>Touch-up &amp; framing</h3>${slider("soft", "Soft focus", 0, 100)}${slider("zoom", "Framing (zoom)", 1, 1.8, 0.05)}</div>
+    <div class="st-group"><h3>Background</h3><div class="bgs"><button data-bg="none" class="${t.bg === "none" ? "on" : ""}"><span>None</span></button><button data-bg="blur" class="${t.bg === "blur" ? "on" : ""}"><span>Blur</span></button>${BACKGROUNDS.map(([k, n]) => `<button data-bg="kayak-${k}" class="${t.bg === "kayak-" + k ? "on" : ""}" style="background-image:url(/assets/bg/kayak-${k}-thumb.jpg)" title="${n}"><span>${n}</span></button>`).join("")}</div></div>
+    <div class="st-foot"><button class="kb" id="streset">Reset to standard</button><button class="kb primary" id="stdone">Done</button></div>`
+    : `<p class="km-muted st-note">Camera studio and backgrounds need Chrome, Edge or Firefox, or the Meet by Kayak desktop app. Your camera works as normal here.</p><div class="st-foot"><button class="kb primary" id="stdone">OK</button></div>`}</div></div>`;
+  document.body.append(d); d.showModal();
+  const v = $("#stv", d); v.srcObject = S.local;
+  const close = () => { d.close(); d.remove(); };
+  $("#stx", d) && ($("#stx", d).onclick = close); $("#stdone", d).onclick = close;
+  d.addEventListener("cancel", close);
+  const changed = async () => { saveStudio(); await applyStudio(); v.srcObject = S.local; };
+  for (const k of ["bright", "contrast", "sat", "warm", "soft", "zoom"]) { const el = $("#s-" + k, d); if (el) el.oninput = () => { t[k] = Number(el.value); $("#o-" + k, d).textContent = k === "zoom" ? `${Math.round(t[k] * 100)}%` : t[k] > 0 ? `+${t[k]}` : t[k]; changed(); }; }
+  $("#s-light", d) && ($("#s-light", d).onchange = (e) => { t.light = e.target.checked; changed(); });
+  $$("[data-bg]", d).forEach((b) => (b.onclick = () => { t.bg = b.dataset.bg; $$("[data-bg]", d).forEach((x) => x.classList.toggle("on", x === b)); changed(); }));
+  $("#streset", d) && ($("#streset", d).onclick = () => { Object.assign(t, STUDIO0); saveStudio(); applyStudio().then(() => { close(); openStudio(); }); });
+}
+
 // ---------------------------------------------------------------- audio sink
 // One hidden <audio> per remote participant, kept in the DOM for the whole call so their sound is
 // never interrupted by what the video grid happens to be showing. If the browser blocks autoplay,
@@ -369,6 +494,7 @@ function setMic(on) {
 }
 async function setCam(on) {
   S.camOn = on;
+  if (!on && PROC) { const old = PROC.out; stopCamTracks(); for (const { pc } of S.peers.values()) for (const s of pc.getSenders()) if (s.track === old) s.replaceTrack(null); }
   let t = S.local.getVideoTracks()[0];
   if (!on && t) { t.stop(); S.local.removeTrack(t); for (const { pc } of S.peers.values()) for (const s of pc.getSenders()) if (s.track === t) s.replaceTrack(null); }
   if (on) {
@@ -380,6 +506,7 @@ async function setCam(on) {
         if (s) await s.replaceTrack(t); else pc.addTrack(t, S.local);
       }
       tuneBitrate();
+      await applyStudio();
     } catch { S.camOn = false; toast("The camera couldn't start. Check that no other app is using it."); }
   }
   send({ t: "state", cam: S.camOn });
@@ -491,6 +618,7 @@ function bar() {
     [`${ic("cc")} Transcript`, () => panel("transcript")],
     [`${ic("globe")} Caption language: ${S.capLang ? langName(S.capLang) : "Off"}`, () => { if (S.panel !== "transcript") panel("transcript"); setTimeout(() => $("#ten")?.focus(), 50); }],
     [`${ic("screen")} ${S.screens.length ? "Share another screen or stop" : "Share screen"}`, toggleScreen],
+    [`${ic("sparkle")} Camera studio &amp; backgrounds`, openStudio],
     ...(isHost() ? [
       [`${ic("micOff")} Mute everyone`, () => send({ t: "muteAll" })],
       [`${ic("lock")} ${S.room.locked ? "Unlock meeting" : "Lock meeting"}`, () => send({ t: "room", locked: !S.room.locked })],
@@ -840,6 +968,7 @@ async function leave() {
   endScreen("You left the meeting.");
 }
 function cleanup() {
+  try { stopCamTracks(); } catch {}
   S.ended = S.ended || S.leaving; deskState();
   stopCaptions();
   for (const id of [...S.peers.keys()]) dropPeer(id);
