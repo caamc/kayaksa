@@ -1437,7 +1437,74 @@
     "An offer",
     "A clear offer, and a plan for your first ninety days."
    ]
-  ]
+  ],
+  "jobs": [
+   {
+    "id": "sm-tax-legal-regulatory",
+    "title": "Senior Manager - Tax, Legal & Regulatory Services",
+    "cluster": "tax-legal-regulatory",
+    "location": "Mumbai and Thane, with travel to clients",
+    "type": "Full time",
+    "experience": "11+ years",
+    "qualification": "Company Secretary and LLB",
+    "summary": "Lead corporate M&A, restructuring and turnaround mandates from structuring to closing, working directly with the partner and the client's board.",
+    "about": "You will be the senior hands-on lead for our corporate legal and secretarial work on transactions and restructurings. Clients bring us a deal to close, a group to simplify or a business under stress; you will design the route, run the process with regulators, lenders and counsel, and keep the board's decisions clean and defensible.",
+    "do": [
+     "Lead the legal and secretarial workstreams on mergers, acquisitions, demergers, slump sales and joint ventures, from structuring and term sheets to closing.",
+     "Run schemes of arrangement under Sections 230 to 232 of the Companies Act, 2013: NCLT applications, notices to regulators, and creditor and shareholder meetings.",
+     "Advise on corporate restructuring: group simplification, capital reduction, buy-backs, conversions and reorganisations, and the FEMA, SEBI and stamp duty points they raise.",
+     "Support turnaround and resilience mandates: stressed-asset reviews, IBC processes and pre-packs, one-time settlements, and work with lenders, resolution professionals and investors.",
+     "Lead legal and secretarial due diligence, and turn findings into risk ratings, conditions precedent and deal protections.",
+     "Draft and review transaction documents: share purchase, shareholders', business transfer and investment agreements, and board and shareholder resolutions.",
+     "Keep governance sound through a deal: board processes, related-party transactions, and SEBI listing and takeover compliance for listed clients.",
+     "Manage and develop a team of consultants, review their work, and contribute to proposals, knowledge notes and Confluence."
+    ],
+    "must": [
+     "A qualified Company Secretary (member of ICSI) with an LLB.",
+     "At least 11 years' experience, with substantial work on corporate M&A, corporate restructuring and turnaround, in a law firm, a Big Four or consulting firm, or a corporate legal and secretarial team.",
+     "Hands-on experience of NCLT schemes, and working knowledge of the Companies Act, the Insolvency and Bankruptcy Code, SEBI regulations and FEMA.",
+     "Clear drafting and the ability to explain a complex structure to a board in plain language."
+    ],
+    "nice": [
+     "Listed-company and cross-border transaction experience.",
+     "An LLM, or registration as an insolvency professional.",
+     "Fluency in Hindi, Marathi or Gujarati in addition to English."
+    ]
+   },
+   {
+    "id": "m-crisis-risk-resilience",
+    "title": "Manager - Crisis, Risk & Resilience Services",
+    "cluster": "crisis-resilience",
+    "location": "Mumbai and Thane, with travel to clients",
+    "type": "Full time",
+    "experience": "7+ years post-qualification (PQE)",
+    "qualification": "CA or MBA, with LLB",
+    "summary": "Run white-collar crime investigations, integrity due diligence and crisis responses that hold up in a boardroom, before a regulator and in court.",
+    "about": "You will work on the matters that keep boards awake: a suspected fraud, a partner whose background doesn't add up, a crisis that needs facts by tomorrow. You will run the work day to day, bringing together the accounting, the law and the evidence, and turn it into findings a board can act on.",
+    "do": [
+     "Run white-collar crime investigations: fund diversion, asset misappropriation, bribery and corruption, procurement and vendor fraud, and conflicts of interest.",
+     "Lead integrity and third-party due diligence on companies, promoters and key people for acquisitions, partners, vendors and distributors.",
+     "Analyse books, bank statements and transaction data to trace funds and test hypotheses, working with forensic technology and e-discovery colleagues.",
+     "Support crisis management: fact-finding in the first hours, stakeholder and regulator communication, and board reporting.",
+     "Write evidence-led reports that stand up to scrutiny, keep chain of custody and records in order, and support counsel in litigation, arbitration and complaints to the authorities.",
+     "Review fraud-risk and resilience frameworks: controls, speak-up and whistleblowing, investigation protocols and crisis playbooks.",
+     "Make sure every piece of work is lawful and ethical: information comes only from lawful sources, with legal review where it is needed.",
+     "Manage and develop consultants, and contribute to proposals, methods and Confluence."
+    ],
+    "must": [
+     "A Chartered Accountant, or an MBA, together with an LLB.",
+     "At least 7 years' post-qualification experience in forensic accounting, investigations, integrity due diligence or crisis management, at a Big Four, forensic or risk consulting firm, a law firm or an in-house investigations team.",
+     "Working knowledge of the Bharatiya Nyaya Sanhita, the Prevention of Corruption Act, PMLA, the fraud provisions of the Companies Act, the IT Act and the rules on electronic evidence under the Bharatiya Sakshya Adhiniyam.",
+     "Sharp analysis, clear report writing and complete discretion with confidential matters."
+    ],
+    "nice": [
+     "Certified Fraud Examiner (CFE), CIA or DISA.",
+     "Experience with forensic and review tools such as Magnet Axiom, Nuix, Relativity or Intella.",
+     "Matters involving the FCPA or the UK Bribery Act, or cross-border investigations."
+    ]
+   }
+  ],
+  "eeo": "Kayak is an equal opportunity employer. We consider every applicant on merit, without regard to gender, religion, caste, disability, age or any other personal characteristic. We never charge candidates a fee or ask for payment at any stage."
  },
  "next": [
   [

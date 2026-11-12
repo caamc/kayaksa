@@ -143,6 +143,8 @@ jobs:
         run: |
           set -eo pipefail
           CFG=apps/www/wrangler.jsonc
+          # Résumés from the careers page: a private bucket (never public), read only by Kayak Internal.
+          npx wrangler r2 bucket list | grep -qE "^name:\s+kayaksa-careers$" || npx wrangler r2 bucket create kayaksa-careers || true
           # Kay's answer memory uses Vectorize and Workers AI when the token allows; otherwise it falls back to word matching.
           if ! { npx wrangler vectorize list --json 2>/dev/null | jq -e '.[] | select(.name=="kay-memory")' >/dev/null || npx wrangler vectorize create kay-memory --dimensions=1024 --metric=cosine; }; then
             echo "::warning::The Cloudflare token cannot use Vectorize, so Kay's answer memory uses word matching. Add 'Vectorize: Edit' and 'Workers AI: Read' to the token to switch on meaning-based matching."
@@ -192,6 +194,7 @@ jobs:
           if ! npx wrangler r2 bucket list | grep -q "kayaksa-brand"; then npx wrangler r2 bucket create kayaksa-brand; echo "NEW_BUCKET=1" >> "$GITHUB_ENV"; fi
           if ! npx wrangler r2 bucket list | grep -qE "^name:\s+kayaksa-meet$"; then npx wrangler r2 bucket create kayaksa-meet || true; fi
           if ! npx wrangler r2 bucket list | grep -q "kayaksa-vault"; then npx wrangler r2 bucket create kayaksa-vault; fi
+          if ! npx wrangler r2 bucket list | grep -qE "^name:\s+kayaksa-careers$"; then npx wrangler r2 bucket create kayaksa-careers || true; fi
           npx wrangler deploy -c apps/internal/wrangler.jsonc
           have=$(npx wrangler secret list --name kayaksa-internal --format json 2>/dev/null | jq -r '.[].name' || true)
           node scripts/secrets.mjs ANTHROPIC_API_KEY OPENAI_API_KEY XAI_API_KEY GEMINI_API_KEY RESEND_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET > /tmp/s.json

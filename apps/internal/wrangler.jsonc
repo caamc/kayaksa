@@ -14,7 +14,7 @@
     { "binding": "WWW_DB", "database_name": "kayaksa-www", "database_id": "00000000-0000-0000-0000-000000000002" },
     { "binding": "MEET_DB", "database_name": "kayaksa-meet", "database_id": "00000000-0000-0000-0000-000000000003" }
   ],
-  "r2_buckets": [{ "binding": "BRAND", "bucket_name": "kayaksa-brand" }, { "binding": "MEET_REC", "bucket_name": "kayaksa-meet" }, { "binding": "VAULT", "bucket_name": "kayaksa-vault" }],
+  "r2_buckets": [{ "binding": "BRAND", "bucket_name": "kayaksa-brand" }, { "binding": "MEET_REC", "bucket_name": "kayaksa-meet" }, { "binding": "VAULT", "bucket_name": "kayaksa-vault" }, { "binding": "CAREERS", "bucket_name": "kayaksa-careers" }],
   "ai": { "binding": "AI" },
   "rules": [{ "type": "Data", "globs": ["**/*.ttf"], "fallthrough": false }],
   "observability": { "enabled": true },

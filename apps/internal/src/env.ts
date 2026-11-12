@@ -10,6 +10,7 @@ export interface Env extends AiEnv, MailEnv {
   BRAND: R2Bucket;
   MEET_DB?: D1Database; // Kayak Meet meetings, transcripts and feedback
   MEET_REC?: R2Bucket; // Kayak Meet recordings
+  CAREERS?: R2Bucket; // résumés from the careers page on www (private)
   VAULT?: R2Bucket; // Document Drive: encrypted identity, KYC, KYB and KYV documents
   MEET_SIGNING_KEY?: string;
   TOOLBAR_TOKEN?: string; // KSA Office Toolbar Assistant access token, shown to staff to paste into the add-in

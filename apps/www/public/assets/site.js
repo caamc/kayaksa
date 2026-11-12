@@ -519,13 +519,32 @@ P.careers = () => `
   <p style="color:var(--muted);margin-top:14px">Most of our roles suit experienced professionals from consulting, investigation, audit, law, technology and industry. We are open to people who have worked across more than one of these.</p></div>
   <div><span class="eyebrow">How we hire</span><ol class="steps" style="margin-top:16px">${DATA.careers.steps.map((s) => `<li><div><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div></li>`).join("")}</ol></div>
 </div></section>
+${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Open roles</span><h2>Join us now</h2><p class="lead">${DATA.careers.jobs.length} ${DATA.careers.jobs.length === 1 ? "role is" : "roles are"} open. Read the full description, then apply below.</p></div></div>
+  <div class="jobs">${DATA.careers.jobs.map((j) => `<article class="job" id="job-${esc(j.id)}">
+    <div class="job-top"><div><span class="job-cl">${esc(C[j.cluster]?.name || "")}</span><h3>${esc(j.title)}</h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button></div>
+    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li></ul>
+    <details class="job-jd"><summary>Read the full description</summary><div class="job-body">
+      <h4>About the role</h4><p>${esc(j.about)}</p>
+      <h4>What you will do</h4><ul>${j.do.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <h4>What you will bring</h4><ul>${j.must.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <h4>Good to have</h4><ul>${j.nice.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <p class="job-eeo">${esc(DATA.careers.eeo || "")}</p>
+      <button class="btn btn-ghost" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button>
+    </div></details>
+  </article>`).join("")}</div>
+</div></section>` : ""}
 <section class="sec" id="apply"><div class="wrap contact-grid">
-  <div><span class="eyebrow">Founding team</span><h2 style="font-size:var(--step3);margin:10px 0 12px">Tell us where you would fit</h2><p class="lead" style="margin-bottom:28px">We have no open listings yet. Send us a short note and we will reply personally.</p>
+  <div><span class="eyebrow">Apply</span><h2 style="font-size:var(--step3);margin:10px 0 12px">Tell us where you would fit</h2><p class="lead" style="margin-bottom:28px">${(DATA.careers.jobs || []).length ? "Apply for an open role, or send a general note if you would fit the founding team elsewhere. We reply to every application personally." : "We have no open listings yet. Send us a short note and we will reply personally."}</p>
   <form class="js-form" id="careerForm" novalidate data-kind="career"><div class="formgrid">
     ${field("c-name", "Full name", "text", true, "name")}${field("c-email", "Email", "email", true, "email")}
+    ${(DATA.careers.jobs || []).length ? selectField("c-role", "Role you are applying for", DATA.careers.jobs.map((j) => j.title).concat(["General note (founding team)"]), true) : ""}
     ${selectField("c-cluster", "Area of interest", DATA.clusters.map((c) => c.name).concat(["Operations and firm building"]))}
     ${field("c-link", "LinkedIn or portfolio link", "url", false, "url")}
-    <div class="field full"><label for="c-msg">A few lines about you</label><textarea id="c-msg" name="msg" required></textarea><span class="err" aria-live="polite"></span></div>
+    <div class="field full"><label for="c-cv">Résumé <span style="color:var(--muted);font-weight:400">${(DATA.careers.jobs || []).length ? "(needed for an open role; PDF or Word, up to 2 MB)" : "(optional; PDF or Word, up to 2 MB)"}</span></label>
+      <label class="cv-drop" for="c-cv"><input id="c-cv" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">${ic("report")}<span class="cv-t">Choose a file or drop it here</span><span class="cv-n" aria-live="polite"></span></label>
+      <span class="err" aria-live="polite"></span></div>
+    <div class="field full"><label for="c-msg">A few lines about you${(DATA.careers.jobs || []).length ? ' <span style="color:var(--muted);font-weight:400">(your qualifications, years of experience and notice period)</span>' : ""}</label><textarea id="c-msg" name="msg" required></textarea><span class="err" aria-live="polite"></span></div>
     <div class="field full"><label class="check"><input id="c-consent" type="checkbox" required> I agree that Kayak may use these details to consider my application, as described in the privacy notice.</label><span class="err" aria-live="polite"></span></div>
     <div class="field full"><button class="btn btn-primary" type="submit" style="justify-self:start">Send note ${arrow}</button></div>
   </div></form></div>
@@ -771,7 +790,7 @@ function bindPage() {
 function bindForm(f) {
   f.dataset.t = String(Date.now());
   if (!$(".hp", f)) f.insertAdjacentHTML("beforeend", `<div class="hp" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>`);
-  f.addEventListener("submit", (e) => {
+  f.addEventListener("submit", async (e) => {
     e.preventDefault();
     let ok = true;
     $$("input,textarea,select", f).forEach((el) => {
@@ -792,8 +811,17 @@ function bindForm(f) {
       career: `Thank you${name ? ", " + esc(name) : ""}. We read every note and will reply personally.`,
     };
     const fields = {};
-    $$("input,textarea,select", f).forEach((el) => { if (!el.name && !el.id) return; const k = (el.name || el.id).replace(/^[fc]-/, ""); fields[k] = el.type === "checkbox" ? el.checked : el.value.trim(); });
+    $$("input,textarea,select", f).forEach((el) => { if ((!el.name && !el.id) || el.type === "file") return; const k = (el.name || el.id).replace(/^[fc]-/, ""); fields[k] = el.type === "checkbox" ? el.checked : el.value.trim(); });
     const kind = f.dataset.kind;
+    // Careers: attach the résumé (PDF or Word, up to 2 MB).
+    const cvIn = $("#c-cv", f), cvFile = cvIn?.files?.[0];
+    if (cvIn) {
+      const err = cvIn.closest(".field").querySelector(".err");
+      const msg = cvFile ? cvError(cvFile) : fields.role && !/^General/.test(fields.role) ? "Please attach your résumé (PDF or Word, up to 2 MB)." : "";
+      err.textContent = msg;
+      if (msg) { cvIn.closest(".field").classList.add("bad"); cvIn.focus(); return; }
+      if (cvFile) fields.resume = { name: cvFile.name, data: await fileB64(cvFile) };
+    }
     const body = { kind, fields, page: location.pathname, t: Number(f.dataset.t || 0) };
     if (kind === "cases") body.filters = Object.fromEntries(new FormData(f).entries());
     const btn = $("button[type=submit]", f);
@@ -809,6 +837,32 @@ function bindForm(f) {
       .catch((err) => { toast(err.message); if (btn) { btn.disabled = false; btn.innerHTML = label; } });
   });
 }
+
+/* ---------- Careers: résumé field ---------- */
+const CV_MAX = 2 * 1024 * 1024;
+const cvError = (file) => (!/\.(pdf|docx?)$/i.test(file.name) ? "Please choose a PDF or Word document (.pdf, .doc or .docx)." : file.size > CV_MAX ? `That file is ${(file.size / 1048576).toFixed(1)} MB. Résumés can be up to 2 MB.` : file.size < 200 ? "That file looks empty." : "");
+const fileB64 = (file) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(file); });
+document.addEventListener("change", (e) => {
+  if (e.target.id !== "c-cv") return;
+  const file = e.target.files?.[0], fld = e.target.closest(".field"), msg = file ? cvError(file) : "";
+  fld.querySelector(".cv-n").textContent = file ? `${file.name} · ${file.size < 1048576 ? Math.max(1, Math.round(file.size / 1024)) + " KB" : (file.size / 1048576).toFixed(1) + " MB"}` : "";
+  fld.querySelector(".err").textContent = msg; fld.classList.toggle("bad", !!msg); fld.querySelector(".cv-drop").classList.toggle("has", !!file && !msg);
+});
+for (const ev of ["dragover", "dragleave", "drop"]) document.addEventListener(ev, (e) => {
+  const d = e.target.closest?.(".cv-drop"); if (!d) return;
+  e.preventDefault(); d.classList.toggle("over", ev === "dragover");
+  if (ev === "drop" && e.dataTransfer.files[0]) { const inp = $("#c-cv"); inp.files = e.dataTransfer.files; inp.dispatchEvent(new Event("change", { bubbles: true })); }
+});
+
+/* ---------- Careers: "Apply for this role" ---------- */
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-apply]"); if (!b) return;
+  const sel = $("#c-role"); if (sel) sel.value = b.dataset.apply;
+  const j = DATA.careers.jobs?.find((x) => x.title === b.dataset.apply), cl = $("#c-cluster");
+  if (j && cl && C[j.cluster]) cl.value = C[j.cluster].name;
+  $("#apply")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  setTimeout(() => $("#c-name")?.focus({ preventScroll: true }), 450);
+});
 
 /* ---------- Search ---------- */
 const INDEX = [

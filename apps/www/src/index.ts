@@ -10,6 +10,7 @@ import { randomToken, sha256hex } from "../../../packages/core/src/crypto";
 import { mailEnabled, mailHtml, sendMail } from "../../../packages/core/src/mail";
 import BODY from "./body.html";
 import STATIC_DATA from "./site-data.json";
+import { scanResume } from "./scan";
 import SERVICES from "../public/assets/services.json";
 import { kayApi, redact } from "./kay";
 import { syncMemory, weeklyDrafts, dailyCleanup, seedMemory } from "./learning";
@@ -101,7 +102,7 @@ const STATIC_PAGES: Record<string, [string, string]> = {
   industries: ["Industries", "Wide industry and sector exposure, from financial services and healthcare to manufacturing, infrastructure, consumer and technology."],
   insights: ["Confluence insights", "Confluence, the Kayak monthly on strategy, risk and the decisions between them."],
   about: ["About us", "Kayak Strategic Advisors: independent, senior-led advisory from Mumbai and Thane. Our values, promises and standards."],
-  careers: ["Careers", "Join the founding team at Kayak Strategic Advisors."],
+  careers: ["Careers", "Open roles at Kayak Strategic Advisors: Senior Manager - Tax, Legal & Regulatory Services, and Manager - Crisis, Risk & Resilience Services. Mumbai and Thane."],
   contact: ["Contact us", "Start a confidential conversation with Kayak Strategic Advisors. A senior member of the team replies within one working day."],
   legal: ["Privacy and terms", "How Kayak Strategic Advisors handles personal data, measures this site without cookies, and the terms of use."],
   solutions: ["Kayak Solutions", "Thought, Designed and Developed in India for the World: SayUsNow, SeeCounter, NexaPair and DocuVow, platforms born of Kayak's advisory practice."],
@@ -201,6 +202,27 @@ app.post("/api/consent", async (c) => {
 
 // ------------------------------------------------------------------ forms
 const okEmail = (e: string) => !!cleanEmail(e);
+// A résumé from the careers form: { name, data (base64) }. PDF, DOC or DOCX, at most 2 MB, identified by its first bytes.
+const MAX_CV = 2 * 1024 * 1024;
+function resumeFile(r: any): { bytes: Uint8Array; ext: string; type: string; name: string } | { error: string } {
+  const name = str(r.name, 120).replace(/[^\w .()-]/g, "_") || "resume";
+  const data = String(r.data || "");
+  if (!data || data.length > Math.ceil(MAX_CV / 3) * 4 + 8) return { error: "Résumés can be up to 2 MB." };
+  let bytes: Uint8Array;
+  try { const bin = atob(data); bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i); } catch { return { error: "The résumé couldn't be read. Please try again." }; }
+  if (bytes.length > MAX_CV) return { error: "Résumés can be up to 2 MB." };
+  if (bytes.length < 200) return { error: "The résumé file looks empty." };
+  const head = (n: number) => String.fromCharCode(...bytes.subarray(0, n));
+  if (head(5) === "%PDF-") return { bytes, ext: "pdf", type: "application/pdf", name };
+  if (bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0) return { bytes, ext: "doc", type: "application/msword", name };
+  if (head(4) === "PK\x03\x04" && /\.docx$/i.test(name)) {
+    // A .docx is a zip; it must contain the Word document part.
+    const sample = new TextDecoder("latin1").decode(bytes.subarray(0, Math.min(bytes.length, 200_000)));
+    if (sample.includes("word/")) return { bytes, ext: "docx", type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", name };
+  }
+  return { error: "Please attach your résumé as a PDF or a Word document (.pdf, .doc or .docx)." };
+}
+
 app.post("/api/forms", async (c) => {
   const ip = clientIp(c);
   if (!(await rateLimit(c.env.DB, `form:${ip}`, 12, 3600))) return c.json({ error: "Too many submissions from this network. Please email enquiries@kayaksa.com." }, 429);
@@ -244,13 +266,30 @@ app.post("/api/forms", async (c) => {
     const link = str(f.link, 300);
     if (link && !/^https:\/\//i.test(link)) return c.json({ error: "Links must start with https://" }, 400);
     const id = crypto.randomUUID();
-    await c.env.DB.prepare("INSERT INTO enquiries (id, kind, source, name, email, organisation, phone, area, message, link, transcript, page, country, consent_at, created_at, notice_version, purpose) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-      .bind(id, kind, b.source === "kay" ? "kay" : "form", name, e, str(f.org, 160), str(f.phone, 40), str(f.cluster, 120), msg, link, str(b.transcript, 12000), str(b.page, 200), country, now, now,
-        NOTICE_VERSION, kind === "career" ? "Considering you for a role at Kayak" : "Replying to your enquiry").run();
+    // Careers: a résumé, PDF or Word, up to 2 MB, checked by its contents rather than its name.
+    let cv: { key: string; name: string; size: number } | null = null;
+    const forRole = kind === "career" && f.role && !/^General/.test(String(f.role));
+    if (kind === "career" && f.resume && typeof f.resume === "object") {
+      const r = resumeFile(f.resume);
+      if ("error" in r) return c.json({ error: r.error }, 400);
+      if (!c.env.CV) return c.json({ error: "Résumé upload isn't available at the moment. Please email it to careers@kayaksa.com." }, 503);
+      // Scanned before anything is kept: a file with macros, scripts, embedded objects or remote content is refused.
+      const scan = await scanResume(r.bytes, r.ext);
+      if (!scan.ok) {
+        await securityEvent(c, c.env.DB, "www", { kind: "upload.blocked", severity: "medium", detail: { form: "career", type: r.ext, size: r.bytes.length, reasons: scan.reasons } });
+        return c.json({ error: `Your résumé wasn't accepted because the file ${scan.reasons[0]}. Please save it again as a plain PDF (File → Save as PDF, or Print → Save as PDF) and upload that.` }, 400);
+      }
+      const key = `cv/${now.slice(0, 7)}/${id}.${r.ext}`;
+      await c.env.CV.put(key, r.bytes, { httpMetadata: { contentType: r.type }, customMetadata: { enquiry: id, name: r.name, scan: "clean", engine: "kayak-cv-scan/1", scanned_at: now } });
+      cv = { key, name: r.name, size: r.bytes.length };
+    } else if (forRole) return c.json({ error: "Please attach your résumé (PDF or Word, up to 2 MB)." }, 400);
+    await c.env.DB.prepare("INSERT INTO enquiries (id, kind, source, name, email, organisation, phone, area, message, link, transcript, page, country, consent_at, created_at, notice_version, purpose, resume_key, resume_name, resume_size) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      .bind(id, kind, b.source === "kay" ? "kay" : "form", name, e, str(f.org, 160), str(f.phone, 40), str(kind === "career" && f.role && !/^General/.test(String(f.role)) ? `Role: ${f.role}` : f.cluster, 120), msg, link, str(b.transcript, 12000), str(b.page, 200), country, now, now,
+        NOTICE_VERSION, kind === "career" ? "Considering you for a role at Kayak" : "Replying to your enquiry", cv?.key || null, cv?.name || null, cv?.size || null).run();
     await auditFull(c, c.env.DB, null, `www.${kind}.submitted`, { id, via: b.source === "kay" ? "kay" : "form", page: str(b.page, 200) });
     if (mailEnabled(c.env) && c.env.ENQUIRY_TO) {
-      const rows = [["Name", name], ["Email", e], ["Organisation", str(f.org, 160)], ["Phone", str(f.phone, 40)], ["Area", str(f.cluster, 120)], ["Link", link], ["Came via", b.source === "kay" ? "Kay" : "Website form"]].filter((r) => r[1]);
-      c.executionCtx.waitUntil(sendMail(c.env, c.env.ENQUIRY_TO, `${kind === "career" ? "Careers note" : "New enquiry"}: ${name}${f.org ? `, ${str(f.org, 80)}` : ""}`, mailHtml({ site: "WWW",
+      const rows = [["Name", name], ["Email", e], ["Organisation", str(f.org, 160)], ["Phone", str(f.phone, 40)], ["Role", kind === "career" ? str(f.role, 120) : ""], ["Area", str(f.cluster, 120)], ["Link", link], ["Résumé", cv ? `${cv.name} (${Math.round(cv.size / 1024)} KB), in Kayak Internal` : ""], ["Came via", b.source === "kay" ? "Kay" : "Website form"]].filter((r) => r[1]);
+      c.executionCtx.waitUntil(sendMail(c.env, c.env.ENQUIRY_TO, `${kind === "career" ? (f.role && !/^General/.test(String(f.role)) ? `Application, ${str(f.role, 80)}` : "Careers note") : "New enquiry"}: ${name}${f.org ? `, ${str(f.org, 80)}` : ""}`, mailHtml({ site: "WWW",
         title: kind === "career" ? "A new careers note" : "A new enquiry",
         intro: `<table cellpadding="4">${rows.map((r) => `<tr><td style="color:#4E6470">${esc(r[0])}</td><td><b>${esc(r[1])}</b></td></tr>`).join("")}</table><p style="white-space:pre-wrap">${esc(msg)}</p>`,
         action: { label: "Open in Kayak Internal", url: "https://internal.kayaksa.com/app#/website" }, outro: "Reply within one working day, as the website promises." })).then(() => {}));

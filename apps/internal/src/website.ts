@@ -51,8 +51,20 @@ website.post("/enquiries/:id", async (c) => {
   await audit(c, c.env.DB, c.get("user").id, "website.enquiry_updated", { id: c.req.param("id"), status });
   return c.json({ ok: true });
 });
+// A candidate's résumé: downloaded, never shown inline, and every download is logged.
+website.get("/enquiries/:id/resume", async (c) => {
+  const e: any = await db(c).prepare("SELECT resume_key, resume_name, name FROM enquiries WHERE id = ?").bind(c.req.param("id")).first();
+  if (!e?.resume_key || !c.env.CAREERS) return c.json({ error: "No résumé is attached." }, 404);
+  const o = await c.env.CAREERS.get(e.resume_key);
+  if (!o) return c.json({ error: "The résumé file is missing." }, 404);
+  await audit(c, c.env.DB, c.get("user").id, "website.resume_downloaded", { id: c.req.param("id") });
+  const fn = String(e.resume_name || "resume").replace(/[^\w .()-]/g, "_");
+  return new Response(o.body, { headers: { "Content-Type": o.httpMetadata?.contentType || "application/octet-stream", "Content-Disposition": `attachment; filename="${fn}"`, "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
+});
 website.post("/enquiries/:id/delete", async (c) => {
   if (!atLeast(c.get("user"), "admin")) return c.json({ error: "Administrators only." }, 403);
+  const r: any = await db(c).prepare("SELECT resume_key FROM enquiries WHERE id = ?").bind(c.req.param("id")).first();
+  if (r?.resume_key) await c.env.CAREERS?.delete(r.resume_key);
   await db(c).prepare("DELETE FROM enquiries WHERE id = ?").bind(c.req.param("id")).run();
   await audit(c, c.env.DB, c.get("user").id, "website.enquiry_deleted", { id: c.req.param("id") });
   return c.json({ ok: true });
