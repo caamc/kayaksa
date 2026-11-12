@@ -182,7 +182,7 @@ export function mount(api) {
     s.textContent = state.over ? (state.over === "draw" ? "It's a draw!" : `${label(state.over) || (state.over === "p1" ? "Player 1" : "Player 2")} wins!`) : anim ? "…" : `${label(state.turn) || (state.turn === "p1" ? "Player 1" : "Player 2")} to shoot${myTurn() ? " · your turn" : ""}`;
     root.querySelector("#cseats").innerHTML = [["p1", "Player 1 · ivory", "w"], ["p2", "Player 2 · deep teal", "b"]].map(([k, l, c]) => {
       const who = label(k);
-      return `<div class="gm-seat${state.turn === k && !state.over ? " turn" : ""}"><span class="chip" style="background:${c === "w" ? "#F2E8D2" : "#1B5566"}"></span><b>${who ? esc(who) : `<small>${l} — free</small>`}<br><small>${l.split(" · ")[1]} · ${state.scores[k]} pts</small></b>${!ai ? (seats[k]?.id === me.id ? `<button class="glass" data-leave>Leave</button>` : !seats[k] ? `<button class="glass p" data-seat="${k}">Play</button>` : "") : ""}</div>`;
+      return `<div class="gm-seat${state.turn === k && !state.over ? " turn" : ""}"><span class="chip" style="background:${c === "w" ? "#F2E8D2" : "#1B5566"}"></span><b>${who ? esc(who) : `<small>${l} - free</small>`}<br><small>${l.split(" · ")[1]} · ${state.scores[k]} pts</small></b>${!ai ? (seats[k]?.id === me.id ? `<button class="glass" data-leave>Leave</button>` : !seats[k] ? `<button class="glass p" data-seat="${k}">Play</button>` : "") : ""}</div>`;
     }).join("");
     root.querySelector("#clast").textContent = state.last ? `Last shot: ${state.last}` : "Break the pack to start.";
   }

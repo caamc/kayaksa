@@ -1,4 +1,4 @@
-/* Meet by Kayak — public pages (product, download, sign-in). Built on the Kayak design system. */
+/* Meet by Kayak - public pages (product, download, sign-in). Built on the Kayak design system. */
 :root{--mk-deep:#0E2F3C;--mk-deep2:#0B2530;--mk-teal:#17807E;--mk-teal-l:#1FA3A0;--mk-saf:#EE9B1E;--mk-mist:#EEF4F1}
 body.mk{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans)}
 .mk a{color:var(--link)}

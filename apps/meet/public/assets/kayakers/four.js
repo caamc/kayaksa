@@ -48,7 +48,7 @@ export function mount(api) {
   root.innerHTML = `<div class="gm"><div class="gm-stage"><div class="k4" id="k4" role="grid" aria-label="Kayak Four board"></div></div>
     <aside class="gm-side"><h3>Kayak Four</h3><div class="gm-status" id="fst">Connecting…</div><div class="gm-seats" id="fseats"></div>
       <div class="gm-actions"><button class="glass" id="fnew">New game</button></div>
-      <p class="gm-note">Drop discs by clicking a column. Line up four in a row — across, down or diagonally — to win. ${ai ? (owner ? "You play teal and go first; Kayak AI plays saffron." : `${esc(space.created_by_name || "A colleague")} is playing Kayak AI. You are watching live.`) : "Take a seat to play; everyone else watches live."}</p></aside></div>
+      <p class="gm-note">Drop discs by clicking a column. Line up four in a row - across, down or diagonally - to win. ${ai ? (owner ? "You play teal and go first; Kayak AI plays saffron." : `${esc(space.created_by_name || "A colleague")} is playing Kayak AI. You are watching live.`) : "Take a seat to play; everyone else watches live."}</p></aside></div>
     <style>
       .k4{--s:min(calc((100vh - 150px) / 6.6),calc((100vw - 400px) / 7.4),92px);display:grid;grid-template-columns:repeat(7,var(--s));gap:calc(var(--s) * .12);padding:calc(var(--s) * .22);border-radius:28px;background:linear-gradient(160deg,#1D6F8A,#0E3B4C);box-shadow:0 40px 90px #000a,inset 0 2px 0 #ffffff33}
       @media (max-width:900px){.k4{--s:min(calc((100vw - 60px) / 8),60px)}}
@@ -75,7 +75,7 @@ export function mount(api) {
     st.textContent = w ? (w.p === "draw" ? "It's a draw!" : `${label(w.p) || (w.p === "a" ? "Teal" : "Saffron")} wins!`) : thinking ? "Kayak AI is thinking…" : `${label(t) || (t === "a" ? "Teal" : "Saffron")} to play${mine() === t ? " · your turn" : ""}`;
     root.querySelector("#fseats").innerHTML = [["p1", "a", "Teal", "#17807E"], ["p2", "b", "Saffron", "#EE9B1E"]].map(([k, c, l, col]) => {
       const who = label(c);
-      return `<div class="gm-seat${!w && t === c ? " turn" : ""}"><span class="chip" style="background:${col}"></span><b>${who ? esc(who) : `<small>${l} — free</small>`}<br><small>${l}</small></b>${!ai ? (seats[k]?.id === me.id ? `<button class="glass" data-leave>Leave</button>` : !seats[k] ? `<button class="glass p" data-seat="${k}">Play</button>` : "") : ""}</div>`;
+      return `<div class="gm-seat${!w && t === c ? " turn" : ""}"><span class="chip" style="background:${col}"></span><b>${who ? esc(who) : `<small>${l} - free</small>`}<br><small>${l}</small></b>${!ai ? (seats[k]?.id === me.id ? `<button class="glass" data-leave>Leave</button>` : !seats[k] ? `<button class="glass p" data-seat="${k}">Play</button>` : "") : ""}</div>`;
     }).join("");
   }
   function aiTurn() {

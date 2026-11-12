@@ -188,7 +188,7 @@ jobs:
         run: |
           set -e
           if ! npx wrangler r2 bucket list | grep -q "kayaksa-brand"; then npx wrangler r2 bucket create kayaksa-brand; echo "NEW_BUCKET=1" >> "$GITHUB_ENV"; fi
-          if ! npx wrangler r2 bucket list | grep -q "kayaksa-meet"; then npx wrangler r2 bucket create kayaksa-meet; fi
+          if ! npx wrangler r2 bucket list | grep -qE "^name:\s+kayaksa-meet$"; then npx wrangler r2 bucket create kayaksa-meet || true; fi
           if ! npx wrangler r2 bucket list | grep -q "kayaksa-vault"; then npx wrangler r2 bucket create kayaksa-vault; fi
           npx wrangler deploy -c apps/internal/wrangler.jsonc
           have=$(npx wrangler secret list --name kayaksa-internal --format json 2>/dev/null | jq -r '.[].name' || true)
@@ -219,11 +219,28 @@ jobs:
           tar xzf mediapipe-selfie_segmentation-*.tgz 2>/dev/null && cd package && cp -f *.js *.wasm *.tflite *.binarypb *.data LICENSE "$GITHUB_WORKSPACE/$D/" 2>/dev/null
           ls -la "$GITHUB_WORKSPACE/$D" || true
           [ -f "$GITHUB_WORKSPACE/$D/selfie_segmentation.js" ] && echo "### Meet backgrounds: segmentation model added" >> "$GITHUB_STEP_SUMMARY" || echo "::warning::Could not add the segmentation model; Meet backgrounds will be unavailable until the next deploy."
+      - name: Add the face-tracking model for Kayak Avatar
+        if: contains(format(',{0},', steps.apps.outputs.list), ',meet,')
+        # Google's open-source MediaPipe Face Mesh (Apache-2.0), served from meet.kayaksa.com itself. It runs
+        # only in the speaker's browser to animate their avatar. Pinned version; never fails the deploy.
+        run: |
+          set +e
+          D=apps/meet/public/face; mkdir -p "$D" /tmp/fm && cd /tmp/fm
+          npm pack @mediapipe/face_mesh@0.4.1633559619 --silent >/dev/null 2>&1 || npm pack @mediapipe/face_mesh --silent >/dev/null 2>&1
+          tar xzf mediapipe-face_mesh-*.tgz 2>/dev/null && cd package && cp -f *.js *.wasm *.tflite *.binarypb *.data LICENSE "$GITHUB_WORKSPACE/$D/" 2>/dev/null
+          ls -la "$GITHUB_WORKSPACE/$D" || true
+          [ -f "$GITHUB_WORKSPACE/$D/face_mesh.js" ] && echo "### Kayak Avatar: face tracking added" >> "$GITHUB_STEP_SUMMARY" || echo "::warning::Could not add face tracking; Kayak Avatar will follow voice only until the next deploy."
       - name: Publish meet.kayaksa.com
         if: contains(format(',{0},', steps.apps.outputs.list), ',meet,')
+        env:
+          MS_CLIENT_ID: ${{ secrets.MS_CLIENT_ID }}
+          MS_CLIENT_SECRET: ${{ secrets.MS_CLIENT_SECRET }}
+          MS_TENANT: ${{ secrets.MS_TENANT }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           set -e
-          if ! npx wrangler r2 bucket list | grep -q "kayaksa-meet"; then npx wrangler r2 bucket create kayaksa-meet; fi
+          if ! npx wrangler r2 bucket list | grep -qE "^name:\s+kayaksa-meet$"; then npx wrangler r2 bucket create kayaksa-meet || true; fi
           npx wrangler deploy -c apps/meet/wrangler.jsonc
           have=$(npx wrangler secret list --name kayaksa-meet --format json 2>/dev/null | jq -r '.[].name' || true)
           echo '{}' > /tmp/m.json
@@ -244,6 +261,22 @@ jobs:
               echo "::warning::Could not create a TURN relay key ($(echo "$R" | jq -r '.errors[0].message // "unknown"')). Meetings still work; people behind strict firewalls may not connect. Add 'Calls: Edit' (Realtime) to the Cloudflare token to enable the relay."
             fi
           fi
+          # Town halls (hundreds of people with video) run on a Cloudflare Realtime SFU app. Created once,
+          # automatically, when the Cloudflare token has the Realtime permission. Pay-as-you-go:
+          # the first 1,000 GB a month (shared with TURN) is free, then $0.05 per GB of egress.
+          if ! echo "$have" | grep -qx CF_REALTIME_APP_ID; then
+            R=$(curl -sS -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" -d '{"name":"kayak-meet-townhall"}' "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/calls/apps")
+            if [ "$(echo "$R" | jq -r '.success')" = "true" ]; then
+              node -e 'const f="/tmp/m.json";const j=JSON.parse(require("fs").readFileSync(f));const r=JSON.parse(process.argv[1]).result;j.CF_REALTIME_APP_ID=r.uid;j.CF_REALTIME_APP_SECRET=r.secret;require("fs").writeFileSync(f,JSON.stringify(j))' "$R"
+              echo "Created the Cloudflare Realtime app for Meet town halls." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::warning::Town halls are off: could not create a Cloudflare Realtime app ($(echo "$R" | jq -r '.errors[0].message // "unknown"')). Add the 'Realtime Admin' (Calls: Edit) permission to the Cloudflare API token."
+            fi
+          fi
+          # Two-way calendar sync: app registrations from Microsoft and Google, kept in GitHub secrets.
+          for k in MS_CLIENT_ID MS_CLIENT_SECRET MS_TENANT GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
+            v="${!k}"; [ -n "$v" ] && node -e 'const f="/tmp/m.json";const j=JSON.parse(require("fs").readFileSync(f));j[process.argv[1]]=process.argv[2];require("fs").writeFileSync(f,JSON.stringify(j))' "$k" "$v"
+          done
           [ "$(cat /tmp/m.json)" = "{}" ] || npx wrangler secret bulk /tmp/m.json --name kayaksa-meet; rm -f /tmp/m.json
           echo "### meet.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
 

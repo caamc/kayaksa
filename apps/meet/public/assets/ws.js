@@ -115,6 +115,10 @@ function route() {
   if (h === "new") { history.replaceState(null, "", "#meetings"); go("meetings"); return newMeeting(); }
   if (h === "join") { history.replaceState(null, "", "#meetings"); go("meetings"); return joinCode(); }
   if (["meetings","tasks","todo","planner"].includes(h) || (h === "kayakers" && isEmp())) return go(h);
+  if (h.startsWith("calendar")) {
+    const msg = { "calendar-connected": "Your calendar is connected. Meet meetings now appear in it, and its events in Planner.", "calendar-failed": "The calendar couldn't be connected. Try again, or ask Kayak IT.", "calendar-cancelled": "Calendar connection cancelled.", "calendar-unavailable": "Calendar sync hasn't been switched on yet by Kayak IT." }[h];
+    history.replaceState(null, "", "#planner"); go("planner"); if (msg) toast(msg); if (h === "calendar" || h === "calendar-connected") calendarDialog(); return;
+  }
   const m = h.match(/^c\/([a-z0-9]+)(?:\/(tasks|files))?$/);
   if (m) return openChannel(m[1], m[2] || "chat");
   const first = S.channels.find((c) => c.kind !== "dm") || S.channels[0];
@@ -697,21 +701,23 @@ function bucketOf(due, today) {
   return due <= wk ? "week" : "later";
 }
 async function renderPlanner(main) {
-  main.innerHTML = `<header class="top"><div class="t"><h2>Planner</h2><small>Meet your due dates, deliverables and meetings — everything with a date, in one place</small></div><button class="btn p" id="addDel">${ic("plus")}<span class="lbl">Add deliverable</span></button></header><div class="body" id="body"><p class="mk-small" style="padding:16px">Loading…</p></div>`;
+  main.innerHTML = `<header class="top"><div class="t"><h2>Planner</h2><small>Meet your due dates, deliverables and meetings - everything with a date, in one place</small></div><button class="btn" id="calBtn">${ic("cal")}<span class="lbl">Calendars</span></button><button class="btn p" id="addDel">${ic("plus")}<span class="lbl">Add deliverable</span></button></header><div class="body" id="body"><p class="mk-small" style="padding:16px">Loading…</p></div>`;
   $("#addDel").onclick = () => todoDialog({ kind: "deliverable" }, () => renderPlanner(main));
+  $("#calBtn") && ($("#calBtn").onclick = calendarDialog);
   const r = await api("/planner").catch((e) => toast(e.message)); if (!r) return;
   const body = $("#body");
   if (!r.items.length) { body.innerHTML = `<div class="empty">${ic("cal")}<h3>Nothing scheduled</h3><p>Add a deliverable with a due date, give a to-do a date, or schedule a meeting. It all shows here on a timeline.</p></div>`; return; }
   const by = {}; for (const it of r.items) (by[bucketOf(it.due, r.today)] ||= []).push(it);
-  const TYPE = { todo: ["To-do", "#17807E", P.tasks], deliverable: ["Deliverable", "#9C630E", P.tasks], task: ["Task", "#2D6A9F", P.tasks], meeting: ["Meeting", "#0E2F3C", P.video] };
+  const TYPE = { todo: ["To-do", "#17807E", P.tasks], deliverable: ["Deliverable", "#9C630E", P.tasks], task: ["Task", "#2D6A9F", P.tasks], meeting: ["Meeting", "#0E2F3C", P.video], calendar: ["Calendar", "#5E4B78", P.cal] };
   const line = (it) => { const [label, col, icon] = TYPE[it.type] || TYPE.todo; return `<div class="pl-row" data-type="${it.type}" data-id="${esc(it.id)}" ${it.channel_id ? `data-ch="${esc(it.channel_id)}"` : ""}>
     <span class="pl-ic" style="background:${col}"><svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg></span>
-    <div class="pl-main"><b>${esc(it.title)}</b><small>${label}${it.channel ? ` · #${esc(it.channel)}` : ""}${it.type === "meeting" && it.startsAt ? ` · ${new Date(it.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}${it.priority === "high" || it.priority === "urgent" ? ` · ${it.priority}` : ""}</small></div>
+    <div class="pl-main"><b>${esc(it.title)}</b><small>${it.type === "calendar" ? (it.provider === "google" ? "Google Calendar" : "Outlook") : label}${it.channel ? ` · #${esc(it.channel)}` : ""}${it.type === "meeting" && it.startsAt ? ` · ${new Date(it.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}${it.priority === "high" || it.priority === "urgent" ? ` · ${it.priority}` : ""}</small></div>
     <span class="pl-due ${dueClass(it.due, it.done)}">${new Date(it.due).toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}</span></div>`; };
   body.innerHTML = `<div class="mt-wrap">${BUCKETS.filter(([k]) => by[k]?.length).map(([k, label]) => `<section><h3 class="sec ${k === "overdue" ? "overdue" : ""}">${label} <span class="count">${by[k].length}</span></h3><div class="pl-list">${by[k].map(line).join("")}</div></section>`).join("")}</div>`;
   $$(".pl-row", body).forEach((el) => (el.onclick = () => {
     const type = el.dataset.type, id = el.dataset.id;
-    if (type === "meeting") joinRoom(id);
+    if (type === "calendar") { const it = r.items.find((x) => x.type === "calendar" && x.id === id); if (it?.link) window.open(it.link, "_blank", "noopener"); }
+    else if (type === "meeting") joinRoom(id);
     else if (type === "task" && el.dataset.ch) openChannel(el.dataset.ch, "tasks");
     else go("todo");
   }));
@@ -719,7 +725,7 @@ async function renderPlanner(main) {
 // ------------------------------------------------------------------ Kayakers (Kayak team only)
 const KX = {
   board: ["Whiteboard", "#17807E", "Draw, sketch, add sticky notes and shapes together, live."],
-  chess: ["Chess", "#2D6A9F", "Full rules — castling, en passant, promotion. Play a colleague or Kayak AI."],
+  chess: ["Chess", "#2D6A9F", "Full rules - castling, en passant, promotion. Play a colleague or Kayak AI."],
   carrom: ["Carrom", "#9C630E", "Real physics on a classic board. Flick the striker and pocket your coins."],
   four: ["Kayak Four", "#B4472F", "Line up four discs before the other side does. Quick and addictive."],
 };
@@ -730,7 +736,7 @@ const KXI = {
   four: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="1.6"/><circle cx="12" cy="9" r="1.6"/><circle cx="16" cy="9" r="1.6"/><circle cx="8" cy="15" r="1.6"/><circle cx="12" cy="15" r="1.6"/><circle cx="16" cy="15" r="1.6"/>',
 };
 async function renderKayakers(main) {
-  main.innerHTML = `<header class="top"><div class="t"><h2>Kayakers</h2><small>Joint visuals and games for the Kayak team — work together, then take a break together</small></div><button class="btn p" id="kxNewB">${ic("plus")}<span class="lbl">New whiteboard</span></button></header>
+  main.innerHTML = `<header class="top"><div class="t"><h2>Kayakers</h2><small>Joint visuals and games for the Kayak team - work together, then take a break together</small></div><button class="btn p" id="kxNewB">${ic("plus")}<span class="lbl">New whiteboard</span></button></header>
     <div class="body" id="body"><div class="mt-wrap kx-hub">
       <section><h3 class="sec">Joint visuals</h3><div class="kx-grid" id="kxBoards"><p class="mk-small">Loading…</p></div></section>
       <section><h3 class="sec">Games</h3><div class="kx-games">${["chess", "carrom", "four"].map((k) => `<div class="kx-game" style="--c:${KX[k][1]}"><span class="kx-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${KXI[k]}</svg></span><b>${KX[k][0]}</b><small>${KX[k][2]}</small><div class="kx-btns"><button class="btn sm p" data-new="${k}" data-mode="team">${ic("people")} With colleagues</button><button class="btn sm" data-new="${k}" data-mode="ai">${ic("ai")} vs Kayak AI</button></div></div>`).join("")}</div>
@@ -740,7 +746,7 @@ async function renderKayakers(main) {
     const r = await post("/kayakers", { kind, mode, title }).catch((e) => toast(e.message));
     if (r?.id) location.href = `/kayakers/${r.id}`;
   };
-  $("#kxNewB").onclick = () => dialog(`<form><h3>New whiteboard</h3><div class="fld"><label for="kxt">Name</label><input id="kxt" maxlength="80" placeholder="e.g. Diligence plan — Project Falcon" required></div><p class="mk-small">Everyone in the Kayak team can open and draw on it. Don't put client-confidential material on a shared board unless the whole team may see it.</p><div class="foot"><button class="btn" data-close>Cancel</button><button class="btn p">Create</button></div></form>`, (d) => {
+  $("#kxNewB").onclick = () => dialog(`<form><h3>New whiteboard</h3><div class="fld"><label for="kxt">Name</label><input id="kxt" maxlength="80" placeholder="e.g. Diligence plan - Project Falcon" required></div><p class="mk-small">Everyone in the Kayak team can open and draw on it. Don't put client-confidential material on a shared board unless the whole team may see it.</p><div class="foot"><button class="btn" data-close>Cancel</button><button class="btn p">Create</button></div></form>`, (d) => {
     $("form", d).onsubmit = (e) => { e.preventDefault(); const t = $("#kxt", d).value.trim(); if (t) create("board", "team", t); };
     $("#kxt", d).focus();
   });
@@ -748,7 +754,7 @@ async function renderKayakers(main) {
   const r = await api("/kayakers").catch((e) => toast(e.message)); if (!r) return;
   const card = (sp) => `<a class="kx-card" href="/kayakers/${esc(sp.id)}" style="--c:${KX[sp.kind]?.[1] || "#17807E"}"><span class="kx-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${KXI[sp.kind] || ""}</svg></span><span class="kx-t"><b>${esc(sp.title)}</b><small>${KX[sp.kind]?.[0] || ""}${sp.kind !== "board" ? (sp.mode === "ai" ? " · vs AI" : " · team") : ""} · ${esc(sp.created_by_name || "")} · ${fmtDay(sp.updated_at)}</small></span>${sp.created_by === S.me.id ? `<button class="ib" data-del="${esc(sp.id)}" aria-label="Remove" title="Remove">${ic("x")}</button>` : ""}</a>`;
   const boards = r.spaces.filter((x) => x.kind === "board"), games = r.spaces.filter((x) => x.kind !== "board");
-  $("#kxBoards").innerHTML = boards.length ? boards.map(card).join("") : `<div class="kx-none"><b>No whiteboards yet</b><small>Start one for a workshop, a case map or a quick sketch — colleagues who open it draw with you live.</small></div>`;
+  $("#kxBoards").innerHTML = boards.length ? boards.map(card).join("") : `<div class="kx-none"><b>No whiteboards yet</b><small>Start one for a workshop, a case map or a quick sketch - colleagues who open it draw with you live.</small></div>`;
   $("#kxGames").innerHTML = games.length ? games.slice(0, 12).map(card).join("") : `<div class="kx-none"><small>No games yet. Pick one above.</small></div>`;
   $$("[data-del]", main).forEach((b) => (b.onclick = async (e) => { e.preventDefault(); e.stopPropagation(); await post(`/kayakers/${b.dataset.del}`, {}, "DELETE").catch((x) => toast(x.message)); renderKayakers(main); }));
 }
@@ -841,6 +847,8 @@ function profileMenu(anchor) {
     [`<small style="color:var(--muted)">${esc(S.me.email)} · ${S.me.kind === "employee" ? "Kayak" : esc(S.me.org || "Client")}</small>`, () => {}],
     "-",
     [`${ic("globe")} Translation language: ${esc(LANGS[S.me.lang] || "English")}`, pickLang],
+    [`${ic("cal")} Calendar sync (Outlook, Google)`, calendarDialog],
+    ...(isEmp() ? [[`${ic("globe")} Cloudflare usage this month`, usageDialog]] : []),
     ...(!D && "Notification" in window && Notification.permission === "default" ? [[`${ic("bell")} Turn on notifications`, () => Notification.requestPermission()]] : []),
     ...(!D ? [[`${ic("download")} Get the desktop app`, () => window.open("/download", "_blank", "noopener")]] : []),
     [`${ic("download")} Download my data`, () => (location.href = "/api/ws/me/export")],
@@ -903,3 +911,27 @@ addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); $("#q")?.focus(); }
   if (e.key === "Escape" && S.panel && !document.querySelector("dialog[open]")) { S.panel = null; S.thread = null; renderPanel(); }
 });
+
+// ------------------------------------------------------------------ calendar sync (Outlook, Google)
+async function calendarDialog() {
+  const r = await api("/calendar").catch((e) => toast(e.message)); if (!r) return;
+  const row = (p) => `<div class="cal-row"><span class="cal-ic ${p.id}">${p.id === "google" ? "G" : "O"}</span><div><b>${esc(p.name)}</b><small>${p.connected ? `Connected${p.account ? ` as ${esc(p.account)}` : ""}${p.syncedAt ? ` · synced ${new Date(p.syncedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}${p.error ? ` · <span style="color:#B4472F">${esc(p.error)}</span>` : ""}` : p.available ? "Not connected" : "Not switched on yet by Kayak IT"}</small></div>
+    ${p.connected ? `<button class="btn sm" data-off="${p.id}">Disconnect</button>${p.error ? `<a class="btn sm p" href="/calendar/connect/${p.id}">Sign in again</a>` : ""}` : p.available ? `<a class="btn sm p" href="/calendar/connect/${p.id}">Connect</a>` : ""}</div>`;
+  dialog(`<div class="dlg"><h3>Calendar sync</h3><p>Connect your work calendar and Meet by Kayak keeps both in step:</p>
+    <ul class="cal-ul"><li>Meetings you schedule here, or are invited to, appear in your calendar with the join link.</li><li>Your calendar's events show in Planner beside your to-dos and deliverables.</li><li>Move a meeting you host in Outlook or Google, and it moves here too.</li></ul>
+    ${r.providers.map(row).join("")}
+    <p class="mk-small" style="color:var(--muted)">Meet by Kayak asks only for access to your calendar events. Your sign-in tokens are encrypted and you can disconnect at any time, which deletes them.</p>
+    <div class="foot">${r.providers.some((p) => p.connected) ? `<button class="btn" id="calSync">Sync now</button>` : ""}<button class="btn p" data-close>Done</button></div></div>`, (d) => {
+    $$("[data-off]", d).forEach((b) => (b.onclick = async () => { await post(`/calendar/${b.dataset.off}`, {}, "DELETE").catch((e) => toast(e.message)); d.close(); toast("Calendar disconnected."); }));
+    $("#calSync", d) && ($("#calSync", d).onclick = async (e) => { e.target.disabled = true; e.target.textContent = "Syncing…"; await post("/calendar/sync").catch((x) => toast(x.message)); d.close(); toast("Calendar synced."); if (S.view === "planner") renderMain(); });
+  });
+}
+
+// ------------------------------------------------------------------ Cloudflare Realtime usage (Kayak team)
+async function usageDialog() {
+  const r = await api("/usage").catch((e) => toast(e.message)); if (!r) return;
+  const fmt = (v, u) => (u === "GB" ? v.toLocaleString("en-IN", { maximumFractionDigits: 2 }) : Math.round(v).toLocaleString("en-IN")) + " " + u;
+  dialog(`<div class="dlg"><h3>Cloudflare Realtime usage</h3><p>Billing period from ${new Date(r.period + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}. Meet by Kayak stops using each service just before its limit, so usage stays within what's included.</p>
+    ${r.meters.map((m) => `<div class="um"><div class="um-h"><b>${esc(m.label)}</b><span>${fmt(m.used, m.unit)} of ${fmt(m.limit, m.unit)}</span></div><div class="um-bar"><i style="width:${m.pct}%;background:${m.pct >= 90 ? "#B4472F" : m.pct >= 80 ? "#EE9B1E" : "#17807E"}"></i></div><small>${m.notUsed ? "Not used by Meet by Kayak (its recordings are stored in Kayak's own R2). Blocked at the limit anyway." : `Stops at ${fmt(m.stopsAt, m.unit)}.`}</small></div>`).join("")}
+    <div class="foot"><button class="btn p" data-close>Done</button></div></div>`);
+}

@@ -1,4 +1,4 @@
-// Meet by Kayak — desktop app for Windows and macOS.
+// Meet by Kayak - desktop app for Windows and macOS.
 // A hardened shell around meet.kayaksa.com that adds what a browser tab cannot: a tray / menu-bar
 // presence, global mute and camera shortcuts, a native screen-share picker, a floating mini window
 // that stays out of what you share, taskbar meeting controls on Windows, unread badges, deep links

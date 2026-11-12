@@ -12,3 +12,4 @@ apps/*/wrangler.local.jsonc
 desktop/node_modules/
 desktop/dist/
 apps/meet/public/seg/
+apps/meet/public/face/

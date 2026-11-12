@@ -1,4 +1,4 @@
-// meet.kayaksa.com — Kayak Meet. Kayak's own meeting service: browser to browser audio and video
+// meet.kayaksa.com - Kayak Meet. Kayak's own meeting service: browser to browser audio and video
 // (end-to-end encrypted by WebRTC), Kayak's own signalling (Durable Objects), live captions and
 // minutes on Cloudflare Workers AI, recordings in Kayak's own R2 storage, and feedback that feeds an
 // improvement log approved by administrators. No meeting vendor is involved.
@@ -13,6 +13,8 @@ export { Room, Space };
 import type { Env } from "./env";
 import { auth, currentMember, needMember } from "./auth";
 import { ws, serveFile, mayJoin } from "./workspace";
+import { calApi, calPages } from "./calendar";
+import { gate as usageGate } from "./usage";
 type C = { Bindings: Env; Variables: { claims: MeetClaims; meeting: any } };
 const app = new Hono<C>();
 const ROOM_RE = /^[a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{3}$/;
@@ -64,9 +66,11 @@ app.get("/api/room/:room", needRoom, (c) => {
 // STUN tells each browser its public address; TURN relays media only when a firewall blocks direct paths.
 app.get("/api/ice/:room", needRoom, async (c) => {
   const ice: any[] = [{ urls: ["stun:stun.cloudflare.com:3478"] }];
-  if (c.env.TURN_KEY_ID && c.env.TURN_KEY_API_TOKEN) {
+  // The relay is only handed out while the monthly Cloudflare Realtime data limit has room left.
+  // Short-lived (1 hour), so a stop takes effect quickly even for credentials already issued.
+  if (c.env.TURN_KEY_ID && c.env.TURN_KEY_API_TOKEN && (await usageGate(c.env)).turn) {
     const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${c.env.TURN_KEY_ID}/credentials/generate-ice-servers`, {
-      method: "POST", headers: { Authorization: `Bearer ${c.env.TURN_KEY_API_TOKEN}`, "Content-Type": "application/json" }, body: JSON.stringify({ ttl: 6 * 3600 }),
+      method: "POST", headers: { Authorization: `Bearer ${c.env.TURN_KEY_API_TOKEN}`, "Content-Type": "application/json" }, body: JSON.stringify({ ttl: 3600 }),
     }).catch(() => null);
     const j: any = r && r.ok ? await r.json().catch(() => null) : null;
     if (j?.iceServers) return c.json({ iceServers: j.iceServers, relay: true });
@@ -103,18 +107,29 @@ app.post("/api/transcribe/:room", needRoom, async (c) => {
   let bin = "";
   for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000));
   try {
-    const r: any = await c.env.AI.run("@cf/openai/whisper-large-v3-turbo" as any, { audio: btoa(bin), task: "transcribe", vad_filter: true, condition_on_previous_text: false } as any);
+    // Notes.AI: Whisper detects the language of every phrase by itself. When it is unsure (short or
+    // mixed-language phrases, common with Hinglish), the speaker's own recent language is used as a hint.
+    const audio = btoa(bin);
+    let r: any = await c.env.AI.run("@cf/openai/whisper-large-v3-turbo" as any, { audio, task: "transcribe", vad_filter: true, condition_on_previous_text: false } as any);
+    let conf = Number(r?.transcription_info?.language_probability);
+    const hint = /^[a-z]{2,3}$/.test(c.req.query("hint") || "") ? c.req.query("hint")! : "";
+    const detected = String(r?.transcription_info?.language || "").toLowerCase().slice(0, 8);
+    if (hint && detected && detected !== hint && conf < 0.5) {
+      const again: any = await c.env.AI.run("@cf/openai/whisper-large-v3-turbo" as any, { audio, task: "transcribe", language: hint, vad_filter: true, condition_on_previous_text: false } as any).catch(() => null);
+      if (clean(again?.text)) { r = { ...again, transcription_info: { language: hint, language_probability: conf } }; }
+    }
     const text = clean(r?.text);
     if (!text) return c.json({ text: "" });
     const lang = String(r?.transcription_info?.language || "").toLowerCase().slice(0, 8) || (/^[\x00-\x7F]*$/.test(text) ? "en" : "");
-    if (lang === "en") return c.json({ text, lang, en: null });
+    conf = Number.isFinite(conf) ? Math.max(0, Math.min(1, conf)) : NaN;
+    if (lang === "en") return c.json({ text, lang, en: null, conf: Number.isFinite(conf) ? conf : null });
     // Live translation to English: text first (fast), then the audio itself if that fails.
     let en = await toEnglish(c.env.AI, text, lang);
     if (!en) {
       const t: any = await c.env.AI.run("@cf/openai/whisper-large-v3-turbo" as any, { audio: btoa(bin), task: "translate", vad_filter: true } as any).catch(() => null);
       en = clean(t?.text);
     }
-    return c.json({ text, lang: lang || null, en: en && en.toLowerCase() !== text.toLowerCase() ? en : null });
+    return c.json({ text, lang: lang || null, en: en && en.toLowerCase() !== text.toLowerCase() ? en : null, conf: Number.isFinite(conf) ? conf : null });
   } catch {
     try {
       const r: any = await c.env.AI.run("@cf/openai/whisper" as any, { audio: [...b] } as any);
@@ -158,6 +173,116 @@ app.post("/api/translate/:room", needRoom, async (c) => {
 // Whisper sometimes "hears" stock phrases in silence; drop them.
 const HALLUCINATIONS = /^(thank you\.?|thanks for watching\.?|you|bye\.?|\.|subtitles by.*|please subscribe.*)$/i;
 const clean = (t: unknown) => { const s = String(t || "").replace(/\s+/g, " ").trim(); return HALLUCINATIONS.test(s) ? "" : s.slice(0, 1000); };
+
+// ---------------------------------------------------------------- town halls: Cloudflare Realtime (SFU)
+// The browser never sees the Realtime app secret: every call goes through these routes, which check
+// the meeting invitation and a signed ticket that ties the Realtime session to this meeting.
+const SFU = "https://rtc.live.cloudflare.com/v1/apps";
+async function sfuSig(key: string, room: string, session: string) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode("sfu:" + key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(room + "|" + session));
+  return btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/[+/=]/g, (ch) => ({ "+": "-", "/": "_", "=": "" })[ch]!);
+}
+async function sfuCall(env: Env, path: string, method: string, body?: unknown) {
+  const r = await fetch(`${SFU}/${env.CF_REALTIME_APP_ID}${path}`, { method, headers: { Authorization: `Bearer ${env.CF_REALTIME_APP_SECRET}`, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined }).catch(() => null);
+  if (!r) return { ok: false, status: 502, j: { errorCode: "unreachable", errorDescription: "Cloudflare Realtime could not be reached." } };
+  const j: any = await r.json().catch(() => ({}));
+  return { ok: r.ok && !j.errorCode, status: r.status, j };
+}
+const sfuGate = async (c: any, next: () => Promise<void>) => {
+  if (!c.env.CF_REALTIME_APP_ID || !c.env.CF_REALTIME_APP_SECRET) return c.json({ error: "Town halls are not switched on yet." }, 503);
+  if (c.get("meeting").kind !== "townhall") return c.json({ error: "Not a town hall." }, 400);
+  // Hard stop at Kayak's monthly Cloudflare Realtime limits: no new sessions or tracks past them.
+  const g = await usageGate(c.env);
+  if (!g.sfu) return c.json({ error: "This month's town-hall allowance has been used, so town halls are paused until it renews.", capped: true }, 429);
+  const cl = c.get("claims");
+  if (!(await rateLimit(c.env.DB, `sfu:${cl.r}:${c.req.header("CF-Connecting-IP")}`, 240, 60))) return c.json({ error: "slow down" }, 429);
+  return next();
+};
+const SESSION_RE = /^[\w-]{8,100}$/, TRACK_RE = /^[\w:-]{1,80}$/, MID_RE = /^[\w-]{1,16}$/;
+async function sfuSession(c: any) {
+  const b = await c.req.json().catch(() => ({}));
+  const s = String(b.session || "");
+  if (!SESSION_RE.test(s) || String(b.ticket || "") !== (await sfuSig(c.env.MEET_SIGNING_KEY || "", c.req.param("room"), s))) return null;
+  return { s, b };
+}
+const sdp = (d: any) => (d && (d.type === "offer" || d.type === "answer") && typeof d.sdp === "string" && d.sdp.length < 200_000 ? { type: d.type, sdp: d.sdp } : undefined);
+app.post("/api/sfu/:room/session", needRoom, sfuGate, async (c) => {
+  const r = await sfuCall(c.env, "/sessions/new", "POST");
+  if (!r.ok || !SESSION_RE.test(String(r.j.sessionId || ""))) return c.json({ error: "The town hall couldn't connect. Try again." }, 502);
+  return c.json({ session: r.j.sessionId, ticket: await sfuSig(c.env.MEET_SIGNING_KEY || "", c.req.param("room"), r.j.sessionId) });
+});
+app.post("/api/sfu/:room/tracks", needRoom, sfuGate, async (c) => {
+  const x = await sfuSession(c); if (!x) return c.json({ error: "Bad ticket." }, 403);
+  const tracks = (Array.isArray(x.b.tracks) ? x.b.tracks : []).slice(0, 40).map((t: any) => t.location === "remote"
+    ? (SESSION_RE.test(String(t.sessionId)) && TRACK_RE.test(String(t.trackName)) ? { location: "remote", sessionId: t.sessionId, trackName: t.trackName } : null)
+    : (MID_RE.test(String(t.mid)) && TRACK_RE.test(String(t.trackName)) ? { location: "local", mid: t.mid, trackName: t.trackName } : null)).filter(Boolean);
+  if (!tracks.length) return c.json({ error: "No tracks." }, 400);
+  const r = await sfuCall(c.env, `/sessions/${x.s}/tracks/new`, "POST", { tracks, ...(sdp(x.b.sessionDescription) ? { sessionDescription: sdp(x.b.sessionDescription) } : {}) });
+  return c.json(r.j, r.ok ? 200 : 502);
+});
+app.post("/api/sfu/:room/renegotiate", needRoom, sfuGate, async (c) => {
+  const x = await sfuSession(c); if (!x) return c.json({ error: "Bad ticket." }, 403);
+  if (!sdp(x.b.sessionDescription)) return c.json({ error: "Bad description." }, 400);
+  const r = await sfuCall(c.env, `/sessions/${x.s}/renegotiate`, "PUT", { sessionDescription: sdp(x.b.sessionDescription) });
+  return c.json(r.j, r.ok ? 200 : 502);
+});
+app.post("/api/sfu/:room/close", needRoom, sfuGate, async (c) => {
+  const x = await sfuSession(c); if (!x) return c.json({ error: "Bad ticket." }, 403);
+  const mids = (Array.isArray(x.b.mids) ? x.b.mids : []).map(String).filter((m: string) => MID_RE.test(m)).slice(0, 40);
+  if (!mids.length) return c.json({});
+  const d = sdp(x.b.sessionDescription);
+  const r = await sfuCall(c.env, `/sessions/${x.s}/tracks/close`, "PUT", { tracks: mids.map((mid: string) => ({ mid })), force: !d, ...(d ? { sessionDescription: d } : {}) });
+  return c.json(r.j, r.ok ? 200 : 502);
+});
+
+// ---------------------------------------------------------------- Notes.AI: the evidence-grade record
+// A plain-text record of everything transcribed: UTC time, speaker, breakout room, the words as spoken,
+// the language Whisper detected (with its confidence) and an English rendering. A SHA-256 fingerprint of
+// the record is written into it and into Kayak's audit log, so any later change to a copy can be detected.
+app.get("/api/notes/:room", needRoom, hostOnlyNotes, async (c) => {
+  const id = c.req.param("room");
+  const m = await c.env.DB.prepare("SELECT id, title, kind, host_name, started_at, ended_at, starts_at FROM meetings WHERE id = ?").bind(id).first<any>();
+  const { results } = await c.env.DB.prepare("SELECT at, speaker, text, text_en, lang, conf, room FROM transcript WHERE meeting_id = ? ORDER BY id").bind(id).all<any>();
+  const langs: Record<string, number> = {};
+  for (const r of results) if (r.lang) langs[r.lang] = (langs[r.lang] || 0) + 1;
+  const lines = results.map((r: any, i: number) => [
+    `[${String(i + 1).padStart(4, "0")}] ${r.at.replace("T", " ").replace(/\.\d+Z$/, "Z")}  ${r.speaker}${r.room ? `  (breakout: ${r.room})` : ""}`,
+    `       Language: ${LANG_NAMES[r.lang] || r.lang || "not detected"}${r.conf != null ? ` (confidence ${Math.round(r.conf * 100)}%)` : ""}`,
+    `       As spoken: ${r.text}`,
+    ...(r.text_en && r.lang !== "en" ? [`       English:   ${r.text_en}`] : []),
+  ].join("\n"));
+  const body = [
+    "NOTES.AI - MEETING TRANSCRIPT RECORD",
+    "Meet by Kayak · Kayak Strategic Advisors",
+    "",
+    `Meeting:        ${m?.title || id}`,
+    `Meeting ID:     ${id}`,
+    `Type:           ${m?.kind || ""}`,
+    `Host:           ${m?.host_name || ""}`,
+    `Started (UTC):  ${m?.started_at || "—"}`,
+    `Ended (UTC):    ${m?.ended_at || "—"}`,
+    `Lines:          ${results.length}`,
+    `Languages:      ${Object.entries(langs).sort((a, b) => b[1] - a[1]).map(([l, n]) => `${LANG_NAMES[l] || l} (${n})`).join(", ") || "—"}`,
+    `Exported (UTC): ${new Date().toISOString()}`,
+    "",
+    "How this was made: each speaker's microphone was transcribed by OpenAI Whisper (large-v3-turbo) on",
+    "Cloudflare Workers AI, which also detected the language of every line. English renderings are machine",
+    "translations. Everyone in the meeting saw a notice that captions were on. Machine transcription can",
+    "contain errors; check important passages against the recording, if one was made.",
+    "",
+    "----------------------------------------------------------------------------------------------",
+    ...lines,
+    "----------------------------------------------------------------------------------------------",
+  ].join("\n");
+  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const cl = c.get("claims");
+  await auditFull(c as any, c.env.DB, cl.e || null, "meet.notes_exported", { room: id, lines: results.length, sha256: hash });
+  const out = `${body}\nSHA-256 of everything above this line: ${hash}\nThis fingerprint is also recorded in Kayak's audit log with the export time.\n`;
+  return new Response(out, { headers: { "Content-Type": "text/plain; charset=utf-8", "Content-Disposition": `attachment; filename="Notes.AI-${id}.txt"`, "X-Content-SHA256": hash, "Cache-Control": "no-store" } });
+});
+async function hostOnlyNotes(c: any, next: () => Promise<void>) { return c.get("claims").role === "host" ? next() : c.json({ error: "Only the host can export the Notes.AI record." }, 403); }
+const LANG_NAMES: Record<string, string> = { en: "English", hi: "Hindi", bn: "Bengali", mr: "Marathi", te: "Telugu", ta: "Tamil", gu: "Gujarati", ur: "Urdu", kn: "Kannada", ml: "Malayalam", pa: "Punjabi", as: "Assamese", ne: "Nepali", sd: "Sindhi", sa: "Sanskrit", si: "Sinhala", ar: "Arabic", fr: "French", de: "German", es: "Spanish", it: "Italian", pt: "Portuguese", nl: "Dutch", ru: "Russian", uk: "Ukrainian", pl: "Polish", tr: "Turkish", fa: "Persian", he: "Hebrew", el: "Greek", sv: "Swedish", da: "Danish", fi: "Finnish", no: "Norwegian", cs: "Czech", ro: "Romanian", hu: "Hungarian", ja: "Japanese", zh: "Chinese", ko: "Korean", id: "Indonesian", ms: "Malay", th: "Thai", vi: "Vietnamese", tl: "Filipino", sw: "Swahili", yo: "Yoruba" };
 
 // ---------------------------------------------------------------- recordings (Kayak's own R2 storage)
 const hostOnly = async (c: any, next: () => Promise<void>) => (c.get("claims").role === "host" ? next() : c.json({ error: "Only the host can record." }, 403));
@@ -266,6 +391,8 @@ app.get("/download/:os/:file", async (c) => {
 
 // ---------------------------------------------------------------- accounts and workspace
 app.route("/", auth);
+app.route("/api/ws/calendar", calApi);
+app.route("/calendar", calPages);
 app.route("/api/ws", ws);
 app.get("/files/:fid", needMember, serveFile);
 

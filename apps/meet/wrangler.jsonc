@@ -12,6 +12,10 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }, { "tag": "v2", "new_sqlite_classes": ["Space"] }],
   "r2_buckets": [{ "binding": "REC", "bucket_name": "kayaksa-meet" }],
   "ai": { "binding": "AI" },
-  "observability": { "enabled": true }
-  // Secrets: MEET_SIGNING_KEY (shared with internal). Optional: TURN_KEY_ID, TURN_KEY_API_TOKEN.
+  "observability": { "enabled": true },
+  // The day of the month Cloudflare bills on; the monthly Realtime usage limits reset on it (src/usage.ts).
+  "vars": { "USAGE_CYCLE_DAY": "1" }
+  // Secrets: MEET_SIGNING_KEY (shared with internal). Optional: TURN_KEY_ID, TURN_KEY_API_TOKEN,
+  // CF_REALTIME_APP_ID, CF_REALTIME_APP_SECRET, MS_CLIENT_ID, MS_CLIENT_SECRET, MS_TENANT,
+  // GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
 }

@@ -15,6 +15,8 @@ import { mailEnabled, mailHtml, sendMail } from "../../../packages/core/src/mail
 import { auditFull } from "../../../packages/core/src/shield";
 import { needMember, employeeOnly, issueInvite, resetClient, now, type Member } from "./auth";
 import type { Env } from "./env";
+import { pushMeeting, removeMeeting, syncMember } from "./calendar";
+import { read as readUsage, view as usageView } from "./usage";
 
 type V = { Bindings: Env; Variables: { member: Member } };
 export const ws = new Hono<V>();
@@ -450,6 +452,7 @@ ws.post("/meetings", async (c) => {
     .bind(id, title, kind, m.email, m.name, starts ? starts.toISOString() : null, Math.min(480, Math.max(15, Number(b.duration) || 30)), kind === "client" || kind === "webinar" || kind === "townhall" || b.lobby ? 1 : 0, JSON.stringify(invitees), m.id, now(), chId).run();
   if (chId) await sysMsg(c.env, chId, starts ? `${m.name} scheduled “${title}” for ${starts.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST.` : `${m.name} started a meeting.`, "meeting", { meeting: id, title, startsAt: starts?.toISOString() || null });
   await auditFull(c as any, c.env.DB, m.id, "meet.ws.meeting.created", { id, kind, channel: chId, invitees: invitees.length });
+  if (starts) c.executionCtx.waitUntil(pushMeeting(c.env, id).catch(() => {})); // into connected Outlook / Google calendars
   return c.json({ id, url: `/${id}` });
 });
 ws.get("/meetings/:id", async (c) => {
@@ -470,6 +473,7 @@ ws.post("/meetings/:id/cancel", async (c) => {
   const mt: any = await c.env.DB.prepare("SELECT * FROM meetings WHERE id = ?").bind(c.req.param("id")).first();
   if (!mt || mt.host_email !== m.email) throw err("Only the host can cancel this meeting.", 403);
   await c.env.DB.prepare("UPDATE meetings SET status = 'cancelled' WHERE id = ?").bind(mt.id).run();
+  c.executionCtx.waitUntil(removeMeeting(c.env, mt.id).catch(() => {}));
   if (mt.channel_id) await sysMsg(c.env, mt.channel_id, `${m.name} cancelled “${mt.title}”.`);
   return c.json({ ok: true });
 });
@@ -529,7 +533,7 @@ ws.post("/channels/:id/summary", async (c) => {
   const lang = LANGS[b.lang] || "English";
   const r: any = await c.env.AI.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast" as any, {
     messages: [
-      { role: "system", content: `You summarise workplace conversations for Kayak Strategic Advisors. Write in ${lang} (British English if English). Output Markdown: a 2-4 sentence summary, then "Decisions", "Action items" (owner — action — due date if stated) and "Open questions". Use only what is in the conversation; never invent names, numbers or dates. Omit empty sections.` },
+      { role: "system", content: `You summarise workplace conversations for Kayak Strategic Advisors. Write in ${lang} (British English if English). Output Markdown: a 2-4 sentence summary, then "Decisions", "Action items" (owner - action - due date if stated) and "Open questions". Use only what is in the conversation; never invent names, numbers or dates. Omit empty sections.` },
       { role: "user", content: `${parent ? "Thread" : "Conversation"} in “${x.ch.kind === "dm" ? "a direct message" : x.ch.name}”:\n\n${convo}` },
     ], max_tokens: 900,
   } as any);
@@ -643,7 +647,7 @@ ws.delete("/todos/:id", async (c) => {
   await c.env.DB.prepare("DELETE FROM todos WHERE id = ? AND member_id = ?").bind(c.req.param("id"), me(c).id).run();
   return c.json({ ok: true });
 });
-// The Planner: everything of mine with a date — to-dos, deliverables, tasks assigned to me, meetings —
+// The Planner: everything of mine with a date - to-dos, deliverables, tasks assigned to me, meetings —
 // so deadlines and client deliverables are met. Read-only aggregate; items are edited where they live.
 ws.get("/planner", async (c) => {
   const m = me(c);
@@ -659,9 +663,13 @@ ws.get("/planner", async (c) => {
     ...todos.results.map((t: any) => ({ type: t.kind, id: t.id, title: t.title, due: t.due, priority: t.priority, done: !!t.done, channel: t.channel })),
     ...tasks.results.map((t: any) => ({ type: "task", id: t.id, title: t.title, due: t.due, priority: t.priority, channel: t.channel, channel_id: t.channel_id })),
     ...meetings.results.map((t: any) => ({ type: "meeting", id: t.id, title: t.title, due: t.due, startsAt: t.starts_at, channel: t.channel })),
+    ...(await syncMember(c.env, m).catch(() => [])).filter((e) => e.start.slice(0, 10) <= soon && e.end >= new Date().toISOString()).map((e) => ({ type: "calendar", id: e.id, title: e.title, due: e.start.slice(0, 10), startsAt: e.allDay ? null : e.start, link: e.link, provider: e.provider })),
   ].sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : 0));
   return c.json({ items, today: new Date().toISOString().slice(0, 10) });
 });
+
+// ------------------------------------------------------------------ Cloudflare Realtime usage this month (Kayak team)
+ws.get("/usage", employeeOnly, async (c) => c.json(usageView(await readUsage(c.env), c.env)));
 
 // ------------------------------------------------------------------ Kayakers: whiteboards and games (Kayak team only)
 const SPACE_KINDS = ["board", "chess", "carrom", "four"];

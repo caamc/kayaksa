@@ -128,7 +128,7 @@ export function mount(api) {
     <aside class="gm-side"><h3>Chess</h3><div class="gm-status" id="cst">Connecting…</div><div class="gm-seats" id="cseats"></div>
       <div><b style="font-size:.85rem;color:#A9C0C6">Moves</b><div class="gm-moves" id="cmoves"></div></div>
       <div class="gm-actions"><button class="glass" id="cnew">New game</button><button class="glass" id="cflip">Flip board</button></div>
-      <p class="gm-note">${space.mode === "ai" ? (space.created_by === me.id ? "You play White against Kayak AI. It thinks for about a second." : `${esc(space.created_by_name || "A colleague")} is playing Kayak AI. You are watching live.`) : "Take a seat to play. Everyone else watches live. Moves are saved — come back any time."}</p></aside></div>
+      <p class="gm-note">${space.mode === "ai" ? (space.created_by === me.id ? "You play White against Kayak AI. It thinks for about a second." : `${esc(space.created_by_name || "A colleague")} is playing Kayak AI. You are watching live.`) : "Take a seat to play. Everyone else watches live. Moves are saved - come back any time."}</p></aside></div>
     <style>
       .cb{--s:min(calc((100vh - 120px) / 8),calc((100vw - 380px) / 8),84px);display:grid;grid-template-columns:repeat(8,var(--s));grid-template-rows:repeat(8,var(--s));border-radius:16px;overflow:hidden;box-shadow:0 40px 90px #000a,0 0 0 10px #ffffff12;user-select:none}
       @media (max-width:900px){.cb{--s:min(calc((100vw - 40px) / 8),64px)}}
@@ -180,7 +180,7 @@ export function mount(api) {
     const s = root.querySelector("#cst"); s.textContent = thinking ? "Kayak AI is thinking…" : st.text + (!st.over && mine && g.turn === mine ? " · your move" : ""); s.classList.toggle("win", !!st.over);
     root.querySelector("#cseats").innerHTML = [["w", "White", "#fff"], ["b", "Black", "#0E2F3C"]].map(([k, l, c]) => {
       const who = seatName(k);
-      return `<div class="gm-seat${g.turn === k && !st.over ? " turn" : ""}"><span class="chip" style="background:${c};border:2px solid #ffffff55"></span><b>${who ? esc(who) : `<small>${l} — free</small>`}</b>${space.mode !== "ai" ? (seats[k]?.id === me.id ? `<button class="glass" data-leave>Leave</button>` : !seats[k] ? `<button class="glass p" data-seat="${k}">Play ${l}</button>` : "") : ""}</div>`;
+      return `<div class="gm-seat${g.turn === k && !st.over ? " turn" : ""}"><span class="chip" style="background:${c};border:2px solid #ffffff55"></span><b>${who ? esc(who) : `<small>${l} - free</small>`}</b>${space.mode !== "ai" ? (seats[k]?.id === me.id ? `<button class="glass" data-leave>Leave</button>` : !seats[k] ? `<button class="glass p" data-seat="${k}">Play ${l}</button>` : "") : ""}</div>`;
     }).join("");
     const mv = g.hist; root.querySelector("#cmoves").innerHTML = mv.length ? mv.reduce((a, x, i) => a + (i % 2 ? `<span>${x}</span>` : `<span>${i / 2 + 1}.</span><span>${x}</span>`), "") + (mv.length % 2 ? "<span></span>" : "") : `<span style="grid-column:1/-1">No moves yet</span>`;
     const el = root.querySelector("#cmoves"); el.scrollTop = el.scrollHeight;

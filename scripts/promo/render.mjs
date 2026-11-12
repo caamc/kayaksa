@@ -11,7 +11,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const OUT = join(here, "../../apps/meet/public/assets/video");
 mkdirSync(OUT, { recursive: true });
 const FPS = 30, W = 1280, H = 720;
-const POSTER = { meeting: 5.4, notes: 8.2, workspace: 3.9, languages: 5.2, plan: 3.4 };
+const POSTER = { meeting: 5.4, notes: 8.2, workspace: 5.2, languages: 5.2, plan: 3.4, reveal: 9.6 };
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: W, height: H } });

@@ -90,6 +90,28 @@ body{font-family:Archivo,Arial,sans-serif;color:#E8F0EF}
 .vig{background:radial-gradient(ellipse at center,transparent 55%,#00000055 100%)}
 .wm{position:absolute;right:18px;bottom:14px;z-index:20;display:flex;align-items:center;gap:7px;font:700 12px Archivo,Arial;color:#ffffffd9;background:#06171E8c;border:1px solid #ffffff26;padding:5px 10px;border-radius:999px;backdrop-filter:blur(6px)}
 .wm img{height:14px}
+/* ---- motion-graphics layer: 3D camera, futuristic backdrop, glass shapes, callouts ---- */
+.bg{position:absolute;inset:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 120%,#0E3B4C 0%,#06171E 55%,#030B0F 100%)}
+.orb{position:absolute;border-radius:50%;filter:blur(40px);mix-blend-mode:screen}
+.gridfloor{position:absolute;left:-50%;right:-50%;bottom:-40%;height:80%;transform:perspective(600px) rotateX(72deg);background-image:linear-gradient(#17807E33 1px,transparent 1px),linear-gradient(90deg,#17807E33 1px,transparent 1px);background-size:60px 60px;-webkit-mask-image:linear-gradient(transparent,#000 40%,transparent 95%);mask-image:linear-gradient(transparent,#000 40%,transparent 95%)}
+.world{position:absolute;inset:0;perspective:1700px;perspective-origin:50% 45%}
+.cam{position:absolute;left:0;top:0;width:1280px;height:720px;transform-style:preserve-3d;transform-origin:50% 50%}
+.screen{position:absolute;inset:0;border-radius:22px;overflow:hidden;box-shadow:0 60px 120px -20px #000c,0 0 0 1px #ffffff2e,0 0 80px -10px #17807E66}
+.screen>.scene{display:block}
+.edge{position:absolute;inset:0;border-radius:22px;pointer-events:none;background:linear-gradient(115deg,transparent 30%,#ffffff1f 45%,transparent 60%);mix-blend-mode:screen}
+.shape{position:absolute;transform-style:preserve-3d}
+.sph{border-radius:50%;background:radial-gradient(circle at 32% 28%,#ffffffcc 0%,#7FE3DF 12%,#17807E 45%,#06303A 80%);box-shadow:inset -12px -18px 40px #0008,0 30px 60px -10px #0009}
+.sph.gold{background:radial-gradient(circle at 32% 28%,#fff 0%,#FFD99A 14%,#EE9B1E 48%,#7A4A06 85%)}
+.ring{border-radius:50%;border:10px solid #7FE3DF;box-shadow:0 0 30px #17807E,inset 0 0 22px #17807E;opacity:.85}
+.cube{width:90px;height:90px}
+.cube i{position:absolute;inset:0;background:linear-gradient(135deg,#7FE3DF55,#17807E22);border:1.5px solid #7FE3DFaa;box-shadow:inset 0 0 20px #7FE3DF33}
+.callout{position:absolute;display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:18px;background:linear-gradient(135deg,#123E4Cf2,#0A2530eb);border:1px solid #7FE3DF55;backdrop-filter:blur(14px);box-shadow:0 24px 50px -12px #000b;color:#fff;font-weight:700;font-size:17px;white-space:nowrap}
+.callout .ci{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:#17807E;font-size:16px}
+.callout small{display:block;font-weight:500;color:#C9E5E3;font-size:12.5px}
+.title{position:absolute;left:44px;bottom:40px;z-index:15;padding:18px 24px 20px;border-radius:24px;background:linear-gradient(135deg,#0B2833f0,#06171Ee6);border:1px solid #7FE3DF40;box-shadow:0 30px 60px -16px #000c}
+.title .k{font:800 13px Archivo;letter-spacing:.18em;text-transform:uppercase;color:#EE9B1E}
+.title h1{margin:6px 0 0;font:800 46px/1.02 Archivo;letter-spacing:-.02em;color:#fff;text-shadow:0 8px 30px #000a}
+.ptc{position:absolute;inset:0}
 .wm.light{color:#0E2F3Cd9;background:#ffffffb3;border-color:#0E2F3C1f}
 </style></head>
 <body><div id="stage"></div>
@@ -183,7 +205,7 @@ const SCENES = {
   meeting: { dur: 10, lines: [
     { who: "aarav", a: 0.4, b: 3.3, text: "Thanks for joining. Let's lock the FY27 scope today." },
     { who: "meera", a: 3.5, b: 6.5, text: "हम सारे दस्तावेज़ 15 तारीख तक भेज देंगे।", lang: "Hindi", tr: "We'll send all the documents by the 15th." },
-    { who: "daniel", a: 6.7, b: 9.5, text: "Perfect — I'll prepare the GST reconciliation." },
+    { who: "daniel", a: 6.7, b: 9.5, text: "Perfect - I'll prepare the GST reconciliation." },
   ],
   render(t) {
     const L = this.lines, cur = L.find((l) => t >= l.a && t <= l.b);
@@ -227,7 +249,7 @@ const SCENES = {
   render(t) {
     const msgs = [
       { who: "meera", at: 0.4, p: "Uploaded the FY26 returns for review.", file: "GSTR-9 FY26.pdf" },
-      { who: "rohan", at: 2.0, p: "Thanks! Reconciliation is done — moving it to Done." },
+      { who: "rohan", at: 2.0, p: "Thanks! Reconciliation is done - moving it to Done." },
       { who: "aarav", at: 3.6, p: "Great work. Let's walk the client through it now." },
     ].map((m) => { const c = CAST[m.who], o = ramp(t, m.at, m.at + 0.35);
       return `<div class="m" style="opacity:${o};transform:translateY(${(1 - o) * 12}px)">${AV(m.who, 34)}<div><b>${c.name}</b><span class="tm">${c.org}</span><p>${m.p}</p>${m.file ? `<div class="file"><i></i>${m.file}</div>` : ""}</div></div>`; }).join("");
@@ -254,7 +276,7 @@ const SCENES = {
     const k = (t - cur.a) / (cur.b - cur.a);
     const en = "The filing deadline is the 31st of March. We'll be on time.";
     const list = ["English", "Hindi", "Marathi", "Arabic", "Tamil", "Gujarati", "French", "Bengali"];
-    return `<div class="top"><img src="${LOGO}"><span class="t">Captions in your language</span><span class="pill ai">✦ 50 languages</span><span class="pill">🔒 Encrypted</span></div>
+    return `<div class="top"><img src="${LOGO}"><span class="t">Captions in your language</span><span class="pill ai">✦ 100+ languages</span><span class="pill">🔒 Encrypted</span></div>
       <div class="bigtile" style="right:400px;bottom:92px">${face("zara", t, true, "lz")}<div class="nm" style="position:absolute;left:16px;top:16px;font-weight:700;background:#06171Ecc;padding:5px 12px;border-radius:8px">Wei · Counsel</div></div>
       <div class="np" style="width:352px;bottom:92px"><h3>✦ Show captions in</h3>${list.map((l) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;font-size:16px;font-weight:${l === cur.code ? 800 : 500};background:${l === cur.code ? "#17807E" : "transparent"};color:${l === cur.code ? "#fff" : "#C9D8DC"}">${l}${l === cur.code ? "<span>✓</span>" : ""}</div>`).join("")}</div>
       <div class="cap" style="opacity:1;left:24px;transform:none;width:856px;bottom:110px">${AV("zara")}<div style="flex:1"><b>Wei<span class="lang">English → ${cur.code}</span></b><div class="tx" dir="${cur.rtl ? "rtl" : "ltr"}" style="opacity:${ramp(t, cur.a + 0.15, cur.a + 0.5)};text-align:${cur.rtl ? "right" : "left"}">${typed(cur.text, k * 2.2)}</div><div class="tr" style="color:#9FB5BC;font-size:14px">${en}</div></div></div>
@@ -282,13 +304,116 @@ const SCENES = {
   } },
 };
 
+// ------------------------------------------------------------------ motion-graphics layer
+const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+function backdrop(t, hue = 0) {
+  const orbs = [[180, 160, 420, "#17807E"], [1080, 120, 380, "#EE9B1E"], [980, 620, 460, "#2D6A9F"], [240, 640, 360, "#17807E"]].map(([x, y, r, c], i) =>
+    `<div class="orb" style="left:${x - r / 2 + 60 * Math.sin(t * 0.35 + i * 1.7)}px;top:${y - r / 2 + 40 * Math.cos(t * 0.3 + i)}px;width:${r}px;height:${r}px;background:${c};opacity:${0.28 + 0.08 * Math.sin(t * 0.8 + i)}"></div>`).join("");
+  return `<div class="bg">${orbs}<div class="gridfloor" style="background-position:0 ${(t * 40) % 60}px"></div>${particles(t)}${globe(t)}</div>`;
+}
+// A drifting particle network: points, joined when they come close.
+function particles(t, n = 46) {
+  const pts = Array.from({ length: n }, (_, i) => [((rnd(i) * 1400 + t * (8 + rnd(i + 9) * 16)) % 1400) - 60, rnd(i + 3) * 760 - 20 + 18 * Math.sin(t * 0.6 + i)]);
+  let lines = "";
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]); if (d < 150) lines += `<line x1="${pts[i][0].toFixed(1)}" y1="${pts[i][1].toFixed(1)}" x2="${pts[j][0].toFixed(1)}" y2="${pts[j][1].toFixed(1)}" stroke="#7FE3DF" stroke-opacity="${(0.22 * (1 - d / 150)).toFixed(3)}"/>`; }
+  return `<svg class="ptc" viewBox="0 0 1280 720">${lines}${pts.map(([x, y], i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(1.2 + rnd(i + 5) * 2).toFixed(2)}" fill="${i % 7 ? "#BFF3F0" : "#FFD27A"}" opacity=".7"/>`).join("")}</svg>`;
+}
+// A rotating wireframe globe (orthographic projection), the "global network" behind Meet.
+function globe(t, cx = 1090, cy = 600, R = 250) {
+  const rot = t * 0.25, tilt = 0.35, P = [];
+  const proj = (lat, lon) => { const x = Math.cos(lat) * Math.sin(lon + rot), y = Math.sin(lat), z = Math.cos(lat) * Math.cos(lon + rot); const y2 = y * Math.cos(tilt) - z * Math.sin(tilt), z2 = y * Math.sin(tilt) + z * Math.cos(tilt); return [cx + x * R, cy - y2 * R, z2]; };
+  let path = "";
+  for (let la = -60; la <= 60; la += 30) { let d = ""; for (let lo = 0; lo <= 360; lo += 10) { const [x, y, z] = proj((la * Math.PI) / 180, (lo * Math.PI) / 180); d += (z < 0 ? "M" : d ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1); } path += `<path d="${d}"/>`; }
+  for (let lo = 0; lo < 360; lo += 30) { let d = ""; for (let la = -90; la <= 90; la += 10) { const [x, y, z] = proj((la * Math.PI) / 180, (lo * Math.PI) / 180); d += (z < 0 ? "M" : d ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1); } path += `<path d="${d}"/>`; }
+  const cities = [[19, 73], [28.6, 77.2], [51.5, -0.1], [25.2, 55.3], [1.35, 103.8], [40.7, -74], [13, 77.6]].map(([a, b], i) => { const [x, y, z] = proj((a * Math.PI) / 180, (b * Math.PI) / 180); return z > 0 ? `<circle cx="${x}" cy="${y}" r="${4 + 2 * Math.sin(t * 4 + i)}" fill="#EE9B1E"/><circle cx="${x}" cy="${y}" r="${10 + ((t * 14 + i * 5) % 18)}" fill="none" stroke="#EE9B1E" stroke-opacity="${0.6 - ((t * 14 + i * 5) % 18) / 30}"/>` : ""; }).join("");
+  return `<svg class="ptc" viewBox="0 0 1280 720" style="opacity:.55"><g fill="none" stroke="#7FE3DF" stroke-opacity=".35" stroke-width="1.2">${path}</g>${cities}</svg>`;
+}
+function shapes(t, set) {
+  const L = {
+    a: [["sph", 92, 64, 70, 0], ["ring", 1150, 70, 120, 1], ["cube", 1170, 470, 90, 2], ["sph gold", 70, 560, 46, 3]],
+    b: [["ring", 60, 80, 110, 0], ["sph gold", 1180, 90, 58, 1], ["cube", 70, 520, 80, 2], ["sph", 1190, 560, 64, 3]],
+  }[set] || [];
+  return L.map(([k, x, y, size, i]) => {
+    const bob = 14 * Math.sin(t * 0.9 + i * 1.3), ry = t * 40 + i * 50, rx = 55 + 10 * Math.sin(t * 0.7 + i);
+    const tr = k === "ring" ? `rotateX(${rx}deg) rotateY(${ry}deg)` : k === "cube" ? `rotateX(${t * 30 + i * 20}deg) rotateY(${t * 45 + i * 30}deg)` : "";
+    const faces = k === "cube" ? ["rotateY(0deg)", "rotateY(90deg)", "rotateY(180deg)", "rotateY(-90deg)", "rotateX(90deg)", "rotateX(-90deg)"].map((f) => `<i style="transform:${f} translateZ(${size / 2}px)"></i>`).join("") : "";
+    return `<div class="shape ${k}" style="left:${x - size / 2}px;top:${y - size / 2 + bob}px;width:${size}px;height:${size}px;transform:${tr};z-index:12">${faces}</div>`;
+  }).join("");
+}
+// Callouts: 3D glass chips that pop in front of the screen at the right moment.
+function callout(t, a, b, x, y, icon, text, sub, gold = false) {
+  const k = ramp(t, a, a + 0.45) * (1 - ramp(t, b - 0.35, b));
+  if (k <= 0) return "";
+  const pop = 0.6 + 0.4 * ease(Math.min(1, k * 1.4)) + 0.05 * Math.sin(Math.min(1, k) * Math.PI);
+  return `<div class="callout" style="left:${x}px;top:${y + (1 - k) * 30}px;opacity:${k};transform:perspective(800px) translateZ(${(1 - k) * -200}px) rotateX(${(1 - k) * 25}deg) scale(${pop});z-index:14"><span class="ci"${gold ? ' style="background:#EE9B1E;color:#0E2F3C"' : ""}>${icon}</span><span>${text}${sub ? `<small>${sub}</small>` : ""}</span></div>`;
+}
+const STORY = {
+  meeting: { kick: "Meetings", title: "Live captions,<br>translated as you speak", set: "a", calls: (t) => callout(t, 3.7, 6.6, 860, 92, "✓", "Hindi detected", "Translated to English instantly") + callout(t, 7, 9.6, 70, 120, "🔒", "End-to-end encrypted", "Audio and video, browser to browser") },
+  notes: { kick: "Notes.AI", title: "Every language,<br>every line, on record", set: "b", calls: (t) => callout(t, 2.6, 5.5, 520, 470, "✦", "Language auto-detected", "Hindi · Tamil · English, line by line", true) + callout(t, 6.6, 9.6, 60, 110, "#", "SHA-256 fingerprinted", "Logged in Kayak's audit trail") },
+  workspace: { kick: "Workspace", title: "Chat, files and tasks<br>in one secure place", set: "a", calls: (t) => callout(t, 4.6, 7.4, 820, 170, "✓", "Moved to Done", "Rohan · GST reconciliation") + callout(t, 8.4, 9.8, 470, 540, "▶", "Meet now", "3 people joining", true) },
+  languages: { kick: "Captions", title: "Captions in<br>your own language", set: "b", calls: (t) => callout(t, 1, 4, 760, 520, "🌐", "100+ caption languages", "Chosen by each viewer") + callout(t, 6.8, 9.6, 80, 110, "✓", "Tamil", "Same words, your language", true) },
+  plan: { kick: "To-Do & Planner", title: "Plan it, track it,<br>strike it off", set: "b", calls: (t) => callout(t, 1.4, 4.2, 860, 110, "✓", "Deliverable done", "Struck off for the whole team") + callout(t, 5.2, 9.6, 70, 520, "📅", "Synced with Outlook & Google", "Two-way, automatically", true) },
+};
+// The camera: starts angled and further away, glides to face the screen, keeps a slow drift.
+function camera(t, dur, i) {
+  const k = ease(Math.min(1, t / 2.6));
+  const side = i % 2 ? 1 : -1;
+  const ry = side * (24 * (1 - k) + 7 + 2 * Math.sin(t * 0.5));
+  const rx = 10 * (1 - k) + 5 + 1.5 * Math.cos(t * 0.4);
+  const sc = 0.62 + 0.18 * k + 0.012 * Math.sin(t * 0.6);
+  const tx = side * (60 * (1 - k)) + 40 * side;
+  const ty = -18 + 30 * (1 - k);
+  return `transform:translate(${tx}px,${ty}px) rotateY(${ry}deg) rotateX(${rx}deg) scale(${sc})`;
+}
 // Seamless loops: a short fade to and from the background at each end.
 window.seek = (name, t) => {
-  const s = SCENES[name];
   const el = document.getElementById("stage");
+  if (name === "reveal") { el.innerHTML = reveal(t) + `<div class="wm"><img src="${MARK}">✦ Made with Kayak AI</div>`; return; }
+  const s = SCENES[name], st = STORY[name], idx = Object.keys(SCENES).indexOf(name);
   const f = Math.max(1 - ramp(t, 0, 0.35), ramp(t, s.dur - 0.35, s.dur));
-  const light = name === "workspace" || name === "plan";
-  el.innerHTML = `<div class="scene" style="display:block">${s.render(t)}</div><div class="wm${light ? " light" : ""}"><img src="${light ? MARK : MARK}">✦ Made with Kayak AI</div><div class="fade" style="opacity:${f}"></div>`;
+  const tk = ramp(t, 0.3, 0.9) * (1 - ramp(t, 3.4, 4.0));
+  el.innerHTML = `${backdrop(t)}<div class="world"><div class="cam" style="${camera(t, s.dur, idx)}"><div class="screen"><div class="scene">${s.render(t)}</div><div class="edge" style="background-position:${(t * 140) % 1400 - 400}px 0"></div></div></div></div>
+    ${shapes(t, st.set)}${st.calls(t)}
+    <div class="title" style="opacity:${tk};transform:translateY(${(1 - tk) * 20}px)"><div class="k">${st.kick}</div><h1>${st.title}</h1></div>
+    <div class="wm"><img src="${MARK}">✦ Made with Kayak AI</div><div class="fade" style="opacity:${f}"></div>`;
 };
-window.SCENES = Object.fromEntries(Object.entries(SCENES).map(([k, v]) => [k, v.dur]));
+
+// ------------------------------------------------------------------ the logo reveal (12 s)
+// Real people (Pexels photos) on a 3D carousel of glass frames; they gather into the Meet by Kayak mark,
+// the wordmark is revealed behind a light sweep, then the line.
+const REAL = ["10031263", "12319501", "3184611", "7580640", "7581113", "7693249", "8837758", "13339844", "7581116"];
+function reveal(t) {
+  const N = REAL.length;
+  const gather = ease(ramp(t, 3.6, 5.6));            // portraits fly in to the centre
+  const spin = t * 34 + 160 * gather;                  // carousel rotation (degrees)
+  const R = 520 * (1 - gather) + 40;                    // carousel radius
+  const tiles = REAL.map((id, i) => {
+    const a = (i / N) * 360 + spin;
+    const op = ramp(t, 0.2 + i * 0.12, 0.8 + i * 0.12) * (1 - ramp(t, 5.0, 5.8));
+    const kb = 1.08 + 0.05 * Math.sin(t * 0.6 + i);
+    return `<div style="position:absolute;left:${640 - 105}px;top:${360 - 140}px;width:210px;height:280px;border-radius:24px;overflow:hidden;transform:rotateY(${a}deg) translateZ(${R}px) scale(${1 - 0.6 * gather});opacity:${op};box-shadow:0 30px 60px -10px #000c,0 0 0 1.5px #ffffff4d;backface-visibility:hidden">
+      <div style="position:absolute;inset:0;background:url(people/r-${id}.jpg) center/cover;transform:scale(${kb})"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,#06171Ecc)"></div>
+      <div style="position:absolute;left:12px;bottom:12px;display:flex;gap:6px;align-items:center;font:700 12px Archivo;color:#fff"><i style="width:8px;height:8px;border-radius:50%;background:${i % 3 ? "#5DB2AB" : "#EE9B1E"};display:block"></i>${["Mumbai", "Singapore", "London", "Dubai", "Delhi", "Bengaluru", "Pune", "Chennai", "New York"][i]}</div></div>`;
+  }).join("");
+  const flash = Math.max(0, 1 - Math.abs(t - 5.6) / 0.35);
+  const mark = ease(ramp(t, 5.4, 6.4));
+  const word = ease(ramp(t, 6.6, 7.6));
+  const line = ramp(t, 7.8, 8.6);
+  const ringR = 150 + 70 * ease(ramp(t, 5.4, 6.8));
+  const sweep = ramp(t, 7.0, 8.2);
+  const end = ramp(t, 11.6, 12);
+  const start = 1 - ramp(t, 0, 0.4);
+  const tag = "Every conversation. One secure place.";
+  return `${backdrop(t)}
+    <div class="world" style="perspective:1200px;perspective-origin:50% 40%"><div style="position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(-8deg) translateZ(${-200 + 120 * gather}px)">${tiles}</div></div>
+    <svg class="ptc" viewBox="0 0 1280 720" style="z-index:5"><circle cx="640" cy="300" r="${ringR}" fill="none" stroke="#7FE3DF" stroke-width="2" stroke-dasharray="${2 * Math.PI * ringR}" stroke-dashoffset="${2 * Math.PI * ringR * (1 - ease(ramp(t, 5.3, 6.6)))}" opacity=".8"/><circle cx="640" cy="300" r="${ringR + 26}" fill="none" stroke="#EE9B1E" stroke-width="1.2" stroke-dasharray="4 10" transform="rotate(${t * 20} 640 300)" opacity="${0.7 * ramp(t, 5.8, 6.6)}"/></svg>
+    <div style="position:absolute;left:640px;top:300px;width:240px;height:240px;margin:-120px 0 0 -120px;z-index:6;opacity:${mark};transform:perspective(900px) rotateY(${(1 - mark) * 160}deg) scale(${0.4 + 0.6 * mark});filter:drop-shadow(0 20px 40px #000a) drop-shadow(0 0 ${30 * mark}px #17807E)"><img src="${MARK}" style="width:100%;height:100%"></div>
+    <div style="position:absolute;left:0;right:0;top:470px;display:flex;justify-content:center;z-index:6"><div style="position:relative;overflow:hidden;clip-path:inset(0 ${100 - word * 100}% 0 0)"><img src="${LOGO}" style="height:82px;display:block"><div style="position:absolute;top:0;bottom:0;width:120px;left:${-150 + sweep * 900}px;background:linear-gradient(90deg,transparent,#ffffffb0,transparent);mix-blend-mode:screen;transform:skewX(-20deg)"></div></div></div>
+    <div style="position:absolute;left:0;right:0;top:580px;text-align:center;z-index:6;font:600 26px Archivo;color:#DDEDEB;letter-spacing:.01em">${[...tag].map((ch, i) => `<span style="display:inline-block;white-space:pre;opacity:${ramp(t, 7.8 + i * 0.025, 8.2 + i * 0.025)};transform:translateY(${(1 - ramp(t, 7.8 + i * 0.025, 8.2 + i * 0.025)) * 16}px)">${ch}</span>`).join("")}</div>
+    <div style="position:absolute;left:0;right:0;top:630px;text-align:center;z-index:6;font:700 13px Archivo;letter-spacing:.24em;text-transform:uppercase;color:#EE9B1E;opacity:${ramp(t, 8.8, 9.4)}">Kayak Strategic Advisors</div>
+    <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,#ffffff 0%,#7FE3DF88 25%,transparent 60%);opacity:${flash};z-index:7;mix-blend-mode:screen"></div>
+    <div class="fade" style="opacity:${Math.max(start, end)};z-index:30"></div>`;
+}
+window.SCENES = { ...Object.fromEntries(Object.entries(SCENES).map(([k, v]) => [k, v.dur])), reveal: 12 };
 </script></body></html>

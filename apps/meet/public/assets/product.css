@@ -318,3 +318,9 @@ html{scroll-behavior:smooth;scroll-padding-top:72px}
 .kx-shot img{display:block;width:88%;height:auto;border-radius:18px;box-shadow:0 30px 70px -20px #000a;border:1px solid #ffffff22}
 .kx-shot img+img{position:absolute;right:0;bottom:0;width:62%;transform:rotate(2deg);transition:transform .5s cubic-bezier(.3,1.4,.6,1)}
 .kx-shot:hover img+img{transform:rotate(0) translateY(-6px)}
+
+/* brand film */
+.film{background:#030B0F;padding:clamp(28px,5vw,64px) 0}
+.film-frame{position:relative;border-radius:28px;overflow:hidden;box-shadow:0 50px 120px -30px #000,0 0 0 1px #ffffff1f,0 0 120px -40px #17807E}
+.film-frame video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#030B0F}
+.film .hs-note{text-align:center;color:#7F9AA2;margin-top:12px}

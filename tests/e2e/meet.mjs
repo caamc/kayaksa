@@ -30,6 +30,7 @@ const playing = async (p) => p.evaluate(() => [...document.querySelectorAll(".ti
 await h.waitForFunction(() => [...document.querySelectorAll(".tile:not(.me) video")].some((v) => v.videoWidth > 0), null, { timeout: 20000 }).catch(() => {});
 
 ok(await playing(h), "host receives the guest's video directly");
+await g.waitForFunction(() => [...document.querySelectorAll(".tile:not(.me) video")].some((v) => v.videoWidth > 0), null, { timeout: 20000 }).catch(() => {});
 ok(await playing(g), "guest receives the host's video directly");
 const enc = await h.evaluate(async () => { const out = []; return out; });
 // chat
