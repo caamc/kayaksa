@@ -119,3 +119,6 @@ body.mini .stage{padding:4px!important}
 [data-desktop] .top{-webkit-app-region:drag}
 [data-desktop] .top button,[data-desktop] .top a{-webkit-app-region:no-drag}
 [data-desktop=win32] .top{padding-right:150px}
+/* Enable-sound recovery bar (shown only if the browser blocks audio autoplay) */
+.soundbar{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:60;display:inline-flex;align-items:center;gap:8px;border:0;background:var(--km-saffron);color:#0E2F3C;font:700 .95rem var(--sans);padding:10px 18px;border-radius:999px;cursor:pointer;box-shadow:0 8px 30px #0006}
+.soundbar .ico{width:18px;height:18px}

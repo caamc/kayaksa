@@ -136,7 +136,10 @@ function meter(stream, el) {
 async function prejoin() {
   S.local = await getMedia();
   const devs = await navigator.mediaDevices.enumerateDevices().catch(() => []);
-  const opt = (kind, cur) => devs.filter((d) => d.kind === kind).map((d, i) => `<option value="${esc(d.deviceId)}"${d.deviceId === cur ? " selected" : ""}>${esc(d.label || `${kind === "audioinput" ? "Microphone" : "Camera"} ${i + 1}`)}</option>`).join("");
+  const label = { audioinput: "Microphone", videoinput: "Camera", audiooutput: "Speaker" };
+  const opt = (kind, cur) => devs.filter((d) => d.kind === kind).map((d, i) => `<option value="${esc(d.deviceId)}"${d.deviceId === cur ? " selected" : ""}>${esc(d.label || `${label[kind]} ${i + 1}`)}</option>`).join("");
+  const outs = devs.filter((d) => d.kind === "audiooutput");
+  const canPickSpeaker = outs.length > 0 && "setSinkId" in HTMLMediaElement.prototype;
   const isClient = S.info.kind === "client";
   app.innerHTML = `
   <div class="top"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"><span class="title"></span><span class="pill e2e">${ic("lock")} End-to-end encrypted</span></div>
@@ -148,7 +151,7 @@ async function prejoin() {
       <h1>${esc(S.info.title)}</h1>
       <p class="km-muted">Hosted by ${esc(S.info.host)}</p>
       ${S.info.name ? `<p>Joining as <b>${esc(S.info.name)}</b></p>` : `<div class="field"><label for="nm">Your name</label><input class="input" id="nm" maxlength="60" autocomplete="name" value="${esc(S.name)}" placeholder="As you'd like others to see it"></div>`}
-      <div class="devs"><div class="field"><label for="dmic">Microphone</label><select class="input" id="dmic">${opt("audioinput", S.devices.mic)}</select></div><div class="field"><label for="dcam">Camera</label><select class="input" id="dcam">${opt("videoinput", S.devices.cam)}</select></div></div>
+      <div class="devs"><div class="field"><label for="dmic">Microphone</label><select class="input" id="dmic">${opt("audioinput", S.devices.mic)}</select></div><div class="field"><label for="dcam">Camera</label><select class="input" id="dcam">${opt("videoinput", S.devices.cam)}</select></div>${canPickSpeaker ? `<div class="field"><label for="dspk">Speaker</label><div style="display:flex;gap:8px"><select class="input" id="dspk" style="flex:1">${opt("audiooutput", S.sinkId)}</select><button class="kb" type="button" id="dtest" title="Play a test sound">Test</button></div></div>` : ""}</div>
       <button class="kb primary" id="join">${S.info.role === "guest" && S.info.lobby ? "Ask to join" : "Join now"}</button>
       <p class="note">Audio and video go directly between participants' browsers and are encrypted end to end. If the host turns on captions, speech is transcribed on Kayak's own servers. Everyone sees a notice when a meeting is recorded. <a href="https://www.kayaksa.com/legal" target="_blank" rel="noopener">Privacy</a></p>
     </div>
@@ -173,6 +176,18 @@ async function prejoin() {
     S.local = await getMedia(); v.srcObject = S.local; meter(S.local, $("#pm")); sync();
   };
   $("#dmic").onchange = swap; $("#dcam").onchange = swap;
+  if (canPickSpeaker) {
+    $("#dspk").onchange = () => setSpeaker($("#dspk").value);
+    $("#dtest").onclick = async () => {
+      // A short tone through the chosen speaker, so people can check they'll hear the meeting.
+      try { const ac = new AudioContext(); const o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 440; g.gain.value = 0.0001; o.connect(g); const dst = ac.createMediaStreamDestination(); g.connect(dst); g.connect(ac.destination);
+        const el = new Audio(); el.srcObject = dst.stream; if (el.setSinkId && $("#dspk").value) await el.setSinkId($("#dspk").value).catch(() => {}); el.play().catch(() => {});
+        o.start(); g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.5); o.stop(ac.currentTime + 0.5);
+        toast("Playing a test sound through your speaker.");
+        setTimeout(() => { ac.close(); el.srcObject = null; }, 800);
+      } catch { toast("Couldn't play a test sound."); }
+    };
+  }
   $("#join").onclick = async () => {
     const n = S.info.name || $("#nm")?.value.trim();
     if (!n) { $("#nm").focus(); return toast("Add your name so others know who you are."); }
@@ -251,6 +266,9 @@ function addPeer(info) {
   pc.ontrack = ({ track, streams }) => {
     const st = streams[0] || new MediaStream([track]);
     if (x.screenId && st.id === x.screenId) x.streams.screen = st; else if (!x.streams.cam || x.streams.cam.id === st.id) x.streams.cam = st; else x.streams.screen = st;
+    // Audio plays through a dedicated, always-present element, never the video tile, so it keeps
+    // playing through every layout change (screen share, speaker view, camera off, phones).
+    if (track.kind === "audio") playAudio(info.id, st);
     track.onended = track.onmute = () => render();
     track.onunmute = () => render();
     render();
@@ -290,7 +308,37 @@ function dropPeer(id) {
   if (!x) return;
   x.pc.close();
   S.peers.delete(id);
+  const a = S.audio?.get(id); if (a) { a.srcObject = null; a.remove(); S.audio.delete(id); }
   tuneBitrate();
+}
+
+// ---------------------------------------------------------------- audio sink
+// One hidden <audio> per remote participant, kept in the DOM for the whole call so their sound is
+// never interrupted by what the video grid happens to be showing. If the browser blocks autoplay,
+// a single tap on the "Enable sound" bar starts every one of them.
+S.audio = new Map();
+try { S.sinkId = localStorage.getItem("km:spk") || ""; } catch {}
+let audioBlocked = false;
+function audioSink() { let s = $("#sink"); if (!s) { s = document.createElement("div"); s.id = "sink"; s.style.display = "none"; document.body.append(s); } return s; }
+function playAudio(id, stream) {
+  let a = S.audio.get(id);
+  if (!a) { a = document.createElement("audio"); a.autoplay = true; a.playsInline = true; audioSink().append(a); S.audio.set(id, a); }
+  if (a.srcObject !== stream) a.srcObject = stream;
+  if (S.sinkId && a.setSinkId) a.setSinkId(S.sinkId).catch(() => {});
+  a.play?.().catch(() => { if (!audioBlocked) { audioBlocked = true; soundBar(); } });
+}
+function soundBar() {
+  if ($("#soundbar")) return;
+  const b = document.createElement("button");
+  b.id = "soundbar"; b.className = "soundbar";
+  b.innerHTML = `${ic("mic")} Tap to enable sound`;
+  b.onclick = () => { audioBlocked = false; for (const a of S.audio.values()) a.play?.().catch(() => {}); b.remove(); };
+  document.body.append(b);
+}
+// Let people choose which speaker/headphones the meeting plays through, where the browser allows it.
+async function setSpeaker(id) {
+  S.sinkId = id; try { localStorage.setItem("km:spk", id); } catch {}
+  for (const a of S.audio.values()) if (a.setSinkId) await a.setSinkId(id).catch(() => {});
 }
 
 // Fewer people, more quality: share the uplink across everyone we send to.
@@ -454,7 +502,9 @@ function tileFor(key, { name, stream, me, screen, mic, cam, hand, quality }) {
     t = document.createElement("div");
     t.className = "tile" + (me ? " me" : "") + (screen ? " screen" : "");
     t.dataset.k = key;
-    t.innerHTML = `<video autoplay playsinline ${me ? "muted" : ""}></video><div class="av"><span></span></div><div class="name"><b></b></div><div class="flags"></div>`;
+    // Always muted: sound comes from the dedicated audio sink, never the tile, so audio survives
+    // every layout change. (The local tile would echo anyway.)
+    t.innerHTML = `<video autoplay playsinline muted></video><div class="av"><span></span></div><div class="name"><b></b></div><div class="flags"></div>`;
   }
   const v = t.querySelector("video");
   if (stream && v.srcObject !== stream) { v.srcObject = stream; v.play?.().catch(() => {}); }
