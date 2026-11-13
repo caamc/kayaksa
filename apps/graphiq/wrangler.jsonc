@@ -1,0 +1,22 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "kayaksa-graphiq",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [{ "pattern": "graphiq.kayaksa.com", "custom_domain": true }],
+  // public/_shared and public/vendor are built by scripts/build-graphiq.mjs (brand files, the
+  // bundled analysis engine and the browser libraries); they are not committed.
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none", "not_found_handling": "none" },
+  // The placeholder id is replaced by the deploy workflow with the real id of the kayak-graphiq database.
+  "d1_databases": [{ "binding": "DB", "database_name": "kayak-graphiq", "database_id": "00000000-0000-0000-0000-000000000006", "migrations_dir": "migrations" }],
+  // Evidence files, encrypted with AES-256-GCM before they are written (key: GRAPHIQ_DATA_KEY).
+  "r2_buckets": [{ "binding": "EVIDENCE", "bucket_name": "kayak-graphiq-evidence" }],
+  "ai": { "binding": "AI" },
+  "triggers": { "crons": ["41 1 * * *"] },
+  "observability": { "enabled": true },
+  "vars": { "INTERNAL_URL": "https://internal.kayaksa.com" }
+  // Secrets (set by the deploy workflow, never in this file): GRAPHIQ_SIGNING_KEY (shared with
+  // internal for single sign-on) and GRAPHIQ_DATA_KEY (evidence encryption; generated once).
+}
