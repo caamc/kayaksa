@@ -44,6 +44,12 @@ const DEFAULTS = {
   updateChannel: "latest",         // latest | beta
   // Privacy
   spellcheck: true,
+  // Downloads
+  askDownload: false,
+  // Accounts: extra Meet accounts, each in its own separate storage on this computer
+  accounts: [],
+  activeAccount: "main",
+  mainLabel: "Main account",
 };
 
 const POLICY_KEYS = new Set(Object.keys(DEFAULTS).concat(["server", "allowSignOut", "disableUpdates"]));

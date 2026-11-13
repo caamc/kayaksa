@@ -17,6 +17,7 @@ import { needMember, employeeOnly, issueInvite, resetClient, now, type Member } 
 import type { Env } from "./env";
 import { pushMeeting, removeMeeting, syncMember } from "./calendar";
 import { read as readUsage, view as usageView } from "./usage";
+import { addActivity, messageActivity, ringing, statusOf } from "./people";
 
 type V = { Bindings: Env; Variables: { member: Member } };
 export const ws = new Hono<V>();
@@ -80,11 +81,15 @@ ws.get("/boot", async (c) => {
 
 async function visiblePeople(env: Env, m: Member) {
   const co = await coMemberIds(env, m.id);
-  const { results } = await env.DB.prepare("SELECT id, name, email, org, kind, status, last_seen FROM members WHERE status != 'disabled' ORDER BY name").all<any>();
-  return results.filter((p) => p.id === m.id || co.has(p.id) || (isEmp(m) && p.kind === "employee")).map((p) => ({
-    ...p, email: isEmp(m) || p.kind === "employee" || p.id === m.id ? p.email : undefined,
-    online: p.last_seen && Date.now() - Date.parse(p.last_seen) < 5 * 60_000,
-  }));
+  const { results } = await env.DB.prepare("SELECT id, name, email, org, kind, status, last_seen, title, avatar_key, avatar_v, presence, presence_until, status_text, status_emoji, status_until, ooo_until, ooo_note FROM members WHERE status != 'disabled' ORDER BY name").all<any>();
+  return results.filter((p) => p.id === m.id || co.has(p.id) || (isEmp(m) && p.kind === "employee")).map((p) => {
+    const s = statusOf(p);
+    return {
+      id: p.id, name: p.name, org: p.org, kind: p.kind, status: p.status, last_seen: p.last_seen,
+      email: isEmp(m) || p.kind === "employee" || p.id === m.id ? p.email : undefined,
+      online: s.presence !== "offline", ...s,
+    };
+  });
 }
 
 ws.get("/poll", async (c) => {
@@ -100,7 +105,9 @@ ws.get("/poll", async (c) => {
     WHERE x.edited_at > ? AND x.id <= ? AND x.channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?) LIMIT 100`).bind(at, since, m.id).all<any>()).results;
   const tasks = await c.env.DB.prepare("SELECT COUNT(*) n FROM tasks WHERE updated_at > ? AND channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?)").bind(at, m.id).first<any>();
   const chans = await c.env.DB.prepare("SELECT COUNT(*) n FROM channel_members WHERE member_id = ? AND added_at > ?").bind(m.id, at).first<any>();
-  return c.json({ messages: results.map(pub), edits: edits.map(pub), tasksChanged: (tasks?.n || 0) > 0, channelsChanged: (chans?.n || 0) > 0, since: results.length ? results[results.length - 1].id : since, at: now() });
+  const act = await c.env.DB.prepare("SELECT COUNT(*) n, MAX(id) top FROM activity WHERE member_id = ? AND read = 0").bind(m.id).first<any>();
+  const ring = await ringing(c.env, m.id);
+  return c.json({ activity: { unread: act?.n || 0, top: act?.top || 0 }, ring, messages: results.map(pub), edits: edits.map(pub), tasksChanged: (tasks?.n || 0) > 0, channelsChanged: (chans?.n || 0) > 0, since: results.length ? results[results.length - 1].id : since, at: now() });
 });
 
 const pub = (x: any) => ({ id: x.id, channel_id: x.channel_id, member_id: x.member_id, author: x.member_id ? x.author || "Former participant" : null, parent_id: x.parent_id, body: x.deleted ? "" : x.body, kind: x.kind, meta: x.meta ? JSON.parse(x.meta) : null, reactions: x.reactions ? JSON.parse(x.reactions) : {}, created_at: x.created_at, edited_at: x.edited_at, deleted: !!x.deleted, replies: x.replies || 0 });
@@ -143,6 +150,8 @@ async function addPeople(c: any, chId: string, by: Member, list: any[]) {
     await c.env.DB.prepare("INSERT OR IGNORE INTO channel_members (channel_id, member_id, role, added_at) VALUES (?,?,?,?)").bind(chId, target.id, "member", now()).run();
     if (target.kind === "client") await c.env.DB.prepare("UPDATE channels SET external = 1 WHERE id = ?").bind(chId).run();
     names.push(target.name);
+    const chRow: any = await c.env.DB.prepare("SELECT name, kind FROM channels WHERE id = ?").bind(chId).first();
+    if (chRow && chRow.kind !== "dm") await addActivity(c.env, [target.id], { kind: "added", actor: by.id, channel: chId, text: `${by.name} added you to ${chRow.kind === "project" ? "the project" : "#"}${chRow.name}` });
   }
   if (names.length) await sysMsg(c.env, chId, `${by.name} added ${names.join(", ")}.`);
   // Email invitations go out only when email is configured; otherwise the inviter copies the link.
@@ -267,6 +276,7 @@ ws.post("/channels/:id/messages", async (c) => {
     if (!p) throw err("That thread no longer exists.", 404);
   }
   const r = await c.env.DB.prepare("INSERT INTO messages (channel_id, member_id, parent_id, body, created_at) VALUES (?,?,?,?,?) RETURNING id").bind(x.ch.id, m.id, parent, body, now()).first<any>();
+  c.executionCtx.waitUntil(messageActivity(c.env, m, x.ch, r.id, body, parent).catch(() => {}));
   await c.env.DB.prepare("UPDATE channel_members SET last_read = ? WHERE channel_id = ? AND member_id = ?").bind(r.id, x.ch.id, m.id).run();
   return c.json({ id: r.id });
 });
@@ -301,7 +311,9 @@ ws.post("/messages/:id/react", async (c) => {
   if (!["👍", "❤️", "😂", "🎉", "👀", "✅", "🙏", "💡"].includes(e)) throw err("Choose one of the reactions.");
   const r = msg.reactions ? JSON.parse(msg.reactions) : {};
   const set = new Set<string>(r[e] || []);
-  set.has(m.id) ? set.delete(m.id) : set.add(m.id);
+  const adding = !set.has(m.id);
+  adding ? set.add(m.id) : set.delete(m.id);
+  if (adding && msg.member_id && msg.member_id !== m.id) await addActivity(c.env, [msg.member_id], { kind: "reaction", actor: m.id, channel: msg.channel_id, ref: msg.id, text: `${m.name} reacted ${e} to your message: ${String(msg.body).slice(0, 100)}` });
   if (set.size) r[e] = [...set]; else delete r[e];
   await c.env.DB.prepare("UPDATE messages SET reactions = ?, edited_at = COALESCE(edited_at, ?) WHERE id = ?").bind(JSON.stringify(r), now(), msg.id).run();
   return c.json({ reactions: r });
@@ -387,6 +399,7 @@ ws.post("/channels/:id/tasks", async (c) => {
   await c.env.DB.prepare("INSERT INTO tasks (id, channel_id, title, detail, status, priority, assignee, due, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
     .bind(id, x.ch.id, title, str(b.detail, 4000) || null, STATUSES.includes(b.status) ? b.status : "todo", PRIORITIES.includes(b.priority) ? b.priority : "normal", assignee, /^\d{4}-\d{2}-\d{2}$/.test(b.due || "") ? b.due : null, m.id, now(), now()).run();
   await sysMsg(c.env, x.ch.id, `${m.name} added a task: ${title}`, "task", { task: id });
+  if (assignee) await addActivity(c.env, [assignee], { kind: "task", actor: m.id, channel: x.ch.id, ref: id, text: `${m.name} assigned you a task: ${title}` });
   await notify(c.env, x.ch.id, "task", `New task in ${x.ch.name}: ${title}`);
   return c.json({ id });
 });
@@ -408,6 +421,7 @@ ws.patch("/tasks/:id", async (c) => {
     b.title !== undefined ? str(b.title, 200) || t.title : t.title, b.detail !== undefined ? str(b.detail, 4000) || null : t.detail, status,
     PRIORITIES.includes(b.priority) ? b.priority : t.priority, assignee, b.due !== undefined ? (/^\d{4}-\d{2}-\d{2}$/.test(b.due || "") ? b.due : null) : t.due,
     Number.isFinite(b.sort) ? b.sort : t.sort, now(), status === "done" ? t.done_at || now() : null, t.id).run();
+  if (assignee && assignee !== t.assignee) await addActivity(c.env, [assignee], { kind: "task", actor: m.id, channel: t.channel_id, ref: t.id, text: `${m.name} assigned you a task: ${t.title}` });
   if (status === "done" && t.status !== "done") { await sysMsg(c.env, t.channel_id, `${m.name} completed: ${t.title}`, "task", { task: t.id }); await notify(c.env, t.channel_id, "task", `Done in ${x.ch.name}: ${t.title}`); }
   return c.json({ ok: true });
 });
@@ -452,6 +466,10 @@ ws.post("/meetings", async (c) => {
     .bind(id, title, kind, m.email, m.name, starts ? starts.toISOString() : null, Math.min(480, Math.max(15, Number(b.duration) || 30)), kind === "client" || kind === "webinar" || kind === "townhall" || b.lobby ? 1 : 0, JSON.stringify(invitees), m.id, now(), chId).run();
   if (chId) await sysMsg(c.env, chId, starts ? `${m.name} scheduled “${title}” for ${starts.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST.` : `${m.name} started a meeting.`, "meeting", { meeting: id, title, startsAt: starts?.toISOString() || null });
   await auditFull(c as any, c.env.DB, m.id, "meet.ws.meeting.created", { id, kind, channel: chId, invitees: invitees.length });
+  if (invitees.length) {
+    const { results: inv } = await c.env.DB.prepare(`SELECT id FROM members WHERE email IN (${invitees.map(() => "?").join(",")})`).bind(...invitees).all<any>();
+    await addActivity(c.env, inv.map((r: any) => r.id), { kind: "meeting", actor: m.id, channel: chId, ref: id, text: `${m.name} invited you to “${title}”${starts ? ` on ${starts.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST` : ""}` });
+  }
   if (starts) c.executionCtx.waitUntil(pushMeeting(c.env, id).catch(() => {})); // into connected Outlook / Google calendars
   return c.json({ id, url: `/${id}` });
 });

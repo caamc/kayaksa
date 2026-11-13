@@ -3,6 +3,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const D = window.kayakDesktop || null; // present inside the Windows / Mac app
+import { install } from "./ws-plus.js";
 
 const P = {
   chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
@@ -45,7 +46,7 @@ function toast(t, ms = 4000) {
 const person = (id) => S.people.find((p) => p.id === id);
 const initials = (n) => String(n || "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("") || "?";
 const color = (id) => COLORS[[...String(id || "")].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
-const av = (id, name, cls = "") => { const p = person(id); return `<span class="av ${cls}" style="background:${color(id)}" aria-hidden="true">${esc(initials(name || p?.name))}${p?.online && p.id !== S.me.id ? '<i class="on"></i>' : ""}</span>`; };
+const av = (id, name, cls = "") => { const p = person(id); return `<span class="av ${cls}${p?.avatar ? " pic" : ""}" style="background:${color(id)}" aria-hidden="true">${p?.avatar ? K.avatarImg(p) : esc(initials(name || p?.name))}${p && (p.id !== S.me.id || cls.includes("me")) ? K.presenceDot(p) : ""}</span>`; };
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 const fmtDay = (iso) => { const d = new Date(iso), t = new Date(); const y = new Date(Date.now() - 864e5); return d.toDateString() === t.toDateString() ? "Today" : d.toDateString() === y.toDateString() ? "Yesterday" : d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" }); };
 const fmtSize = (n) => (n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
@@ -96,6 +97,17 @@ function dialog(html, onMount) {
 }
 async function copy(text, label = "Copied") { try { await navigator.clipboard.writeText(text); toast(label); } catch { prompt("Copy this:", text); } }
 
+// ------------------------------------------------------------------ Activity, Calls, Status, Settings (ws-plus.js)
+const K = {
+  $, $$, esc, ic, P, api, post, toast, dialog, menu, S, D, LANGS, av, person, fmtDay, fmtSize, isEmp, copy,
+  go: (v) => { if (v === "chat") { S.view = "chat"; shell(); } else go(v); }, openChannel, openThread: (id) => openThread(id), dmWith,
+  calendarDialog, pickLang, eraseMe,
+  updateRail: () => { const b = $(".rail [data-v=activity]"); if (!b) return; b.querySelector(".dot")?.remove(); if (S.act?.unread) b.insertAdjacentHTML("beforeend", `<span class="dot">${S.act.unread > 99 ? "99+" : S.act.unread}</span>`); },
+  signOut: async () => { await fetch("/api/auth/logout", { method: "POST" }); location.href = "/login"; },
+  refreshPeople: async () => { try { const r = await api("/people"); S.people = r.people; renderSide(); const mb = $("#meBtn"); if (mb) mb.innerHTML = `${av(S.me.id, S.me.name, "sm me")}<span>You</span>`; } catch {} },
+};
+const X = install(K);
+
 // ------------------------------------------------------------------ boot
 boot();
 async function boot() {
@@ -104,29 +116,35 @@ async function boot() {
     Object.assign(S, { me: b.me, channels: b.channels, open: b.open, people: b.people, since: b.since, at: b.at, ai: b.ai, mail: b.mail, todoDue: b.todoDue || 0 });
   } catch (e) { app.innerHTML = `<div class="ws-loading"><p>${esc(e.message)}</p><a class="btn" href="/login">Sign in again</a></div>`; return; }
   if (D) { try { S.prefs = (await D.prefs()) || {}; } catch {} D.onCommand((cmd, arg) => { if (cmd === "settings") S.prefs = arg || S.prefs; if (cmd === "toast") toast(arg); }); }
+  await K.loadPrefs();
+  S.me.presence = S.people.find((p) => p.id === S.me.id)?.presence === "offline" ? "offline" : undefined;
   shell();
   route();
   addEventListener("hashchange", route);
-  poll();
+  poll(true);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(true); });
 }
 function route() {
   const h = location.hash.slice(1);
   if (h === "new") { history.replaceState(null, "", "#meetings"); go("meetings"); return newMeeting(); }
   if (h === "join") { history.replaceState(null, "", "#meetings"); go("meetings"); return joinCode(); }
-  if (["meetings","tasks","todo","planner"].includes(h) || (h === "kayakers" && isEmp())) return go(h);
+  if (["meetings","tasks","todo","planner","activity","calls"].includes(h) || (h === "kayakers" && isEmp())) return go(h);
+  if (h === "settings" || h.startsWith("settings/")) { S.setTab = h.split("/")[1] || "general"; return go("settings"); }
+  if (h === "studio") { location.href = "/studio"; return; }
   if (h.startsWith("calendar")) {
     const msg = { "calendar-connected": "Your calendar is connected. Meet meetings now appear in it, and its events in Planner.", "calendar-failed": "The calendar couldn't be connected. Try again, or ask Kayak IT.", "calendar-cancelled": "Calendar connection cancelled.", "calendar-unavailable": "Calendar sync hasn't been switched on yet by Kayak IT." }[h];
     history.replaceState(null, "", "#planner"); go("planner"); if (msg) toast(msg); if (h === "calendar" || h === "calendar-connected") calendarDialog(); return;
   }
   const m = h.match(/^c\/([a-z0-9]+)(?:\/(tasks|files))?$/);
   if (m) return openChannel(m[1], m[2] || "chat");
+  const start = S.xp?.startView;
+  if (!h && start && start !== "chat") return go(start);
   const first = S.channels.find((c) => c.kind !== "dm") || S.channels[0];
   if (first && innerWidth > 760) openChannel(first.id); else go("chat");
 }
 function go(view) {
   S.view = view; S.panel = null; S.thread = null;
-  if (view !== "chat") { S.cur = null; if (location.hash !== "#" + view) history.replaceState(null, "", "#" + view); }
+  if (view !== "chat") { S.cur = null; const hh = view === "settings" ? "settings/" + (S.setTab || "general") : view; if (location.hash !== "#" + hh) history.replaceState(null, "", "#" + hh); }
   shell();
 }
 
@@ -136,19 +154,22 @@ function shell() {
   app.innerHTML = `
     <nav class="rail" aria-label="Main">
       <img class="brand" src="/_shared/logos/MeetByKayak_Mark_Reversed.svg" alt="Meet by Kayak">
+      <button data-v="activity" ${S.view === "activity" ? 'aria-current="page"' : ""}>${ic("activity")}Activity${S.act?.unread ? `<span class="dot">${S.act.unread > 99 ? "99+" : S.act.unread}</span>` : ""}</button>
       <button data-v="chat" ${S.view === "chat" ? 'aria-current="page"' : ""}>${ic("chat")}Chat${S.unreadTotal ? `<span class="dot">${S.unreadTotal > 99 ? "99+" : S.unreadTotal}</span>` : ""}</button>
+      <button data-v="calls" ${S.view === "calls" ? 'aria-current="page"' : ""}>${ic("phone")}Calls</button>
       <button data-v="meetings" ${S.view === "meetings" ? 'aria-current="page"' : ""}>${ic("video")}Meetings</button>
       <button data-v="todo" ${S.view === "todo" ? 'aria-current="page"' : ""}>${ic("tasks")}To-Do${S.todoDue ? `<span class="dot">${S.todoDue > 99 ? "99+" : S.todoDue}</span>` : ""}</button>
       <button data-v="planner" ${S.view === "planner" ? 'aria-current="page"' : ""}>${ic("cal")}Planner</button>
       ${isEmp() ? `<button data-v="kayakers" ${S.view === "kayakers" ? 'aria-current="page"' : ""}>${ic("kayakers")}Kayakers</button>` : ""}
       <span class="sp"></span>
-      <button id="meBtn" aria-label="Profile and settings">${av(S.me.id, S.me.name, "sm")}<span>You</span></button>
+      <button data-v="settings" ${S.view === "settings" ? 'aria-current="page"' : ""} title="Settings (${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}+,)">${ic("gear")}Settings</button>
+      <button id="meBtn" aria-label="Your status, profile and account">${av(S.me.id, S.me.name, "sm me")}<span>You</span></button>
     </nav>
     <aside class="side" id="side"></aside>
     <section class="main" id="main" aria-live="polite"></section>
     <aside class="panel" id="panel" hidden></aside>`;
   $$(".rail [data-v]").forEach((b) => (b.onclick = () => { if (b.dataset.v === "chat") { S.view = "chat"; if (innerWidth <= 760) { S.cur = null; } shell(); if (S.cur) renderMain(); } else go(b.dataset.v); }));
-  $("#meBtn").onclick = (e) => profileMenu(e.currentTarget);
+  $("#meBtn").onclick = (e) => X.meMenu(e.currentTarget);
   renderSide();
   renderMain();
   renderPanel();
@@ -211,6 +232,7 @@ function renderMain() {
   if (S.view === "todo") return renderTodo(main);
   if (S.view === "planner") return renderPlanner(main);
   if (S.view === "kayakers") return renderKayakers(main);
+  if (X.views[S.view]) return X.views[S.view](main);
   const ch = S.cur;
   if (!ch) { main.innerHTML = `<div class="empty"><img src="/_shared/logos/MeetByKayak_Mark_FullColour.svg" width="96" alt=""><h3>Welcome, ${esc(S.me.name.split(" ")[0])}</h3><p>${isEmp() ? "Pick a conversation, or start a channel for a client engagement." : "Pick a conversation to continue working with Kayak."}</p></div>`; return; }
   const members = (ch.member_ids || []).length;
@@ -875,6 +897,7 @@ async function pollOnce() {
   const r = await api(`/poll?since=${S.since}&at=${encodeURIComponent(S.at)}`).catch(() => null);
   if (!r) return;
   S.at = r.at;
+  X.onPoll(r);
   let changedList = false;
   for (const m of r.messages) {
     if (m.id <= S.since && S.msgs.some((x) => x.id === m.id)) continue;
@@ -897,8 +920,9 @@ async function pollOnce() {
 function alertFor(m, ch) {
   const mention = m.body.includes("@" + S.me.name);
   if (ch.kind !== "dm" && !mention) return;
+  if (!K.shouldNotify(mention ? "mention" : "dm") || !S.xp.notifyDesktop) return;
   const title = ch.kind === "dm" ? m.author : `${m.author} in #${ch.name}`;
-  const body = m.kind === "file" ? "Shared a file" : m.body.slice(0, 160);
+  const body = !S.xp.notifyPreview ? "New message" : m.kind === "file" ? "Shared a file" : m.body.slice(0, 160);
   if (D) { D.notify({ title, body, path: `/app#c/${ch.id}` }); D.attention(); return; }
   if ("Notification" in window && Notification.permission === "granted" && document.hidden) { const n = new Notification(title, { body, icon: "/_shared/logos/AppIcon_192.png", tag: "km-" + ch.id }); n.onclick = () => { focus(); openChannel(ch.id); n.close(); }; }
 }

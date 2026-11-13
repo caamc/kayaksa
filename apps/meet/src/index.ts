@@ -13,6 +13,7 @@ export { Room, Space };
 import type { Env } from "./env";
 import { auth, currentMember, needMember } from "./auth";
 import { ws, serveFile, mayJoin } from "./workspace";
+import { people, pruneActivity, castPublic } from "./people";
 import { calApi, calPages } from "./calendar";
 import { gate as usageGate } from "./usage";
 type C = { Bindings: Env; Variables: { claims: MeetClaims; meeting: any } };
@@ -397,6 +398,8 @@ app.get("/sitemap.xml", (c) => c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<
 app.get("/:file{[0-9a-f]+\\.txt}", async (c) => (c.req.param("file") === `${await indexNowKey(new URL(c.req.url).hostname)}.txt` ? c.text(await indexNowKey(new URL(c.req.url).hostname)) : c.notFound()));
 app.route("/", auth);
 app.route("/api/ws/calendar", calApi);
+app.route("/api/wsx", people);
+app.route("/api/cast", castPublic);
 app.route("/calendar", calPages);
 app.route("/api/ws", ws);
 app.get("/files/:fid", needMember, serveFile);
@@ -449,7 +452,13 @@ app.get("/login", async (c) => ((await currentMember(c)) ? c.redirect("/app", 30
 app.get("/join/:token", (c) => page(c, "/login.html"));
 app.get("/join", (c) => page(c, "/login.html"));
 app.get("/app", async (c) => ((await currentMember(c)) ? page(c, "/app.html") : c.redirect("/login", 302)));
+app.get("/studio", async (c) => ((await currentMember(c)) ? page(c, "/studio.html") : c.redirect("/login", 302)));
+app.get("/cast", (c) => page(c, "/cast.html"));
 app.get("/:room", (c) => (ROOM_RE.test(c.req.param("room")) ? page(c, "/room.html") : c.env.ASSETS.fetch(c.req.raw)));
 app.all("*", (c) => c.env.ASSETS.fetch(c.req.raw));
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // Daily clean-up: Activity older than 90 days, and calls left ringing.
+  async scheduled(_e: ScheduledEvent, env: Env, ctx: ExecutionContext) { ctx.waitUntil(pruneActivity(env)); },
+};

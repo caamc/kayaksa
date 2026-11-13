@@ -15,6 +15,8 @@ const path = require("path");
 const { Store } = require("./store");
 
 const store = new Store();
+// Each Meet account lives in its own storage partition, so accounts never see each other's sign-in.
+const PART = () => { const a = store.get("activeAccount"); return a && a !== "main" && (store.get("accounts") || []).some((x) => x.id === a) ? `persist:kayakmeet-${a}` : "persist:kayakmeet"; };
 const ORIGIN = String(store.policy.server || process.env.KAYAK_MEET_URL || "https://meet.kayaksa.com").replace(/\/+$/, "");
 // Kayak staff sign in through Kayak Internal's password + two-factor page. The desktop app is Meet only:
 // it shows those sign-in steps and the hand-back to Meet, and nothing else from Kayak Internal.
@@ -87,7 +89,7 @@ function createWindow() {
     titleBarOverlay: isMac ? false : { color: "#0E2F3C", symbolColor: "#FFFFFF", height: 36 },
     webPreferences: {
       preload: asset("preload.js"), contextIsolation: true, sandbox: true, nodeIntegration: false,
-      webSecurity: true, spellcheck: store.get("spellcheck"), partition: "persist:kayakmeet", backgroundThrottling: false,
+      webSecurity: true, spellcheck: store.get("spellcheck"), partition: PART(), backgroundThrottling: false,
     },
   });
   const wc = win.webContents;
@@ -133,8 +135,30 @@ function showWindow() {
 }
 
 // ----------------------------------------------------------------------------- permissions
+// ----------------------------------------------------------------------------- downloads
+const downloads = [];
+const sendDl = () => win?.webContents.send("km:downloads");
+function trackDownloads(s) {
+  if (s.__kmDl) return; s.__kmDl = true;
+  s.on("will-download", (_e, item, wc) => {
+    if (!store.get("askDownload")) {
+      const dir = app.getPath("downloads"); const base = item.getFilename().replace(/[\\/:*?"<>|]/g, "_"); const ext = path.extname(base), stem = path.basename(base, ext);
+      let target = path.join(dir, base); for (let i = 1; require("fs").existsSync(target) && i < 500; i++) target = path.join(dir, `${stem} (${i})${ext}`);
+      item.setSavePath(target);
+    }
+    const d = { id: String(Date.now()) + Math.random().toString(36).slice(2, 6), name: item.getFilename(), total: item.getTotalBytes(), received: 0, state: "progressing", at: Date.now(), path: "", item };
+    downloads.unshift(d); if (downloads.length > 100) downloads.pop();
+    item.on("updated", (_ev, state) => { d.received = item.getReceivedBytes(); d.total = item.getTotalBytes(); d.path = item.getSavePath(); if (state === "interrupted") d.state = "interrupted"; sendDl(); });
+    item.once("done", (_ev, state) => {
+      d.state = state === "completed" ? "completed" : state === "cancelled" ? "cancelled" : "failed"; d.path = item.getSavePath(); d.received = item.getReceivedBytes(); d.item = null; sendDl();
+      if (d.state === "completed" && store.get("notifications") && Notification.isSupported()) { const n = new Notification({ title: "Download complete", body: d.name, silent: !store.get("notificationSound") }); n.on("click", () => shell.showItemInFolder(d.path)); n.show(); }
+    });
+    sendDl();
+  });
+}
 function hardenSession() {
-  const s = session.fromPartition("persist:kayakmeet");
+  const s = session.fromPartition(PART());
+  trackDownloads(s);
   const ok = new Set(["media", "display-capture", "notifications", "fullscreen", "clipboard-sanitized-write", "speaker-selection"]);
   s.setPermissionRequestHandler(async (wc, permission, cb, details) => {
     const from = details.requestingUrl || wc.getURL();
@@ -166,7 +190,7 @@ function hardenSession() {
   // Kayak's servers only: refuse bad certificates outright.
   app.on("certificate-error", (e, _wc, _url, _err, _cert, cb) => { e.preventDefault(); cb(false); });
 }
-function applyProxy(s = session.fromPartition("persist:kayakmeet")) {
+function applyProxy(s = session.fromPartition(PART())) {
   const mode = store.get("proxy");
   if (mode === "manual" && store.get("proxyRules")) s.setProxy({ mode: "fixed_servers", proxyRules: store.get("proxyRules") });
   else s.setProxy({ mode: mode === "direct" ? "direct" : "system" });
@@ -329,7 +353,7 @@ function about() {
 async function signOut() {
   const r = await dialog.showMessageBox(win, { type: "question", buttons: ["Sign out", "Cancel"], defaultId: 0, cancelId: 1, message: "Sign out of Meet by Kayak on this computer?", detail: "This also clears cached messages and files from this computer." });
   if (r.response) return;
-  const s = session.fromPartition("persist:kayakmeet");
+  const s = session.fromPartition(PART());
   await s.clearStorageData(); await s.clearCache();
   win.loadURL(`${ORIGIN}/login`);
 }
@@ -352,7 +376,7 @@ const fromKayak = (e) => isKayak(e.senderFrame?.url || "");
 ipcMain.handle("km:settings:get", (e) => (fromLocal(e) ? { values: store.all, locked: store.locked(), platform: process.platform, version: app.getVersion(), server: ORIGIN } : null));
 ipcMain.handle("km:settings:set", (e, patch) => (fromLocal(e) ? store.set(patch) : null));
 ipcMain.handle("km:settings:reset", (e) => (fromLocal(e) ? store.reset() : null));
-ipcMain.handle("km:settings:clear", async (e) => { if (!fromLocal(e)) return false; const s = session.fromPartition("persist:kayakmeet"); await s.clearCache(); return true; });
+ipcMain.handle("km:settings:clear", async (e) => { if (!fromLocal(e)) return false; const s = session.fromPartition(PART()); await s.clearCache(); return true; });
 ipcMain.handle("km:settings:signout", (e) => (fromLocal(e) ? signOut() : null));
 ipcMain.handle("km:update:check", (e) => (fromLocal(e) ? checkUpdates(true) : null));
 ipcMain.handle("km:openSettings", (e) => { if (fromLocal(e)) openSettings(); });
@@ -364,7 +388,7 @@ store.onChange((all, changed) => {
   if ("shortcuts" in changed || "globalShortcuts" in changed) { registerShortcuts(); buildMenus(); }
   if ("openAtLogin" in changed || "startInBackground" in changed) loginItem();
   if ("proxy" in changed || "proxyRules" in changed) applyProxy();
-  if ("spellcheck" in changed) session.fromPartition("persist:kayakmeet").setSpellCheckerEnabled(all.spellcheck);
+  if ("spellcheck" in changed) session.fromPartition(PART()).setSpellCheckerEnabled(all.spellcheck);
   if ("hardwareAcceleration" in changed) dialog.showMessageBox(settingsWin || win, { message: "Restart Meet by Kayak to apply the graphics setting." });
   send("settings", pagePrefs());
 });
@@ -397,10 +421,84 @@ ipcMain.on("km:meeting", (e, s) => {
 });
 ipcMain.on("km:mini", (e, on) => { if (fromKayak(e)) setMini(!!on); });
 
+// ----------------------------------------------------------------------------- in-app Settings bridge (Meet's own Settings page)
+const pub = (d) => ({ id: d.id, name: d.name, total: d.total, received: d.received, state: d.state, at: d.at });
+const findDl = (id) => downloads.find((d) => d.id === String(id));
+let updState = { text: "", ready: false };
+function updStatus(text, extra = {}) { updState = { ...updState, text, ...extra }; win?.webContents.send("km:update", updState); }
+ipcMain.handle("km:app:info", (e) => (fromKayak(e) ? {
+  version: app.getVersion(), platform: process.platform, autoUpdate: store.get("autoUpdate"), updateChannel: store.get("updateChannel"), locked: store.locked(),
+  launchAtLogin: store.get("openAtLogin"), closeToTray: store.get("closeToTray"), askDownload: store.get("askDownload"), downloadDir: app.getPath("downloads"),
+  updateStatus: updState.text, updateReady: updState.ready,
+} : null));
+ipcMain.handle("km:app:set", (e, patch) => {
+  if (!fromKayak(e) || !patch || typeof patch !== "object") return null;
+  const map = { launchAtLogin: "openAtLogin", closeToTray: "closeToTray", askDownload: "askDownload", autoUpdate: "autoUpdate", updateChannel: "updateChannel" };
+  const out = {}; for (const [k, v] of Object.entries(patch)) if (map[k]) out[map[k]] = k === "updateChannel" ? (v === "beta" ? "beta" : "latest") : !!v;
+  const r = store.set(out); if ("openAtLogin" in out) loginItem(); if ("updateChannel" in out && updater) { updater.channel = out.updateChannel; updater.allowPrerelease = out.updateChannel === "beta"; }
+  return r;
+});
+ipcMain.handle("km:app:update", (e, op) => {
+  if (!fromKayak(e)) return null;
+  if (op === "install") { if (updState.ready && updater) { quitting = true; updater.quitAndInstall(); } return null; }
+  if (!app.isPackaged) return { status: "Updates are checked in the installed app only." };
+  updStatus("Checking for updates…"); checkUpdates(true, true); return { status: "Checking for updates…" };
+});
+ipcMain.handle("km:app:zoom", (e, dir) => {
+  if (!fromKayak(e)) return 1;
+  const wc = e.sender; const z = dir === "reset" ? 1 : Math.max(0.5, Math.min(2, Math.round((wc.getZoomFactor() + (dir === "in" ? 0.1 : -0.1)) * 10) / 10));
+  wc.setZoomFactor(z); return z;
+});
+ipcMain.handle("km:app:downloads", (e, op, id) => {
+  if (!fromKayak(e)) return null;
+  const d = id != null ? findDl(id) : null;
+  if (op === "list") return downloads.map(pub);
+  if (op === "open" && d?.state === "completed") return shell.openPath(d.path);
+  if (op === "show" && d?.path) return shell.showItemInFolder(d.path);
+  if (op === "cancel" && d?.item) return d.item.cancel();
+  if (op === "clear") { for (let i = downloads.length - 1; i >= 0; i--) if (downloads[i].state !== "progressing") downloads.splice(i, 1); sendDl(); }
+  return null;
+});
+ipcMain.handle("km:app:accounts", async (e, op, a, b) => {
+  if (!fromKayak(e)) return null;
+  const list = (store.get("accounts") || []).filter((x) => x && typeof x.id === "string");
+  const all = () => ({ active: store.get("activeAccount") || "main", accounts: [{ id: "main", label: store.get("mainLabel") || "Main account" }, ...list] });
+  const relaunch = () => { quitting = true; app.relaunch(); app.exit(0); };
+  if (op === "list") return all();
+  if (op === "add" && list.length < 4) { const id = Math.random().toString(36).slice(2, 10); store.set({ accounts: [...list, { id, label: String(a || "Account").slice(0, 40) }], activeAccount: id }); relaunch(); }
+  if (op === "switch" && (a === "main" || list.some((x) => x.id === a))) { store.set({ activeAccount: a }); relaunch(); }
+  if (op === "rename") { if (a === "main") store.set({ mainLabel: String(b || "").slice(0, 40) || "Main account" }); else store.set({ accounts: list.map((x) => (x.id === a ? { ...x, label: String(b || "").slice(0, 40) || x.label } : x)) }); }
+  if (op === "remove" && a !== "main" && a !== store.get("activeAccount")) { const s = session.fromPartition(`persist:kayakmeet-${a}`); await s.clearStorageData().catch(() => {}); await s.clearCache().catch(() => {}); store.set({ accounts: list.filter((x) => x.id !== a) }); }
+  return all();
+});
+// Present a meeting full screen on a second display (HDMI, AirPlay or Miracast extended display).
+let presentWin = null;
+ipcMain.handle("km:app:displays", (e) => {
+  if (!fromKayak(e)) return [];
+  const mine = win ? screen.getDisplayMatching(win.getBounds()).id : null;
+  return screen.getAllDisplays().filter((d) => d.id !== mine).map((d, i) => ({ id: d.id, label: d.label || `Display ${i + 2}`, width: d.size.width, height: d.size.height }));
+});
+ipcMain.handle("km:app:present", (e, displayId, room) => {
+  if (!fromKayak(e)) return false;
+  if (presentWin) { presentWin.destroy(); presentWin = null; }
+  if (displayId == null || !/^[A-Za-z0-9-]{8,64}$/.test(String(room || ""))) return true;
+  const d = screen.getAllDisplays().find((x) => x.id === Number(displayId)); if (!d) return false;
+  presentWin = new BrowserWindow({ x: d.bounds.x, y: d.bounds.y, width: d.bounds.width, height: d.bounds.height, fullscreen: true, backgroundColor: "#0E2F3C", title: "Meet by Kayak - presenting",
+    webPreferences: { preload: asset("preload.js"), contextIsolation: true, sandbox: true, nodeIntegration: false, partition: PART() } });
+  presentWin.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  presentWin.webContents.on("will-navigate", (ev, url) => { if (!isKayak(url)) ev.preventDefault(); });
+  presentWin.webContents.on("before-input-event", (_ev, input) => { if (input.key === "Escape") { presentWin?.destroy(); presentWin = null; } });
+  presentWin.on("closed", () => { presentWin = null; });
+  presentWin.loadURL(`${ORIGIN}/${room}?screen=1&name=${encodeURIComponent("Screen")}`);
+  return true;
+});
+ipcMain.handle("km:app:openSettings", (e) => { if (fromKayak(e)) openSettings(); });
+
 // ----------------------------------------------------------------------------- updates
 let updater = null;
-function checkUpdates(manual = false) {
-  if (store.get("disableUpdates") || (!manual && !store.get("autoUpdate"))) return;
+function checkUpdates(manual = false, quiet = false) {
+  if (store.get("disableUpdates")) { if (quiet) updStatus("Updates are managed by your organisation."); return; }
+  if (!manual && !store.get("autoUpdate")) return;
   if (!app.isPackaged) { if (manual) dialog.showMessageBox({ message: "Updates are checked in the installed app only." }); return; }
   try {
     if (!updater) {
@@ -408,13 +506,17 @@ function checkUpdates(manual = false) {
       updater.channel = store.get("updateChannel") === "beta" ? "beta" : "latest";
       updater.allowPrerelease = updater.channel === "beta";
       updater.autoInstallOnAppQuit = true;
+      updater.on("update-available", (info) => updStatus(`Downloading Meet by Kayak ${info.version}…`, { percent: 0 }));
+      updater.on("download-progress", (p) => updStatus(`Downloading the update… ${Math.round(p.percent)}%`, { percent: p.percent }));
+      updater.on("update-not-available", () => updStatus(`You have the latest version (${app.getVersion()}). Last checked ${new Date().toLocaleTimeString()}.`));
       updater.on("update-downloaded", async (info) => {
+        updStatus(`Meet by Kayak ${info.version} is ready. Restart to finish updating.`, { ready: true, percent: 100 });
         if (meeting.inMeeting) return; // never interrupt a meeting; installs on quit
         const r = await dialog.showMessageBox(win, { type: "info", buttons: ["Restart now", "Later"], defaultId: 0, cancelId: 1, message: `Meet by Kayak ${info.version} is ready.`, detail: "Restart to finish updating. It takes a few seconds." });
         if (r.response === 0) { quitting = true; updater.quitAndInstall(); }
       });
-      if (manual) updater.once("update-not-available", () => dialog.showMessageBox(settingsWin || win, { message: "You have the latest version of Meet by Kayak." }));
-      updater.on("error", (err) => { if (manual) dialog.showMessageBox(settingsWin || win, { type: "warning", message: "Could not check for updates.", detail: String(err?.message || err).slice(0, 300) }); });
+      if (manual && !quiet) updater.once("update-not-available", () => dialog.showMessageBox(settingsWin || win, { message: "You have the latest version of Meet by Kayak." }));
+      updater.on("error", (err) => { updStatus("Couldn't check for updates. Check your internet connection and try again."); if (manual && !quiet) dialog.showMessageBox(settingsWin || win, { type: "warning", message: "Could not check for updates.", detail: String(err?.message || err).slice(0, 300) }); });
     }
     updater.checkForUpdates();
   } catch (err) { console.error(err); }
