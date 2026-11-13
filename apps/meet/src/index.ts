@@ -28,7 +28,7 @@ app.use("*", async (c, next) => { await next(); if (!PUBLIC_PAGES.has(c.req.path
 app.use("*", securityHeaders({ noindex: false, script: ["'wasm-unsafe-eval'"], permissions: "camera=(self), microphone=(self), display-capture=(self), autoplay=(self), fullscreen=(self), geolocation=(), payment=(), usb=()" }));
 // A client office or a Kayak floor shares one address: chat refreshes every 4 s and live captions
 // post every few seconds per person, so Meet allows far more per address than the brochure sites.
-app.use("*", shield("meet", (e) => e.DB, { allowGoodBots: false, burstLimit: 1500, botPaths: (p) => p === "/" || p === "/download" || p === "/sitemap.xml" || p.startsWith("/assets/") || p.startsWith("/_shared/") || /^\/[0-9a-f]{32}\.txt$/.test(p) }));
+app.use("*", shield("meet", (e) => e.DB, { allowGoodBots: false, burstLimit: 1500, botPaths: (p) => p === "/" || p === "/download" || p === "/robots.txt" || p === "/sitemap.xml" || p.startsWith("/assets/") || p.startsWith("/_shared/") || /^\/[0-9a-f]{32}\.txt$/.test(p) }));
 app.use("/api/*", sameOrigin());
 
 // ---------------------------------------------------------------- access

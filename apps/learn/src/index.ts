@@ -31,6 +31,8 @@ app.post("/hooks/razorpay", razorpayWebhook);
 // Cookieless page statistics, read by the internal dashboards.
 app.post("/api/a", (c) => statsBeacon(c, c.env.DB, "kayak-learn"));
 app.use("*", shield("learn", (e) => e.DB, { allowGoodBots: true }));
+// Certificate pages name the holder, so they are for whoever has the link, not for search results.
+app.use("*", async (c, next) => { await next(); if (!c.req.path.startsWith("/verify/")) return; c.res = new Response(c.res.body, c.res); c.res.headers.set("X-Robots-Tag", "noindex, nofollow"); });
 app.use("/api/*", sameOrigin());
 app.onError((e: any, c) => {
   const status = e instanceof HttpError ? e.status : e?.status || 500;

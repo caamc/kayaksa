@@ -685,7 +685,7 @@ function route() {
   else { html = P.notfound(); title = "Page not found"; sec = ""; }
   const main = $("#main");
   main.innerHTML = `<div class="page">${html}</div>`;
-  document.title = title === "Kayak Strategic Advisors" ? title : `${title} | Kayak Strategic Advisors`;
+  document.title = title === "Kayak Strategic Advisors" ? "Kayak Strategic Advisors (Kayak SA) | Advisory in Mumbai and Thane" : `${title} | Kayak Strategic Advisors`;
   $$(".mainnav [data-sec]").forEach((b) => b.classList.toggle("is-current", b.dataset.sec === sec));
   closeMegas(); $("#drawer").hidden = true; document.body.style.overflow = "";
   linkify(main);

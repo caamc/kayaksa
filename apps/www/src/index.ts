@@ -98,20 +98,25 @@ async function siteData(c: any) {
 // ------------------------------------------------------------------ structured data (schema.org)
 const BASE = "https://www.kayaksa.com";
 const ORG_ID = `${BASE}/#org`, SITE_ID = `${BASE}/#website`;
+// The firm's own profile pages (LinkedIn company page, Crunchbase and so on). Search engines use these to tie the
+// brand together; list only real profile URLs, never a site's home page.
+const SOCIAL: string[] = [];
 function orgNode(data: any) {
   return {
-    "@type": ["Organization", "ProfessionalService"], "@id": ORG_ID, name: "Kayak Strategic Advisors Private Limited", alternateName: ["Kayak Strategic Advisors", "KSA", "Kayak"],
-    url: `${BASE}/`, email: "enquiries@kayaksa.com", logo: { "@type": "ImageObject", url: `${BASE}/assets/apple-touch-icon.png`, width: 180, height: 180 }, image: `${BASE}/assets/og.png`,
+    "@type": ["Organization", "ProfessionalService"], "@id": ORG_ID, name: "Kayak Strategic Advisors Private Limited", alternateName: ["Kayak Strategic Advisors", "Kayak SA", "KayakSA", "KSA", "Kayak"],
+    url: `${BASE}/`, ...(SOCIAL.length ? { sameAs: SOCIAL } : {}), email: "enquiries@kayaksa.com", logo: { "@type": "ImageObject", url: `${BASE}/assets/apple-touch-icon.png`, width: 180, height: 180 }, image: `${BASE}/assets/og.png`,
     description: "Independent, senior-led advisory firm in Mumbai and Thane: strategy and deals, tax, legal and regulatory, crisis and resilience, technology and AI, managed services and an International Desk.",
     address: { "@type": "PostalAddress", streetAddress: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road", addressLocality: "Mumbai", postalCode: "400013", addressRegion: "Maharashtra", addressCountry: "IN" },
     areaServed: [{ "@type": "Country", name: "India" }, "Worldwide"], slogan: "Clear advice for consequential decisions", knowsAbout: data.clusters.map((c: any) => c.name),
     contactPoint: [{ "@type": "ContactPoint", contactType: "sales", email: "enquiries@kayaksa.com", areaServed: "IN", availableLanguage: ["en", "hi", "mr"] }, { "@type": "ContactPoint", contactType: "careers", email: "careers@kayaksa.com" }],
     ...(data.flags?.leadership ? { founder: { "@type": "Person", name: "Anuj Matushankar Choudhary" } } : {}),
     subOrganization: [{ "@type": "Organization", name: "Kayak Learn", url: "https://learn.kayaksa.com/" }],
+    brand: [{ "@type": "Brand", name: "Meet by Kayak", url: "https://meet.kayaksa.com/" }, { "@type": "Brand", name: "Kayak Learn", url: "https://learn.kayaksa.com/" },
+      ...data.tools.map((t: any) => ({ "@type": "Brand", name: t.name, url: t.site ? `https://${t.site}/` : `${BASE}/solutions/${t.id}` }))],
     hasOfferCatalog: { "@type": "OfferCatalog", name: "Advisory services", itemListElement: data.clusters.map((c: any) => ({ "@type": "OfferCatalog", name: c.name, url: `${BASE}/services/${c.id}` })) },
   };
 }
-const siteNode = () => ({ "@type": "WebSite", "@id": SITE_ID, url: `${BASE}/`, name: "Kayak Strategic Advisors", inLanguage: "en-IN", publisher: { "@id": ORG_ID } });
+const siteNode = () => ({ "@type": "WebSite", "@id": SITE_ID, url: `${BASE}/`, name: "Kayak Strategic Advisors", alternateName: ["Kayak SA", "KayakSA", "kayaksa.com"], inLanguage: "en-IN", publisher: { "@id": ORG_ID } });
 function crumbs(list: [string, string][]) {
   return { "@type": "BreadcrumbList", itemListElement: [["Home", "/"], ...list].map(([name, path], i) => ({ "@type": "ListItem", position: i + 1, name, item: `${BASE}${path}` })) };
 }
@@ -182,10 +187,10 @@ function render(path: string, data: any): PageMeta {
   }
   if ((m = p.match(/^\/solutions\/([\w-]+)$/)) && T(m[1])) {
     const t = T(m[1]);
-    return { status: 200, title: `${t.name}: ${t.kind}`, desc: (t.line || "").slice(0, 300), ssr: `<h1>${esc(t.name)}</h1><p><b>${esc(t.kind)}.</b> ${esc(t.intro || t.line)}</p><ul>${(t.modules || []).map((x: any) => `<li><b>${esc(x[1])}</b>: ${esc(String(x[2]).replace(/^\[Planned\]\s*/, "Planned: "))}</li>`).join("")}</ul>`,
+    return { status: 200, title: `${t.name}: ${t.kind}`, desc: (t.line || "").slice(0, 300), ssr: `<h1>${esc(t.name)}</h1><p><b>${esc(t.kind)}.</b> ${esc(t.intro || t.line)}</p>${t.site ? `<p><a href="https://${esc(t.site)}/">Visit ${esc(t.name)} at ${esc(t.site)}</a></p>` : ""}<ul>${(t.modules || []).map((x: any) => `<li><b>${esc(x[1])}</b>: ${esc(String(x[2]).replace(/^\[Planned\]\s*/, "Planned: "))}</li>`).join("")}</ul>`,
       crumbs: [["Kayak Solutions", "/solutions"], [t.name, `/solutions/${t.id}`]],
       ld: { "@type": "SoftwareApplication", name: t.name, applicationCategory: "BusinessApplication", applicationSubCategory: t.kind, operatingSystem: "Web browser", description: t.intro || t.line, url: `${BASE}/solutions/${t.id}`,
-        featureList: (t.modules || []).map((x: any) => x[1]), publisher: { "@type": "Organization", name: "Kayak Technology Solutions", parentOrganization: { "@id": ORG_ID } }, provider: { "@id": ORG_ID } } };
+        featureList: (t.modules || []).map((x: any) => x[1]), ...(t.site ? { sameAs: `https://${t.site}/` } : {}), publisher: { "@type": "Organization", name: "Kayak Technology Solutions", parentOrganization: { "@id": ORG_ID } }, provider: { "@id": ORG_ID } } };
   }
   if ((m = p.match(/^\/insights\/([\w-]+)$/)) && A(m[1])) {
     const a = A(m[1]);
@@ -219,7 +224,8 @@ function render(path: string, data: any): PageMeta {
 function page(c: any, meta: PageMeta, data: any, path: string) {
   const base = site(c);
   const canonical = `${base}${path === "/" ? "/" : path.replace(/\/+$/, "")}`;
-  const full = meta.title === "Kayak Strategic Advisors" ? meta.title : `${meta.title} | Kayak Strategic Advisors`;
+  // The home page title carries the short names people search for ("Kayak SA"). Keep it in step with site.js.
+  const full = meta.title === "Kayak Strategic Advisors" ? "Kayak Strategic Advisors (Kayak SA) | Advisory in Mumbai and Thane" : `${meta.title} | Kayak Strategic Advisors`;
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   const head = `<!doctype html><html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>${esc(full)}</title><meta name="description" content="${esc(meta.desc)}"><link rel="canonical" href="${esc(canonical)}">
