@@ -1,0 +1,77 @@
+// What Kayak GraphIQ does today, honestly labelled. Built = working and tested; Partly = works with
+// stated limits; Planned = not built yet. The About page and docs/graphiq-roadmap.md use this list.
+export const FEATURES = [
+  { group: "Import and file formats", items: [
+    ["Bulk upload of several files at once", "built"], ["CSV and other delimited text (comma, tab, pipe, semicolon)", "built"], ["TXT reports with aligned columns", "built"],
+    ["XLSX workbooks (read and written by GraphIQ's own code)", "built"], ["Legacy XLS (Excel 97-2003)", "planned", "Save as XLSX or CSV first; GraphIQ explains this when such a file is dropped."],
+    ["JSON exports", "built"], ["XML exports", "built"], ["HTML tables from operator portals", "built"],
+    ["PDF tables (text-based PDFs, with pdf.js)", "partly", "Works for PDFs with a text layer and simple tables; scanned PDFs need OCR, which is planned."],
+    ["Automatic layout recognition with header synonyms (A/B party, calling/called, date, time, duration, call type, IMEI, IMSI, cell ID/CGI, LAC, latitude/longitude, roaming, operator)", "built"],
+    ["Airtel-, Jio-, Vi- and BSNL-style layouts and generic layouts", "built", "Layout names are a guide; operators change formats, so the mapping is always shown for checking."],
+    ["Title blocks, repeated header rows and files without a header row", "built"], ["Custom column mapping saved as templates, applied automatically to matching files", "built"],
+    ["Tower master import (cell ID/CGI, latitude, longitude, address, azimuth)", "built"], ["Tower dump files (records of many numbers at given cells)", "built"],
+    ["Encrypted case export and import (.gqcase)", "built"], ["ZIP archives of many files", "planned"], ["SDR / CAF subscriber details import", "planned"], ["IPDR (IP detail records) analysis", "planned", "Data sessions in CDRs are imported as DATA records."],
+    ["Direct ingestion from operator portals or e-mail", "planned"],
+  ] },
+  { group: "Standardisation and data quality", items: [
+    ["MSISDN normalisation (+91, leading zeros, 0091, spreadsheet number formats, short codes, SMS sender IDs)", "built"], ["International numbers and country codes", "built"],
+    ["Configurable date order and time zone; dates stored in UTC and shown in the case time zone", "built"], ["Excel serial dates and times", "built"], ["Durations in seconds, hh:mm:ss, mm:ss or words; duration from end time", "built"],
+    ["Call type normalisation (outgoing, incoming, SMS sent/received, missed, data, other)", "built"], ["Calling/called files: target always placed as A party", "built"],
+    ["Duplicate detection within and across files and against records already in the case", "built"], ["Invalid and missing value report with row numbers", "built"], ["Validation summary before anything is stored", "built"],
+    ["IMEI check digit (Luhn) and restoration of a dropped check digit", "built"], ["Merge of several files into one case", "built"],
+    ["Split by target or month", "partly", "Available in the engine and through search filters and per-number reports; a one-click split export is planned."], ["Removing an import (undo a load)", "built"],
+  ] },
+  { group: "Cases, legal gate and governance", items: [
+    ["Case creation requires legal basis, reference number and date, issuing authority and approving supervisor", "built"], ["Lawful-use notice (Telecommunications Act 2023, IT Act 2000, BNSS 2023, DPDP Act 2023) acknowledged on creation", "built"],
+    ["Four-eyes approval: import blocked until a different user with the Approver role approves", "built"], ["Roles: Admin, Approver, Analyst, Viewer", "built"], ["People see only the cases they are assigned to", "built"],
+    ["Single sign-on from Kayak Internal (password and two-factor)", "built"], ["Accounts for agency users outside Kayak", "planned", "On-premise deployments would connect their own identity provider."],
+    ["Case notes; manual OSINT notes for material already lawfully held, with its source", "built"], ["No data-broker look-ups or social-media scraping", "built", "By design: there is no such feature."],
+    ["Bookmarks and evidence tags on records and numbers", "built"], ["Black and white watchlists per case", "built"],
+    ["Tamper-evident audit log (SHA-256 hash chain) of every view, search, import and export, with a Verify button", "built"],
+    ["Evidence files: SHA-256 checked in the browser and on the server, AES-256-GCM encryption with a key for each case, chain of custody, integrity check", "built"],
+    ["Evidence files above 40 MB", "planned", "Needs chunked encryption; split large files for now."], ["Retention date per case, daily flagging of overdue cases", "built"],
+    ["Secure deletion of records, notes and evidence objects, keeping a tombstone and the audit record", "built"], ["Crypto-shredding (destroying a case key)", "planned"],
+    ["Backup and restore of one case (encrypted export)", "built"], ["Whole-database backup", "partly", "Cloudflare D1 Time Travel restores the database to a point in time; a GraphIQ-level full backup is planned."],
+  ] },
+  { group: "Analytics", items: [
+    ["Per-number summary: calls and SMS in and out, total, average, shortest and longest duration, unique contacts, most and least contacted, in/out ratio", "built"],
+    ["First and last record overall and of each day", "built"], ["Hourly, daily, weekly and monthly patterns; day and night; weekend; business hours; peak hours", "built"],
+    ["Short calls, one-way contact, repeated calls in a short window", "built"], ["Overlapping calls (possible conference or call waiting)", "built"], ["Circular communication (A to B to C to A in a time window)", "built"],
+    ["New numbers in a period; silent periods", "built"], ["Numbers common to several targets; common numbers across cases (search all cases)", "built"], ["Target-to-target contact", "built"],
+    ["IMEI: one IMEI with many SIMs, one SIM in many handsets, device-change timeline, TAC", "built"], ["TAC to handset make and model", "planned", "Needs the licensed GSMA TAC database."], ["IMSI-MSISDN-IMEI mapping; network from IMSI (MCC/MNC)", "built"],
+    ["Tower analysis: most used cells, likely day and night location, first and last cell of the day, movements between cells", "built"],
+    ["Possible meeting points: two numbers at the same cell, or the same mast across operators with a tower master, within a time window", "built"],
+    ["Roaming and international (ISD) calls by country", "built"], ["Watchlist hits", "built"], ["Anomalies: daily volume z-score and rarely used night hours", "built"],
+    ["Tower dump analysis: numbers seen at several towers, files or time windows", "built"], ["Contact prioritisation matrix from computed signals (indicative)", "built"],
+    ["Stay points, trips and home/work inference beyond most-used cells", "planned"], ["SIM-swap detection by matching contact patterns of old and new numbers", "planned"],
+  ] },
+  { group: "Visualisation", items: [
+    ["Interactive link chart: filter, expand, search, degree, betweenness and closeness, Louvain communities, PNG export", "built"],
+    ["Kayak exhibit chart library: 33 chart types in Kayak's exhibit style with action titles computed from the data, tooltips, click-to-drill, keyboard focus, SVG and PNG export, light and dark themes", "built"],
+    ["Timeline of records by type", "built"], ["Hour-by-weekday heat map", "built"], ["Bar, line, donut, Sankey call flow and chord charts", "built"],
+    ["Map of cells and movement on OpenStreetMap (attribution shown) with a tower master or coordinates in the records", "built"], ["KML export for Google Earth", "built"],
+    ["Cell coverage areas (sectors, Voronoi)", "planned"], ["Animated movement playback", "planned"],
+  ] },
+  { group: "Search", items: [
+    ["Search within a case by number, date and time range, time of day, duration, call type, IMEI, IMSI, cell and weekday", "built"], ["Bulk multi-number search", "built"],
+    ["Search across all cases you are assigned to", "built"], ["Saved filters", "built"], ["Drill-down from any chart mark to the records behind it", "built"], ["Fuzzy and pattern search on numbers", "planned"],
+  ] },
+  { group: "Reports", items: [
+    ["One-click reports: summary, frequency, common numbers, IMEI, tower and location, timeline, meeting points", "built"], ["Export to PDF (with charts), XLSX, CSV, JSON and HTML", "built"],
+    ["Every report states it is analytical output that needs human verification", "built"], ["Search results to CSV and XLSX (up to 1,000 rows at a time)", "built"],
+    ["Word (DOCX) reports and a custom report builder", "planned"], ["Section 63 (Bharatiya Sakshya Adhiniyam 2023) certificate template", "planned"],
+  ] },
+  { group: "Reference data (offline)", items: [
+    ["International (ISD) codes", "built"], ["Major Indian STD codes", "partly", "About 80 major cities."], ["Indian MCC/MNC codes", "partly", "Indicative list; check against the current ITU-T E.212 list."],
+    ["Indian mobile series to original operator and circle", "partly", "A sample table; mobile number portability means the current operator may differ. Loading the full numbering plan is planned."],
+  ] },
+  { group: "Kayak AI assist", items: [
+    ["Plain-English question to a search filter (shown for checking before it runs; rule-based reading when AI is unavailable)", "built"],
+    ["Draft case summary from computed statistics only, labelled AI-assisted, verify before use", "built"],
+  ] },
+  { group: "Platform", items: [
+    ["Analysis engine in pure TypeScript that runs in the Worker, in a browser Web Worker and in Node", "built"], ["Large files parsed in the browser in a Web Worker and stored in batches", "built"],
+    ["Records in batches per case with a shard setting for one D1 database per large case", "partly", "The shard switch exists; creating extra databases is a manual step today."],
+    ["On-premise licensing for agencies", "partly", "See the on-premise guide: the engine runs anywhere; a packaged server is planned."], ["Mobile app", "planned"],
+  ] },
+];

@@ -1,4 +1,4 @@
-// Unit tests for packages/graphiq-engine, run with `node --test tests/unit/`.
+// Unit tests for packages/graphiq-engine, run with `npm test`.
 // The engine is bundled with esbuild to a temporary ES module first (it is TypeScript).
 import { test } from "node:test";
 import assert from "node:assert/strict";

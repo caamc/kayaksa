@@ -4,6 +4,7 @@ import * as E from "/vendor/graphiq-engine.mjs";
 
 const tables = new Map(); // fileKey -> table
 const parsed = new Map(); // fileKey -> records
+const fileKeys = new Map(); // fileKey -> dedupe keys it added (so re-checking a file does not flag itself)
 let seen = new Set();
 let caseRecords = [];
 
@@ -19,16 +20,18 @@ const ops = {
     return { format: "pdf", rows: table.length, sample: table.slice(0, 40), detection: E.detectMapping(table, {}) };
   },
   async redetect({ key, tz, cc }) { return E.detectMapping(tables.get(key) || [], { tz, cc }); },
-  async resetSeen({ keys }) { seen = new Set(keys || []); for (const r of caseRecords) seen.add(E.dedupeKey(r)); parsed.clear(); return seen.size; },
+  async resetSeen({ keys }) { seen = new Set(keys || []); for (const r of caseRecords) seen.add(E.dedupeKey(r)); parsed.clear(); fileKeys.clear(); return seen.size; },
   async normalise({ key, mapping, src }) {
     const t = tables.get(key);
     if (!t) throw new Error("Open the file again.");
+    for (const k of fileKeys.get(key) || []) seen.delete(k);
     const { records, validation } = E.normaliseTable(t, mapping, { src, seen });
     parsed.set(key, records);
+    fileKeys.set(key, records.map(E.dedupeKey));
     return { validation, preview: records.slice(0, 8) };
   },
   async takeRecords({ key }) { return parsed.get(key) || []; },
-  async forget({ key }) { tables.delete(key); parsed.delete(key); return true; },
+  async forget({ key }) { tables.delete(key); parsed.delete(key); for (const k of fileKeys.get(key) || []) seen.delete(k); fileKeys.delete(key); return true; },
   async load({ records }) { caseRecords = records; return records.length; },
   async analyse({ opts, watchlist }) { return E.analyseAll(caseRecords, { ...opts, watchlist }); },
   async exhibits({ ctx, target }) { return E.buildExhibits(target ? caseRecords.filter((r) => r.a === target || r.b === target) : caseRecords, ctx); },

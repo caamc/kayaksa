@@ -288,7 +288,7 @@ export function treemap(items: Item[], f: Frame & { highlight?: number } = {}) {
 
 export function funnel(stages: Item[], f: Frame & { highlight?: number } = {}) {
   return frame({ height: Math.max(260, 130 + stages.length * 46), ...f }, (b) => {
-    const max = Math.max(1, ...stages.map((s) => s.value)), sh = b.h / Math.max(1, stages.length), cx = b.x + b.w * 0.42, half = b.w * 0.4;
+    const max = Math.max(1, ...stages.map((s) => s.value)), sh = b.h / Math.max(1, stages.length), cx = b.x + b.w * 0.36, half = b.w * 0.32;
     return stages.map((st, i) => {
       const w0 = (st.value / max) * half, w1 = ((stages[i + 1]?.value ?? st.value * 0.85) / max) * half, y = b.y + i * sh, h = sh - 6;
       const c = i === f.highlight ? b.t.accent : b.t.series[Math.min(3, i % 4)];
@@ -517,7 +517,7 @@ export function chevrons(stages: { label: string; done: number; detail?: string;
     const overall = stages.reduce((s, x) => s + Math.min(1, x.done), 0) / Math.max(1, n);
     let s = "";
     stages.forEach((st, i) => {
-      const x = b.x + i * w, c = st.done >= 1 ? b.t.series[0] : st.done > 0 ? b.t.accent : b.t.panel, fg = st.done > 0 && st.done < 1 ? b.t.onAccent : "#FFFFFF";
+      const x = b.x + i * w, c = st.done >= 1 ? b.t.series[0] : st.done > 0 ? b.t.accent : b.t.panel, fg = st.done > 0 && st.done < 1 ? b.t.onAccent : st.done <= 0 ? b.t.muted : "#FFFFFF";
       s += `<path d="M${r1(x)} ${y}H${r1(x + w - tip)}L${r1(x + w)} ${y + h / 2}L${r1(x + w - tip)} ${y + h}H${r1(x)}L${r1(x + (i ? tip : 0))} ${y + h / 2}Z" fill="${c}" stroke="${b.t.bg}" stroke-width="3"${mk(`${st.label}: ${pct(Math.min(1, st.done))} complete${st.detail ? ` - ${st.detail}` : ""}`, st.drill)}/>`;
       s += txt(x + w / 2 + (i ? tip / 3 : 0), y + h / 2 - 2, clip(st.label, w - tip * 2, 12.5), { size: 12.5, fill: fg, anchor: "middle", weight: 700 }) + txt(x + w / 2 + (i ? tip / 3 : 0), y + h / 2 + 14, pct(Math.min(1, st.done)), { size: 11, fill: fg, anchor: "middle" });
       if (st.detail) s += txt(x + 6, y + h + 20, clip(st.detail, w - 8, 10.5), { size: 10.5, fill: b.t.muted });
@@ -610,9 +610,9 @@ export function metricCard(d: CardData, themeName?: ThemeName | Theme): string {
     case "delta": { const up = (d.delta || 0) >= 0; body = txt(18, 118, `${up ? "▲" : "▼"} ${up ? "+" : ""}${fmt(d.delta || 0, 1)}${d.deltaLabel || ""}`, { size: 13, fill: up ? t.ok : t.neg, weight: 700 }); break; }
     case "sparkline": body = spark(18, 100, W - 36, 30); break;
     case "progress": { const p = d.target ? Math.min(1, Number(d.value) / d.target) : 0; body = `<rect x="18" y="108" width="${W - 36}" height="8" fill="${t0.name === "dark" ? t.bg : "#EEF4F1"}"/><rect x="18" y="108" width="${r1((W - 36) * p)}" height="8" fill="${t.series[0]}"/>` + txt(18, 134, `${pct(p)} of ${fmt(d.target || 0)}`, { size: 11, fill: t.muted }); break; }
-    case "benchmark": { const diff = d.benchmark ? Number(d.value) / d.benchmark - 1 : 0; body = txt(18, 118, `${diff >= 0 ? "+" : ""}${pct(diff)} vs ${d.benchmarkLabel || "benchmark"} (${fmt(d.benchmark || 0, 1)})`, { size: 12, fill: diff > 0.25 ? t.accent : t.muted, weight: 600 }); break; }
+    case "benchmark": { const diff = d.benchmark ? Math.round((Number(d.value) / d.benchmark - 1) * 100) / 100 || 0 : 0; body = txt(18, 118, `${diff >= 0 ? "+" : ""}${pct(diff)} vs ${d.benchmarkLabel || "benchmark"} (${fmt(d.benchmark || 0, 1)})`, { size: 12, fill: diff > 0.25 ? t.accent : t.muted, weight: 600 }); break; }
     case "minibar": { const mx = Math.max(1, ...ser), bw = (W - 36) / Math.max(1, ser.length); body = ser.map((v, i) => `<rect x="${r1(18 + i * bw)}" y="${r1(134 - (v / mx) * 32)}" width="${r1(bw - 2)}" height="${r1((v / mx) * 32)}" fill="${i === ser.length - 1 ? t.accent : t.series[0]}"/>`).join(""); break; }
-    case "alert": { const tag = (d.alert || "ALERT").toUpperCase(), tw = tag.length * 6.4 + 16; body = `<rect x="18" y="104" width="${r1(tw)}" height="20" fill="none" stroke="${t.neg}" stroke-width="1.5"/>` + txt(26, 118, tag, { size: 10, fill: t.neg, weight: 700, ls: 0.8 }); break; }
+    case "alert": { const tag = (d.alert || "ALERT").toUpperCase(), tw = Math.min(W - 36, tag.length * 7.3 + 16); body = `<rect x="18" y="104" width="${r1(tw)}" height="20" fill="none" stroke="${t.neg}" stroke-width="1.5"/>` + txt(26, 118, tag, { size: 10, fill: t.neg, weight: 700, ls: 0.8 }); break; }
     case "dark": body = ser.length ? spark(18, 100, W - 36, 30) : txt(18, 120, d.note || "", { size: 11, fill: t.muted }); break;
     default: body = d.note ? txt(18, 120, clip(d.note, W - 36, 11), { size: 11, fill: t.muted }) : "";
   }
