@@ -947,6 +947,7 @@ async function pollOnce() {
   if (!r) return;
   S.at = r.at;
   X.onPoll(r);
+  if (r.ring?.length) lastActive = Date.now();
   let changedList = false;
   for (const m of r.messages) {
     if (m.id <= S.since && S.msgs.some((x) => x.id === m.id)) continue;
@@ -976,10 +977,16 @@ function alertFor(m, ch) {
   if (D) { D.notify({ title, body, path: `/app#c/${ch.id}` }); D.attention(); return; }
   if ("Notification" in window && Notification.permission === "granted" && document.hidden) { const n = new Notification(title, { body, icon: "/_shared/logos/AppIcon_192.png", tag: "km-" + ch.id }); n.onclick = () => { focus(); openChannel(ch.id); n.close(); }; }
 }
+// Live updates check quickly while you're using Meet and slow down when you're not, which keeps
+// server load (and cost) proportional to real use: every 4 s while active, 8 s after a minute idle,
+// 15 s after ten minutes or in the background (well inside a call's 45-second ring). Coming back checks straight away.
+let lastActive = Date.now();
+const pollGap = () => { if (document.hidden) return 15_000; const idle = Date.now() - lastActive; return idle < 60_000 ? 4_000 : idle < 600_000 ? 8_000 : 15_000; };
+for (const ev of ["pointerdown", "keydown", "wheel", "touchstart"]) addEventListener(ev, () => { const wasIdle = Date.now() - lastActive > 60_000; lastActive = Date.now(); if (wasIdle) poll(true); }, { passive: true });
 function poll(now = false) {
   clearTimeout(pollTimer);
-  const run = async () => { await pollOnce(); pollTimer = setTimeout(run, document.hidden ? 20_000 : 4_000); };
-  pollTimer = setTimeout(run, now ? 0 : 4_000);
+  const run = async () => { await pollOnce(); pollTimer = setTimeout(run, pollGap()); };
+  pollTimer = setTimeout(run, now ? 0 : pollGap());
 }
 addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); $("#q")?.focus(); }

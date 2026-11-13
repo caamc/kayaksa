@@ -97,7 +97,8 @@ ws.get("/poll", async (c) => {
   const since = Number(c.req.query("since")) || 0;
   const at = str(c.req.query("at"), 40) || now();
   // Presence: "online" means seen in the last five minutes.
-  await c.env.DB.prepare("UPDATE members SET last_seen = ? WHERE id = ?").bind(now(), m.id).run();
+  // At most one write a minute per person (writes are what cost; reads are cheap).
+  await c.env.DB.prepare("UPDATE members SET last_seen = ? WHERE id = ? AND (last_seen IS NULL OR last_seen < ?)").bind(now(), m.id, new Date(Date.now() - 60_000).toISOString()).run();
   const { results } = await c.env.DB.prepare(`
     SELECT x.*, mb.name author FROM messages x LEFT JOIN members mb ON mb.id = x.member_id
     WHERE x.id > ? AND x.channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?) ORDER BY x.id LIMIT 200`).bind(since, m.id).all<any>();
