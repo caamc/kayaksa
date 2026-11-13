@@ -33,7 +33,7 @@ const R = await employee("Ria Mehta", "ria@kayaksa.com");
 console.log("Hub");
 await A.click('.rail [data-v="kayakers"]');
 await A.waitForSelector(".kx-game");
-ok((await A.$$(".kx-game")).length === 3, "the hub lists chess, carrom and Kayak Four");
+ok((await A.$$(".kx-game")).length === 10, "the hub lists all ten games");
 await shot(A, "k01-hub");
 
 console.log("Whiteboard");

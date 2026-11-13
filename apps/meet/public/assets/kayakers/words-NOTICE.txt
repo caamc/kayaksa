@@ -1,0 +1,2 @@
+words.txt is ENABLE (Enhanced North American Benchmark Lexicon), a word list placed in the public domain by its authors.
+Used by Kayak Wordsmith to check words.

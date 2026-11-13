@@ -750,18 +750,32 @@ const KX = {
   chess: ["Chess", "#2D6A9F", "Full rules - castling, en passant, promotion. Play a colleague or Kayak AI."],
   carrom: ["Carrom", "#9C630E", "Real physics on a classic board. Flick the striker and pocket your coins."],
   four: ["Kayak Four", "#B4472F", "Line up four discs before the other side does. Quick and addictive."],
+  estates: ["Kayak Estates", "#9C630E", "Buy business districts, complete sets, build offices and out-earn everyone. 2-6 players."],
+  flip: ["Kayak Flip", "#EE9B1E", "Match colours and symbols, time your action cards, empty your hand first. 2-6 players."],
+  words: ["Kayak Wordsmith", "#2D6A9F", "Build crossing words from seven tiles on Kayak's compass board. 2-4 players."],
+  rows: ["Kayak Rows", "#5E4B78", "Claim tiles with route cards and line up rows of five. Teams of two for four players."],
+  ludo: ["Ludo", "#4B7A4E", "The race home - roll a six to set out and send rivals back to base. 2-4 players."],
+  snakes: ["Snakes & Ladders", "#1F4B5F", "Kayak's own board: ladders for good habits, snakes for the usual risks. 2-4 players."],
+  ttt: ["Tic Tac Toe", "#0B5654", "Three in a row. Kayak AI never loses - can you hold it to a draw?"],
 };
 const KXI = {
   board: '<path d="M3 5h18v11H3z"/><path d="M8 21l4-5 4 5M7 12l3-3 2 2 4-4"/>',
   chess: '<path d="M8 21h8M9 18h6l-1-6h2l-2-3c1-1 1-3-1-4-1-1-3 0-3 1-2 0-3 2-2 3l-2 3h2z"/>',
   carrom: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="3"/><circle cx="6" cy="6" r="1.3"/><circle cx="18" cy="6" r="1.3"/><circle cx="6" cy="18" r="1.3"/><circle cx="18" cy="18" r="1.3"/>',
   four: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="1.6"/><circle cx="12" cy="9" r="1.6"/><circle cx="16" cy="9" r="1.6"/><circle cx="8" cy="15" r="1.6"/><circle cx="12" cy="15" r="1.6"/><circle cx="16" cy="15" r="1.6"/>',
+  estates: '<path d="M3 21h18M5 21V10l7-5 7 5v11"/><path d="M9 21v-6h6v6M9 11h.01M15 11h.01"/>',
+  flip: '<rect x="3" y="5" width="11" height="15" rx="2"/><path d="M10 5l1-1.5a2 2 0 0 1 2.7-.7l5.6 3.3a2 2 0 0 1 .7 2.7L15 18"/><path d="M8.5 10.5v4"/>',
+  words: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M5.5 9l1.5-4 1.5 4M6 7.5h2M15.5 15h2.5l-2.5 4h2.5"/>',
+  rows: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="7" cy="7" r="1.6"/><circle cx="10.3" cy="10.3" r="1.6"/><circle cx="13.6" cy="13.6" r="1.6"/><circle cx="17" cy="17" r="1.6"/>',
+  ludo: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18M12 3v18"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/>',
+  snakes: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 18c0-4 4-3 4-7s4-3 4-6"/><path d="M15 18l2-12M18 18l2-12M15.5 15h3M16.4 10h3"/>',
+  ttt: '<path d="M9 3v18M15 3v18M3 9h18M3 15h18"/><path d="M4.5 4.5l3 3M7.5 4.5l-3 3"/><circle cx="12" cy="12" r="1.6"/>',
 };
 async function renderKayakers(main) {
   main.innerHTML = `<header class="top"><div class="t"><h2>Kayakers</h2><small>Joint visuals and games for the Kayak team - work together, then take a break together</small></div><button class="btn p" id="kxNewB">${ic("plus")}<span class="lbl">New whiteboard</span></button></header>
     <div class="body" id="body"><div class="mt-wrap kx-hub">
       <section><h3 class="sec">Joint visuals</h3><div class="kx-grid" id="kxBoards"><p class="mk-small">Loading…</p></div></section>
-      <section><h3 class="sec">Games</h3><div class="kx-games">${["chess", "carrom", "four"].map((k) => `<div class="kx-game" style="--c:${KX[k][1]}"><span class="kx-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${KXI[k]}</svg></span><b>${KX[k][0]}</b><small>${KX[k][2]}</small><div class="kx-btns"><button class="btn sm p" data-new="${k}" data-mode="team">${ic("people")} With colleagues</button><button class="btn sm" data-new="${k}" data-mode="ai">${ic("ai")} vs Kayak AI</button></div></div>`).join("")}</div>
+      <section><h3 class="sec">Games</h3><p class="mk-small" style="margin:-4px 0 12px">All games are designed and developed by Kayak.</p><div class="kx-games">${["chess", "carrom", "four", "estates", "flip", "words", "rows", "ludo", "snakes", "ttt"].map((k) => `<div class="kx-game" style="--c:${KX[k][1]}"><span class="kx-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${KXI[k]}</svg></span><b>${KX[k][0]}</b><small>${KX[k][2]}</small><div class="kx-btns"><button class="btn sm p" data-new="${k}" data-mode="team">${ic("people")} With colleagues</button><button class="btn sm" data-new="${k}" data-mode="ai">${ic("ai")} vs Kayak AI</button></div></div>`).join("")}</div>
         <h3 class="sec" style="margin-top:22px">Recent games</h3><div class="kx-grid" id="kxGames"></div></section>
     </div></div>`;
   const create = async (kind, mode, title) => {

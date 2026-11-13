@@ -32,7 +32,7 @@ function drawPeople(people) {
   const { space, me } = await r.json();
   document.title = `${space.title} · Kayakers`;
   $("#kxTitle").textContent = space.title;
-  const kindName = { board: "Whiteboard", chess: "Chess", carrom: "Carrom", four: "Kayak Four" }[space.kind];
+  const kindName = { board: "Whiteboard", chess: "Chess", carrom: "Carrom", four: "Kayak Four", snakes: "Snakes & Ladders", ludo: "Ludo", ttt: "Tic Tac Toe", estates: "Kayak Estates", flip: "Kayak Flip", words: "Kayak Wordsmith", rows: "Kayak Rows" }[space.kind];
   $("#kxSub").textContent = `${kindName}${space.kind !== "board" ? (space.mode === "ai" ? " · vs Kayak AI" : " · with colleagues") : ""} · by ${space.created_by_name || "a colleague"}`;
   $("#kxShare").onclick = async () => { try { await navigator.clipboard.writeText(location.href); toast("Link copied. Colleagues who open it join you live."); } catch { toast(location.href, 8000); } };
   const mod = await import(`/assets/kayakers/${space.kind}.js`);

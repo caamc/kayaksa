@@ -690,7 +690,7 @@ ws.get("/planner", async (c) => {
 ws.get("/usage", employeeOnly, async (c) => c.json(usageView(await readUsage(c.env), c.env)));
 
 // ------------------------------------------------------------------ Kayakers: whiteboards and games (Kayak team only)
-const SPACE_KINDS = ["board", "chess", "carrom", "four"];
+const SPACE_KINDS = ["board", "chess", "carrom", "four", "snakes", "ludo", "ttt", "estates", "flip", "words", "rows"];
 ws.get("/kayakers", employeeOnly, async (c) => {
   const { results } = await c.env.DB.prepare("SELECT id, kind, title, mode, created_by, created_by_name, created_at, updated_at FROM spaces WHERE archived = 0 ORDER BY updated_at DESC LIMIT 200").all<any>();
   return c.json({ spaces: results });
@@ -699,7 +699,7 @@ ws.post("/kayakers", employeeOnly, async (c) => {
   const m = me(c);
   const b = await readJson<any>(c, 2048);
   const kind = SPACE_KINDS.includes(b.kind) ? b.kind : "board";
-  const def = { board: "Whiteboard", chess: "Chess", carrom: "Carrom", four: "Kayak Four" } as Record<string, string>;
+  const def = { board: "Whiteboard", chess: "Chess", carrom: "Carrom", four: "Kayak Four", snakes: "Snakes & Ladders", ludo: "Ludo", ttt: "Tic Tac Toe", estates: "Kayak Estates", flip: "Kayak Flip", words: "Kayak Wordsmith", rows: "Kayak Rows" } as Record<string, string>;
   const title = str(b.title, 80) || `${def[kind]} · ${m.name.split(" ")[0]}`;
   const id = id8();
   await c.env.DB.prepare("INSERT INTO spaces (id, kind, title, mode, created_by, created_by_name, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)")

@@ -6,7 +6,7 @@
 // Message types from a browser:
 //   { t: "op", op }        a durable change: saved, numbered, sent to everyone (whiteboard ops, game moves)
 //   { t: "live", data }    a passing event (cursor, stroke in progress): sent to the others, not saved
-//   { t: "seat", seat }    take a seat in a game ("w" / "b" / "p1" / "p2"), if it is free
+//   { t: "seat", seat }    take a seat in a game ("w" / "b" / "p1" … "p6"), if it is free
 //   { t: "reset" }         clear the board or start a new game (the space's owner, or a seated player)
 export interface SpaceEnv { DB: D1Database }
 interface Who { id: string; name: string; color: string; seat?: string }
@@ -71,7 +71,7 @@ export class Space {
     if (m.t === "seat") {
       const seats = this.seats();
       const k = String(m.seat || "");
-      if (!/^(w|b|p1|p2)$/.test(k)) return;
+      if (!/^(w|b|p[1-6])$/.test(k)) return;
       if (seats[k] && seats[k].id !== who.member) return this.send(ws, { t: "error", message: `${seats[k].name} already has that seat.` });
       for (const [s, v] of Object.entries(seats)) if (v.id === who.member && s !== k) delete seats[s];
       seats[k] = { id: who.member, name: who.name };
