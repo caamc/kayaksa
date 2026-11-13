@@ -484,3 +484,12 @@ dialog:has(.keys){width:min(860px,calc(100vw - 32px))}
 :root[data-theme=dark].high-contrast{--line:#9FB8BF;--line-strong:#C9D8DC;--muted:#DCE7EA}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]) .pill.ok{background:#123A2C;color:#7FDDB0;border-color:#1F5A43}:root:not([data-theme=light]) .pill.warn{background:#3A2A0E;color:#F5C46D;border-color:#5A4214}:root:not([data-theme=light]) .pf-ooo{background:#2A2140;color:#CDBDF0}:root:not([data-theme=light]) .mecard{background:var(--surface)}}
 :root[data-theme=dark] .pill.ok{background:#123A2C;color:#7FDDB0;border-color:#1F5A43}:root[data-theme=dark] .pill.warn{background:#3A2A0E;color:#F5C46D;border-color:#5A4214}:root[data-theme=dark] .pf-ooo{background:#2A2140;color:#CDBDF0}
+/* Channels: announcements, pins, plugins */
+.msg.announce{margin:10px 16px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,color-mix(in srgb,#EE9B1E 12%,var(--surface)),var(--surface));border:1px solid color-mix(in srgb,#EE9B1E 45%,var(--line))}
+.ann-h span{display:inline-flex;gap:6px;align-items:center;font:800 .7rem var(--sans);letter-spacing:.12em;text-transform:uppercase;color:#9C630E}.ann-h .ico{width:14px;height:14px}
+.ann-h h4{margin:4px 0 6px;font:800 1.15rem var(--display)}
+.pin-tag{display:inline-block;font:700 .72rem var(--sans);color:var(--muted);margin-bottom:2px}
+.msg.pinned{box-shadow:inset 3px 0 0 #EE9B1E}
+.plug-logo.sm{width:22px;height:22px;border-radius:6px;font-size:.75rem;display:inline-grid;place-items:center;color:#fff}
+.act.saved{cursor:pointer}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ann-h span{color:#F5C46D}}:root[data-theme=dark] .ann-h span{color:#F5C46D}

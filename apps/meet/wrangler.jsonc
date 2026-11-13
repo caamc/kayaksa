@@ -12,7 +12,6 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }, { "tag": "v2", "new_sqlite_classes": ["Space"] }],
   "r2_buckets": [{ "binding": "REC", "bucket_name": "kayaksa-meet" }],
   "ai": { "binding": "AI" },
-  "triggers": { "crons": ["23 21 * * *"] },
   "observability": { "enabled": true },
   // The day of the month Cloudflare bills on; the monthly Realtime usage limits reset on it (src/usage.ts).
   "vars": { "USAGE_CYCLE_DAY": "1" }

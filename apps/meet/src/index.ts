@@ -13,7 +13,7 @@ export { Room, Space };
 import type { Env } from "./env";
 import { auth, currentMember, needMember } from "./auth";
 import { ws, serveFile, mayJoin } from "./workspace";
-import { people, pruneActivity, castPublic } from "./people";
+import { people, castPublic } from "./people";
 import { calApi, calPages } from "./calendar";
 import { gate as usageGate } from "./usage";
 type C = { Bindings: Env; Variables: { claims: MeetClaims; meeting: any } };
@@ -457,8 +457,4 @@ app.get("/cast", (c) => page(c, "/cast.html"));
 app.get("/:room", (c) => (ROOM_RE.test(c.req.param("room")) ? page(c, "/room.html") : c.env.ASSETS.fetch(c.req.raw)));
 app.all("*", (c) => c.env.ASSETS.fetch(c.req.raw));
 
-export default {
-  fetch: app.fetch,
-  // Daily clean-up: Activity older than 90 days, and calls left ringing.
-  async scheduled(_e: ScheduledEvent, env: Env, ctx: ExecutionContext) { ctx.waitUntil(pruneActivity(env)); },
-};
+export default app;

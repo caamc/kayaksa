@@ -244,6 +244,8 @@ function renderMain() {
       <button class="btn s" id="meetNow" title="Start a meeting with everyone here">${ic("video")}<span class="lbl">Meet now</span></button>
       ${S.ai ? `<button class="btn" id="sum" title="Kayak AI: summarise this conversation">${ic("ai")}<span class="lbl">Recap</span></button>` : ""}
       ${ch.kind !== "dm" ? `<button class="btn ghost" id="ppl" aria-label="People">${ic("people")}<span class="lbl">${members}</span></button>` : ""}
+      <button class="ib" id="chPins" aria-label="Pinned messages" title="Pinned messages">📌</button>
+      ${Object.values(S.xp?.plugins || {}).some(Boolean) ? `<button class="ib" id="chPlug" aria-label="Plugins" title="Plugins">${ic("plug")}</button>` : ""}
       <button class="ib" id="chMore" aria-label="More">${ic("more")}</button>
     </header>
     ${ch.kind !== "dm" ? `<div class="tabs" role="tablist">${[["chat", "Conversation"], ["tasks", ch.kind === "project" ? "Board" : "Tasks"], ["files", "Files"]].map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join("")}</div>` : ""}
@@ -254,6 +256,8 @@ function renderMain() {
   $("#sum") && ($("#sum").onclick = () => summarise());
   $("#ppl") && ($("#ppl").onclick = () => { S.panel = S.panel === "people" ? null : "people"; renderPanel(); });
   $("#chMore").onclick = (e) => channelMenu(e.currentTarget);
+  $("#chPins").onclick = () => { S.panel = S.panel === "pins" ? null : "pins"; renderPanel(); };
+  $("#chPlug") && ($("#chPlug").onclick = (e) => X.pluginMenu(e.currentTarget, ch));
   $$("[data-tab]", main).forEach((b) => (b.onclick = () => openChannel(ch.id, b.dataset.tab)));
   if (S.tab === "chat") { renderMessages(); wireComposer("main"); }
   else if (S.tab === "tasks") renderBoard($("#body"));
@@ -288,8 +292,10 @@ function msgHtml(m, prev, inThread = false) {
   const tr = S.trans[m.id];
   const file = m.kind === "file" && m.meta ? `<div class="card"><span class="ci f">${ic("file")}</span><div><b>${esc(m.meta.name)}</b><small>${fmtSize(m.meta.size)}</small></div><a class="btn sm" href="/files/${esc(m.meta.file)}" download>${ic("download")} Download</a></div>${/^image\/(png|jpeg|gif|webp)$/.test(m.meta.type) ? `<img class="imgprev" loading="lazy" src="/files/${esc(m.meta.file)}?inline=1" alt="${esc(m.meta.name)}">` : ""}` : "";
   const reacts = Object.entries(m.reactions || {}).map(([e, ids]) => `<button data-react="${m.id}" data-e="${e}" class="${ids.includes(S.me.id) ? "mine" : ""}" title="${esc(ids.map((i) => person(i)?.name || "Someone").join(", "))}">${e} ${ids.length}</button>`).join("");
-  return `<div class="msg${cont ? " cont" : ""}" data-id="${m.id}">${av(m.member_id, m.author)}<div>
-    ${cont ? "" : `<div class="who"><b>${esc(m.author || "Kayak")}</b>${person(m.member_id)?.kind === "client" ? `<span class="ext">${esc(person(m.member_id)?.org || "Client")}</span>` : ""}<time datetime="${m.created_at}">${fmtTime(m.created_at)}</time></div>`}
+  const ann = m.meta?.announce;
+  return `<div class="msg${cont && !ann ? " cont" : ""}${ann ? " announce" : ""}${m.pinned ? " pinned" : ""}" data-id="${m.id}">${av(m.member_id, m.author)}<div>
+    ${ann ? `<div class="ann-h"><span>${ic("bell", "ico")} Announcement</span><h4>${esc(m.meta.title)}</h4></div>` : ""}${m.pinned ? `<span class="pin-tag" title="Pinned by ${esc(m.pinned.by || "")}">📌 Pinned</span>` : ""}
+    ${cont && !ann ? "" : `<div class="who"><b>${esc(m.author || "Kayak")}</b>${person(m.member_id)?.kind === "client" ? `<span class="ext">${esc(person(m.member_id)?.org || "Client")}</span>` : ""}<time datetime="${m.created_at}">${fmtTime(m.created_at)}</time></div>`}
     ${m.deleted ? `<div class="tx" style="color:var(--faint);font-style:italic">This message was deleted.</div>` : `${m.kind === "file" && m.body === m.meta?.name ? "" : `<div class="tx">${fmt(m.body)}${m.edited_at && m.kind === "text" && !Object.keys(m.reactions || {}).length ? ' <span class="edited">(edited)</span>' : ""}</div>`}${file}`}
     ${tr ? `<div class="tr">${esc(tr.text)}<small>Translated to ${esc(LANGS[tr.to] || tr.to)} by Kayak AI</small></div>` : ""}
     ${reacts ? `<div class="reacts">${reacts}</div>` : ""}
@@ -336,12 +342,16 @@ async function translate(id) {
 }
 function msgMenu(anchor, id) {
   const m = findMsg(id);
+  const mine = m.member_id === S.me.id;
   menu(anchor, [
-    ["Edit", () => editMsg(m)],
+    ...(mine && m.kind === "text" ? [["Edit", () => editMsg(m)]] : []),
+    ...(!m.parent_id && m.kind !== "system" ? [[m.pinned ? "📌 Unpin" : "📌 Pin to the conversation", async () => { try { await post(`/messages/${id}/pin`, { pin: !m.pinned }); m.pinned = m.pinned ? null : { by: S.me.name, at: new Date().toISOString() }; rerender(); toast(m.pinned ? "Pinned for everyone in this conversation." : "Unpinned."); } catch (x) { toast(x.message); } }]] : []),
+    ["🔖 Save for later", async () => { await post(`/messages/${id}/save`, { save: true }); toast("Saved. Find it under Activity → Saved."); }],
     ["Copy text", () => copy(m.body)],
+    ["Copy link", () => copy(`${location.origin}/app#c/${S.cur?.id}`, "Link copied")],
     "-",
-    ['<span style="color:var(--danger)">Delete</span>', async () => { await api(`/messages/${id}`, { method: "DELETE" }); m.deleted = true; m.body = ""; rerender(); }],
-  ]);
+    ...(mine ? [['<span style="color:var(--danger)">Delete</span>', async () => { await api(`/messages/${id}`, { method: "DELETE" }); m.deleted = true; m.body = ""; rerender(); }]] : []),
+  ].filter((x, i, a) => !(x === "-" && (i === a.length - 1 || a[i - 1] === "-"))));
 }
 function editMsg(m) {
   dialog(`<form><h3>Edit message</h3><div class="fld"><textarea id="ed" rows="5" maxlength="8000">${esc(m.body)}</textarea></div><div class="foot"><button class="btn" data-close>Cancel</button><button class="btn p">Save</button></div></form>`, (d) => {
@@ -439,6 +449,14 @@ function renderPanel() {
     $(".pb", p).scrollTop = 1e9;
     $("#tsum") && ($("#tsum").onclick = () => summarise(S.thread.id));
   } else if (S.panel === "people") return renderPeoplePanel(p, head);
+  else if (S.panel === "pins") {
+    p.innerHTML = head("Pinned") + `<div class="pb msgs" id="pinBody"><p class="mk-small" style="padding:16px">Loading…</p></div>`;
+    api(`/channels/${S.cur.id}/pins`).then((r) => {
+      const b = $("#pinBody"); if (!b) return;
+      b.innerHTML = r.pins.length ? r.pins.map((m) => msgHtml(m, null, true)).join("") : `<div class="empty"><h3>Nothing pinned yet</h3><p>Pin key decisions, links and files from a message's ⋯ menu so everyone can find them.</p></div>`;
+      wireMessages(b);
+    }).catch((e) => toast(e.message));
+  }
   else if (S.panel === "summary") {
     p.innerHTML = head("Kayak AI recap") + `<div class="pb"><div class="pad" id="sumBody"><p class="mk-small">Reading the conversation…</p></div></div>`;
   }
@@ -551,6 +569,8 @@ function channelMenu(anchor) {
   const items = [];
   if (ch.kind !== "dm") items.push([`${ic("people")} People and apps`, () => { S.panel = "people"; renderPanel(); }]);
   items.push([`${ic("cal")} Schedule a meeting`, () => newMeeting(ch)]);
+  if (ch.kind !== "dm") items.push([`${ic("bell")} Post an announcement`, () => announceDialog(ch)]);
+  items.push([`${ic("bell")} Notify me: ${ch.muted ? "off" : ch.notify === "mentions" ? "@mentions only" : "everything"}`, () => notifyDialog(ch)]);
   if (S.ai) items.push([`${ic("ai")} Recap since I last read`, () => summarise(0, ch.last_read)]);
   items.push([`${ic("bell")} ${ch.muted ? "Unmute" : "Mute"} notifications`, async () => { await post(`/channels/${ch.id}/mute`, { muted: !ch.muted }); ch.muted = !ch.muted; toast(ch.muted ? "Muted. You won't be notified about this conversation." : "Unmuted."); renderSide(); }]);
   if (ch.role === "owner" || ch.created_by === S.me.id) {
@@ -558,6 +578,21 @@ function channelMenu(anchor) {
   }
   if (ch.kind !== "dm") items.push("-", [`Leave`, async () => { if (!confirm(`Leave ${ch.name}?`)) return; await post(`/channels/${ch.id}/leave`); await refreshBoot(); S.cur = null; go("chat"); }]);
   menu(anchor, items);
+}
+function announceDialog(ch) {
+  dialog(`<form><h3>Post an announcement</h3><p>Announcements stand out in the conversation and go to everyone's Activity.</p>
+    <div class="fld"><label for="anT">Headline</label><input id="anT" maxlength="120" required placeholder="e.g. Office closed on Friday"></div>
+    <div class="fld"><label for="anB">Details</label><textarea id="anB" maxlength="8000" required></textarea></div>
+    <div class="foot"><button class="btn" data-close>Cancel</button><button class="btn p">Post</button></div></form>`, (d) => {
+    $("form", d).onsubmit = async (e) => { e.preventDefault(); try { await post(`/channels/${ch.id}/messages`, { body: $("#anB", d).value.trim(), title: $("#anT", d).value.trim(), announce: true }); d.close(); pollOnce(); } catch (x) { toast(x.message); } };
+  });
+}
+function notifyDialog(ch) {
+  const cur = ch.muted ? "off" : ch.notify === "mentions" ? "mentions" : "all";
+  dialog(`<form><h3>Notifications for ${esc(chName(ch))}</h3><div class="pick">${[["all", "Everything", "New messages, replies and @mentions"], ["mentions", "@mentions only", "Only when someone mentions you or posts an announcement"], ["off", "Off", "Nothing - the conversation stays in your list"]].map(([v, l, h]) => `<label class="pick-row"><input type="radio" name="nl" value="${v}" ${cur === v ? "checked" : ""}><span><b>${l}</b><br><small class="mute">${h}</small></span></label>`).join("")}</div>
+    <div class="foot"><button class="btn" data-close>Cancel</button><button class="btn p">Save</button></div></form>`, (d) => {
+    $("form", d).onsubmit = async (e) => { e.preventDefault(); const level = $("input[name=nl]:checked", d).value; await post(`/channels/${ch.id}/notify`, { level }); ch.muted = level === "off"; ch.notify = level === "off" ? "all" : level; d.close(); toast("Saved."); };
+  });
 }
 function editChannel() {
   const ch = S.cur;
@@ -932,8 +967,9 @@ async function pollOnce() {
   if (r.tasksChanged && S.tab === "tasks" && S.cur) renderBoard($("#body"));
 }
 function alertFor(m, ch) {
-  const mention = m.body.includes("@" + S.me.name);
+  const mention = m.body.includes("@" + S.me.name) || !!m.meta?.announce;
   if (ch.kind !== "dm" && !mention) return;
+  if (ch.notify === "mentions" && !mention) return;
   if (!K.shouldNotify(mention ? "mention" : "dm") || !S.xp.notifyDesktop) return;
   const title = ch.kind === "dm" ? m.author : `${m.author} in #${ch.name}`;
   const body = !S.xp.notifyPreview ? "New message" : m.kind === "file" ? "Shared a file" : m.body.slice(0, 160);

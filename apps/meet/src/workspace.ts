@@ -17,7 +17,7 @@ import { needMember, employeeOnly, issueInvite, resetClient, now, type Member } 
 import type { Env } from "./env";
 import { pushMeeting, removeMeeting, syncMember } from "./calendar";
 import { read as readUsage, view as usageView } from "./usage";
-import { addActivity, messageActivity, ringing, statusOf } from "./people";
+import { addActivity, messageActivity, announceActivity, ringing, statusOf } from "./people";
 
 type V = { Bindings: Env; Variables: { member: Member } };
 export const ws = new Hono<V>();
@@ -67,7 +67,7 @@ ws.get("/boot", async (c) => {
   const m = me(c);
   const D = c.env.DB;
   const { results: chans } = await D.prepare(`
-    SELECT ch.id, ch.name, ch.kind, ch.topic, ch.private, ch.external, ch.due, ch.archived, ch.created_by, cm.role, cm.muted, cm.last_read,
+    SELECT ch.id, ch.name, ch.kind, ch.topic, ch.private, ch.external, ch.due, ch.archived, ch.created_by, cm.role, cm.muted, cm.notify, cm.last_read,
       (SELECT COUNT(*) FROM messages x WHERE x.channel_id = ch.id AND x.id > cm.last_read AND x.parent_id IS NULL AND x.deleted = 0 AND (x.member_id IS NULL OR x.member_id != ?)) unread,
       (SELECT MAX(id) FROM messages x WHERE x.channel_id = ch.id) last_id,
       (SELECT GROUP_CONCAT(member_id) FROM channel_members y WHERE y.channel_id = ch.id) member_ids
@@ -102,7 +102,7 @@ ws.get("/poll", async (c) => {
     SELECT x.*, mb.name author FROM messages x LEFT JOIN members mb ON mb.id = x.member_id
     WHERE x.id > ? AND x.channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?) ORDER BY x.id LIMIT 200`).bind(since, m.id).all<any>();
   const edits = (await c.env.DB.prepare(`SELECT x.*, mb.name author FROM messages x LEFT JOIN members mb ON mb.id = x.member_id
-    WHERE x.edited_at > ? AND x.id <= ? AND x.channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?) LIMIT 100`).bind(at, since, m.id).all<any>()).results;
+    WHERE (x.edited_at > ? OR x.touched_at > ?) AND x.id <= ? AND x.channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?) LIMIT 100`).bind(at, at, since, m.id).all<any>()).results;
   const tasks = await c.env.DB.prepare("SELECT COUNT(*) n FROM tasks WHERE updated_at > ? AND channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?)").bind(at, m.id).first<any>();
   const chans = await c.env.DB.prepare("SELECT COUNT(*) n FROM channel_members WHERE member_id = ? AND added_at > ?").bind(m.id, at).first<any>();
   const act = await c.env.DB.prepare("SELECT COUNT(*) n, MAX(id) top FROM activity WHERE member_id = ? AND read = 0").bind(m.id).first<any>();
@@ -110,7 +110,7 @@ ws.get("/poll", async (c) => {
   return c.json({ activity: { unread: act?.n || 0, top: act?.top || 0 }, ring, messages: results.map(pub), edits: edits.map(pub), tasksChanged: (tasks?.n || 0) > 0, channelsChanged: (chans?.n || 0) > 0, since: results.length ? results[results.length - 1].id : since, at: now() });
 });
 
-const pub = (x: any) => ({ id: x.id, channel_id: x.channel_id, member_id: x.member_id, author: x.member_id ? x.author || "Former participant" : null, parent_id: x.parent_id, body: x.deleted ? "" : x.body, kind: x.kind, meta: x.meta ? JSON.parse(x.meta) : null, reactions: x.reactions ? JSON.parse(x.reactions) : {}, created_at: x.created_at, edited_at: x.edited_at, deleted: !!x.deleted, replies: x.replies || 0 });
+const pub = (x: any) => ({ id: x.id, channel_id: x.channel_id, member_id: x.member_id, author: x.member_id ? x.author || "Former participant" : null, parent_id: x.parent_id, body: x.deleted ? "" : x.body, kind: x.kind, meta: x.meta ? JSON.parse(x.meta) : null, reactions: x.reactions ? JSON.parse(x.reactions) : {}, created_at: x.created_at, edited_at: x.edited_at, deleted: !!x.deleted, replies: x.replies || 0, pinned: x.pinned_at ? { by: x.pinned_by, at: x.pinned_at } : null });
 
 // ------------------------------------------------------------------ channels
 ws.post("/channels", employeeOnly, async (c) => {
@@ -225,6 +225,46 @@ ws.post("/channels/:id/mute", async (c) => {
   await c.env.DB.prepare("UPDATE channel_members SET muted = ? WHERE channel_id = ? AND member_id = ?").bind(b.muted ? 1 : 0, c.req.param("id"), me(c).id).run();
   return c.json({ ok: true });
 });
+// Notification level per conversation: everything, @mentions only, or off.
+ws.post("/channels/:id/notify", async (c) => {
+  const b = await readJson<any>(c, 256);
+  const level = ["all", "mentions", "off"].includes(b.level) ? b.level : "all";
+  await c.env.DB.prepare("UPDATE channel_members SET notify = ?, muted = ? WHERE channel_id = ? AND member_id = ?").bind(level === "off" ? "all" : level, level === "off" ? 1 : 0, c.req.param("id"), me(c).id).run();
+  return c.json({ ok: true, level });
+});
+// Pinned messages: anyone in the conversation can pin; everyone sees the pins.
+ws.post("/messages/:id/pin", async (c) => {
+  const { m, msg } = await ownMessage(c);
+  if (msg.deleted || msg.parent_id || msg.kind === "system") throw err("This message can't be pinned.");
+  const b = await readJson<any>(c, 256);
+  if (b.pin) {
+    const n: any = await c.env.DB.prepare("SELECT COUNT(*) n FROM messages WHERE channel_id = ? AND pinned_at IS NOT NULL").bind(msg.channel_id).first();
+    if ((n?.n || 0) >= 50) throw err("A conversation can have up to 50 pinned messages. Unpin one first.");
+    await c.env.DB.prepare("UPDATE messages SET pinned_by = ?, pinned_at = ?, touched_at = ? WHERE id = ?").bind(m.name, now(), now(), msg.id).run();
+    await sysMsg(c.env, msg.channel_id, `${m.name} pinned a message.`);
+  } else await c.env.DB.prepare("UPDATE messages SET pinned_by = NULL, pinned_at = NULL, touched_at = ? WHERE id = ?").bind(now(), msg.id).run();
+  return c.json({ ok: true });
+});
+ws.get("/channels/:id/pins", async (c) => {
+  const x = await channelFor(c, c.req.param("id"));
+  const { results } = await c.env.DB.prepare("SELECT x.*, mb.name author FROM messages x LEFT JOIN members mb ON mb.id = x.member_id WHERE x.channel_id = ? AND x.pinned_at IS NOT NULL AND x.deleted = 0 ORDER BY x.pinned_at DESC LIMIT 50").bind(x.ch.id).all<any>();
+  return c.json({ pins: results.map(pub) });
+});
+// Saved messages: a private bookmark list for each person.
+ws.post("/messages/:id/save", async (c) => {
+  const { m, msg } = await ownMessage(c);
+  const b = await readJson<any>(c, 256);
+  if (b.save) await c.env.DB.prepare("INSERT OR IGNORE INTO saved_messages (member_id, message_id, at) VALUES (?,?,?)").bind(m.id, msg.id, now()).run();
+  else await c.env.DB.prepare("DELETE FROM saved_messages WHERE member_id = ? AND message_id = ?").bind(m.id, msg.id).run();
+  return c.json({ ok: true });
+});
+ws.get("/saved", async (c) => {
+  const m = me(c);
+  const { results } = await c.env.DB.prepare(`SELECT x.*, mb.name author, ch.name channel_name, ch.kind channel_kind FROM saved_messages s JOIN messages x ON x.id = s.message_id
+    LEFT JOIN members mb ON mb.id = x.member_id JOIN channels ch ON ch.id = x.channel_id
+    WHERE s.member_id = ? AND x.deleted = 0 AND x.channel_id IN (SELECT channel_id FROM channel_members WHERE member_id = ?) ORDER BY s.at DESC LIMIT 200`).bind(m.id, m.id).all<any>();
+  return c.json({ saved: results.map((r) => ({ ...pub(r), channel_name: r.channel_name, channel_kind: r.channel_kind })) });
+});
 
 ws.post("/dm", async (c) => {
   const m = me(c);
@@ -271,12 +311,14 @@ ws.post("/channels/:id/messages", async (c) => {
   if (!body) throw err("Write a message first.");
   if (!(await rateLimit(c.env.DB, `msg:${m.id}`, 60, 60))) throw err("You're sending messages very quickly. Wait a moment.", 429);
   const parent = Number(b.parent_id) || null;
+  // Announcements: a headline post in a channel or project, highlighted for everyone and sent to their Activity.
+  const announce = !parent && x.ch.kind !== "dm" && b.announce ? { announce: true, title: str(b.title, 120) || "Announcement" } : null;
   if (parent) {
     const p = await c.env.DB.prepare("SELECT id FROM messages WHERE id = ? AND channel_id = ? AND parent_id IS NULL").bind(parent, x.ch.id).first();
     if (!p) throw err("That thread no longer exists.", 404);
   }
-  const r = await c.env.DB.prepare("INSERT INTO messages (channel_id, member_id, parent_id, body, created_at) VALUES (?,?,?,?,?) RETURNING id").bind(x.ch.id, m.id, parent, body, now()).first<any>();
-  c.executionCtx.waitUntil(messageActivity(c.env, m, x.ch, r.id, body, parent).catch(() => {}));
+  const r = await c.env.DB.prepare("INSERT INTO messages (channel_id, member_id, parent_id, body, meta, created_at) VALUES (?,?,?,?,?,?) RETURNING id").bind(x.ch.id, m.id, parent, body, announce ? JSON.stringify(announce) : null, now()).first<any>();
+  c.executionCtx.waitUntil((announce ? announceActivity(c.env, m, x.ch, r.id, announce.title) : messageActivity(c.env, m, x.ch, r.id, body, parent)).catch(() => {}));
   await c.env.DB.prepare("UPDATE channel_members SET last_read = ? WHERE channel_id = ? AND member_id = ?").bind(r.id, x.ch.id, m.id).run();
   return c.json({ id: r.id });
 });

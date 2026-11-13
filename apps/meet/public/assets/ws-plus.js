@@ -83,12 +83,24 @@ export function install(K) {
   async function renderActivity(main) {
     main.innerHTML = `<header class="top"><div class="t"><h2>${ic("activity")} Activity</h2><small>Mentions, replies, reactions, calls, invitations and tasks, in one place.</small></div>
       <button class="btn sm" id="actAll">${ic("check")}<span class="lbl">Mark all read</span></button></header>
-      <div class="act-filters" role="tablist">${[["all", "All"], ["unread", "Unread"], ["mention", "Mentions"], ["reply", "Replies"], ["reaction", "Reactions"], ["missed", "Missed calls"], ["meeting", "Meetings"], ["task", "Tasks"]].map(([k, l]) => `<button role="tab" data-f="${k}" aria-selected="${S.act.filter === k}">${l}</button>`).join("")}</div>
+      <div class="act-filters" role="tablist">${[["all", "All"], ["unread", "Unread"], ["mention", "Mentions"], ["reply", "Replies"], ["reaction", "Reactions"], ["missed", "Missed calls"], ["meeting", "Meetings"], ["task", "Tasks"], ["saved", "🔖 Saved"]].map(([k, l]) => `<button role="tab" data-f="${k}" aria-selected="${S.act.filter === k}">${l}</button>`).join("")}</div>
       <div class="body act-list" id="actList"><div class="empty"><p>Loading…</p></div></div>`;
     $$("[data-f]", main).forEach((b) => (b.onclick = () => { S.act.filter = b.dataset.f; renderActivity(main); }));
     $("#actAll").onclick = async () => { await wpost("/activity/read", { all: true }); S.act.unread = 0; K.updateRail(); renderActivity(main); };
+    if (S.act.filter === "saved") return drawSaved();
     try { await loadActivity(); } catch (e) { $("#actList").innerHTML = `<div class="empty"><p>${esc(e.message)}</p></div>`; return; }
+    K.updateRail();
     drawActivity();
+  }
+  async function drawSaved() {
+    const list = $("#actList");
+    let r; try { r = await api("/saved"); } catch (e) { list.innerHTML = `<div class="empty"><p>${esc(e.message)}</p></div>`; return; }
+    if (!r.saved.length) { list.innerHTML = `<div class="empty"><span class="act-big">🔖</span><h3>Nothing saved yet</h3><p>Choose ⋯ → Save for later on any message to keep it here. Only you see your saved messages.</p></div>`; return; }
+    list.innerHTML = r.saved.map((m) => `<div class="act saved" data-s="${m.id}" data-ch="${esc(m.channel_id)}" role="button" tabindex="0"><span class="act-av">${K.av(m.member_id, m.author)}</span>
+      <span class="act-t"><b>${esc(m.author || "")} · ${m.channel_kind === "dm" ? "Direct message" : "#" + esc(m.channel_name)}</b><span>${esc(m.meta?.announce ? m.meta.title + " - " + m.body : m.body)}</span></span>
+      <span class="row"><time>${ago(m.created_at)}</time><button class="ib" data-un="${m.id}" aria-label="Remove from saved">${ic("x")}</button></span></div>`).join("");
+    $$("[data-s]", list).forEach((b) => (b.onclick = (e) => { if (e.target.closest("[data-un]")) return; K.openChannel(b.dataset.ch); }));
+    $$("[data-un]", list).forEach((b) => (b.onclick = async () => { await post(`/messages/${b.dataset.un}/save`, { save: false }); drawSaved(); }));
   }
   function drawActivity() {
     const list = $("#actList"); if (!list) return;
@@ -665,6 +677,15 @@ export function install(K) {
   return {
     views: { activity: renderActivity, calls: renderCalls, settings: (m) => { K.onLeaveSettings?.(); K.onLeaveSettings = null; return renderSettings(m); } },
     meMenu, statusDialog, openSettings, startCall,
+    pluginMenu(anchor, ch) {
+      const on = S.xp.plugins || {};
+      const items = PLUGINS.filter((p) => on[p.id] && p.url && (!p.emp || K.isEmp())).map((p) => [`<span class="plug-logo sm" style="background:${p.color}">${esc(p.logo)}</span> ${esc(p.name)}`, () => {
+        dialog(`<form><h3>${esc(p.name)}</h3><p>${esc(p.desc)}</p><div class="foot"><a class="btn" href="${p.url}" target="_blank" rel="noopener">Open ${esc(p.name)}</a><button class="btn p" type="button" id="plShare">Share a link here</button></div></form>`, (d) => {
+          $("#plShare", d).onclick = async () => { try { await post(`/channels/${ch.id}/messages`, { body: `${p.name}: ${p.url}` }); d.close(); toast("Shared."); } catch (x) { toast(x.message); } };
+        });
+      }]);
+      menu(anchor, [...items, "-", [`${ic("gear")} Manage plugins`, () => openSettings("plugins")]]);
+    },
     onPoll(r) {
       if (r.activity) {
         const grew = r.activity.top > S.act.top && S.act.top;

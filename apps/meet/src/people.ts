@@ -64,7 +64,8 @@ export async function addActivity(env: Env, to: string[], e: { kind: string; act
 
 /** Activity for a new message: @mentions, replies in threads you're part of, and direct messages. */
 export async function messageActivity(env: Env, author: Member, ch: any, msgId: number, body: string, parent: number | null) {
-  const { results } = await env.DB.prepare("SELECT m.id, m.name FROM channel_members cm JOIN members m ON m.id = cm.member_id WHERE cm.channel_id = ? AND cm.muted = 0").bind(ch.id).all<any>();
+  const { results } = await env.DB.prepare("SELECT m.id, m.name, cm.notify FROM channel_members cm JOIN members m ON m.id = cm.member_id WHERE cm.channel_id = ? AND cm.muted = 0").bind(ch.id).all<any>();
+  const quietIds = new Set(results.filter((p) => p.notify === "mentions").map((p) => p.id)); // "@mentions only"
   const snippet = body.replace(/\s+/g, " ").slice(0, 140);
   const where = ch.kind === "dm" ? "" : ` in #${ch.name}`;
   const everyone = /(^|\s)@(channel|everyone)\b/i.test(body) && ch.kind !== "dm";
@@ -72,11 +73,17 @@ export async function messageActivity(env: Env, author: Member, ch: any, msgId: 
   if (mentioned.length) await addActivity(env, mentioned, { kind: "mention", actor: author.id, channel: ch.id, ref: msgId, text: `${author.name} mentioned ${everyone ? "everyone" : "you"}${where}: ${snippet}` });
   if (parent) {
     const { results: t } = await env.DB.prepare("SELECT DISTINCT member_id id FROM messages WHERE (id = ? OR parent_id = ?) AND member_id IS NOT NULL").bind(parent, parent).all<any>();
-    const ids = t.map((r) => r.id).filter((i) => !mentioned.includes(i));
+    const ids = t.map((r) => r.id).filter((i) => !mentioned.includes(i) && !quietIds.has(i));
     await addActivity(env, ids, { kind: "reply", actor: author.id, channel: ch.id, ref: parent, text: `${author.name} replied${where}: ${snippet}` });
   } else if (ch.kind === "dm") {
-    await addActivity(env, results.map((p) => p.id).filter((i) => !mentioned.includes(i)), { kind: "dm", actor: author.id, channel: ch.id, ref: msgId, text: `${author.name}: ${snippet}` });
+    await addActivity(env, results.map((p) => p.id).filter((i) => !mentioned.includes(i) && !quietIds.has(i)), { kind: "dm", actor: author.id, channel: ch.id, ref: msgId, text: `${author.name}: ${snippet}` });
   }
+}
+
+/** Announcements reach everyone in the channel (except people who turned the channel off). */
+export async function announceActivity(env: Env, author: Member, ch: any, msgId: number, title: string) {
+  const { results } = await env.DB.prepare("SELECT member_id id FROM channel_members WHERE channel_id = ? AND muted = 0").bind(ch.id).all<any>();
+  await addActivity(env, results.map((r) => r.id), { kind: "mention", actor: author.id, channel: ch.id, ref: msgId, text: `Announcement in #${ch.name} from ${author.name}: ${title}` });
 }
 
 // ------------------------------------------------------------------ profiles
@@ -168,6 +175,8 @@ people.put("/prefs", async (c) => {
 // ------------------------------------------------------------------ Activity
 people.get("/activity", async (c) => {
   const m = me(c);
+  // Clean-up runs now and then as people use Activity (Cloudflare limits scheduled jobs per account).
+  if (Math.random() < 0.02) c.executionCtx.waitUntil(pruneActivity(c.env).catch(() => {}));
   const before = Number(c.req.query("before")) || 1e15;
   const kind = str(c.req.query("kind"), 20);
   const unread = c.req.query("unread") === "1";
