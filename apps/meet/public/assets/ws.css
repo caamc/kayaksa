@@ -202,7 +202,10 @@ dialog .foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 @media (max-width:1100px){.ws{grid-template-columns:68px 240px minmax(0,1fr)}.panel{position:fixed;right:0;top:0;bottom:0;z-index:20;box-shadow:-20px 0 60px #0003}}
 @media (max-width:760px){
   .ws{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
-  .rail{flex-direction:row;justify-content:space-around;grid-row:2;padding:4px 0 calc(4px + env(safe-area-inset-bottom))}
+  .rail{flex-direction:row;justify-content:space-between;grid-row:2;padding:4px 4px calc(4px + env(safe-area-inset-bottom));overflow-x:auto;overflow-y:hidden;scrollbar-width:none;min-width:0}
+  .rail::-webkit-scrollbar{display:none}
+  .rail button{flex:none;width:58px}
+  .rail [data-v=settings]{display:none}
   .rail .brand,.rail .sp{display:none}
   .rail button[aria-current=page]::before{left:12px;right:12px;top:-4px;bottom:auto;width:auto;height:3px}
   .side{display:none}.ws.show-side .side{display:flex;grid-row:1}.ws.show-side .main{display:none}
