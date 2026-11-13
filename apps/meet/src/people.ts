@@ -294,7 +294,9 @@ people.post("/cast", async (c) => {
   const mt: any = await c.env.DB.prepare("SELECT * FROM meetings WHERE id = ?").bind(str(b.room, 40)).first();
   if (!mt || !(await mayJoin(c.env, m, mt))) throw err("Choose a meeting you can join.", 403);
   // The screen joins as a guest named "Screen: <person>"; meetings with a lobby still ask the host to admit it.
-  const link = `/${mt.id}?t=${await signMeet(c.env.MEET_SIGNING_KEY, { r: mt.id, role: "guest", x: Date.now() + 8 * 3_600_000 })}&screen=1&name=${encodeURIComponent("Screen - " + m.name)}`;
+  const key = c.env.MEET_SIGNING_KEY;
+  if (!key) throw err("Casting isn't available yet.", 503);
+  const link = `/${mt.id}?t=${await signMeet(key, { r: mt.id, role: "guest", x: Date.now() + 8 * 3_600_000 })}&screen=1&name=${encodeURIComponent("Screen - " + m.name)}`;
   await c.env.DB.prepare("UPDATE cast_codes SET link = ?, title = ?, sent_by = ?, sent_at = ? WHERE code = ?").bind(link, mt.title, m.id, now(), code).run();
   await auditFull(c as any, c.env.DB, m.id, "meet.cast.sent", { meeting: mt.id });
   return c.json({ ok: true });
