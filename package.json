@@ -25,9 +25,13 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261031.1",
+    "cytoscape": "3.35.0",
     "dompurify": "3.3.0",
+    "esbuild": "0.28.2",
     "jspdf": "3.0.3",
+    "leaflet": "1.9.4",
     "marked": "16.4.1",
+    "pdfjs-dist": "6.5.438",
     "pptxgenjs": "4.0.1",
     "qrcode-generator": "1.5.2",
     "svg2pdf.js": "2.6.0",
