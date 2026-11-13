@@ -14,7 +14,6 @@
   // Evidence files, encrypted with AES-256-GCM before they are written (key: GRAPHIQ_DATA_KEY).
   "r2_buckets": [{ "binding": "EVIDENCE", "bucket_name": "kayak-graphiq-evidence" }],
   "ai": { "binding": "AI" },
-  "triggers": { "crons": ["41 1 * * *"] },
   "observability": { "enabled": true },
   "vars": { "INTERNAL_URL": "https://internal.kayaksa.com" }
   // Secrets (set by the deploy workflow, never in this file): GRAPHIQ_SIGNING_KEY (shared with

@@ -13,6 +13,14 @@ import { ai } from "./ai";
 import type { Env, V } from "./env";
 
 const app = new Hono<V>();
+// Housekeeping (retention flags, expired sessions) runs now and then during normal use, because
+// Cloudflare's free plan limits scheduled jobs per account. The scheduled handler below still works
+// if a cron trigger is added on a paid plan.
+async function housekeeping(env: Env) {
+  await retentionSweep(env).catch((err) => console.error("retention", err?.message));
+  await env.DB.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(new Date().toISOString()).run().catch(() => {});
+}
+app.use("*", async (c, next) => { if (Math.random() < 0.01) c.executionCtx.waitUntil(housekeeping(c.env)); await next(); });
 
 app.get("/healthz", (c) => c.json({ ok: true, site: "graphiq" }));
 app.get("/robots.txt", (c) => c.text("User-agent: *\nDisallow: /\n"));
@@ -52,8 +60,5 @@ app.all("*", async (c) => {
 
 export default {
   fetch: app.fetch,
-  async scheduled(_e: ScheduledEvent, env: Env) {
-    await retentionSweep(env).catch((err) => console.error("retention", err?.message));
-    await env.DB.prepare("DELETE FROM sessions WHERE expires_at < ?").bind(new Date().toISOString()).run().catch(() => {});
-  },
+  async scheduled(_e: ScheduledEvent, env: Env) { await housekeeping(env); },
 };

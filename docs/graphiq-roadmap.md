@@ -107,7 +107,7 @@ The link chart (Cytoscape.js) and the map (Leaflet with OpenStreetMap) complete 
 | Tamper-evident audit log (SHA-256 hash chain) of every view, search, import and export, with a Verify button | Built |  |
 | Evidence files: SHA-256 checked in the browser and on the server, AES-256-GCM encryption with a key for each case, chain of custody, integrity check | Built |  |
 | Evidence files above 40 MB | Planned | Needs chunked encryption; split large files for now. |
-| Retention date per case, daily flagging of overdue cases | Built |  |
+| Retention date per case, regular flagging of overdue cases (runs during normal use; a daily schedule needs a paid Cloudflare plan) | Built |  |
 | Secure deletion of records, notes and evidence objects, keeping a tombstone and the audit record | Built |  |
 | Crypto-shredding (destroying a case key) | Planned |  |
 | Backup and restore of one case (encrypted export) | Built |  |
