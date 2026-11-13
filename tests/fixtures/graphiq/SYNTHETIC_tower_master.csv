@@ -1,0 +1,14 @@
+# SYNTHETIC TEST DATA - invented coordinates
+cell_id,latitude,longitude,address,azimuth
+404-10-1201-31001,28.6315,77.2167,"Synthetic site A1, New Delhi",120
+404-10-1201-31002,28.6129,77.2295,"Synthetic site A2, New Delhi",120
+404-10-1202-31010,28.5355,77.391,"Synthetic site A3, New Delhi",120
+404-10-1203-31020,28.4595,77.0266,"Synthetic site A4, New Delhi",120
+404-10-1204-31030,28.7041,77.1025,"Synthetic site A5, New Delhi",120
+405-872-2201-41001,28.6315,77.2167,"Synthetic site A1, New Delhi (shared mast)",240
+405-872-2201-41002,28.6448,77.2167,"Synthetic site J2, New Delhi",0
+405-872-2203-41020,28.6692,77.4538,"Synthetic site J3, Ghaziabad",0
+404-20-3301-51001,28.62,77.2,"Synthetic site V1, Delhi",0
+404-20-3302-51002,28.650000000000002,77.22,"Synthetic site V2, Delhi",0
+404-20-3303-51003,28.68,77.24000000000001,"Synthetic site V3, Delhi",0
+404-27-3401-52001,19.076,72.8777,"Synthetic site, Mumbai",0

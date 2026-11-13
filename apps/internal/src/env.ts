@@ -13,6 +13,7 @@ export interface Env extends AiEnv, MailEnv {
   CAREERS?: R2Bucket; // résumés from the careers page on www (private)
   VAULT?: R2Bucket; // Document Drive: encrypted identity, KYC, KYB and KYV documents
   MEET_SIGNING_KEY?: string;
+  GRAPHIQ_SIGNING_KEY?: string; // single sign-on to Kayak GraphIQ (shared with graphiq.kayaksa.com)
   TOOLBAR_TOKEN?: string; // KSA Office Toolbar Assistant access token, shown to staff to paste into the add-in
   AI?: Ai;
   ASSETS: Fetcher;

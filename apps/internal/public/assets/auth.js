@@ -5,8 +5,9 @@ const card = $("#card");
 const params = new URLSearchParams(location.search);
 const next = (() => {
   const n = params.get("next") || "";
-  // Only Kayak Internal's own app, or the hand-back to Meet by Kayak (single sign-on), are allowed.
+  // Only Kayak Internal's own app, or the hand-backs to Meet by Kayak and Kayak GraphIQ (single sign-on), are allowed.
   if (/^\/sso\/meet(\?next=%2F[A-Za-z0-9%#/_-]*)?$/.test(n)) return n;
+  if (/^\/sso\/graphiq(\?next=%2Fapp[A-Za-z0-9%#/_-]*)?$/.test(n)) return n;
   return n.startsWith("/app") && !n.startsWith("//") ? n : "/app";
 })();
 

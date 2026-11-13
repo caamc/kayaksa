@@ -49,8 +49,8 @@ const guard = async (c: any, next: any) => {
   const u = await loadUser(c);
   if (!u) {
     if (c.req.path.startsWith("/api/") || c.req.path.startsWith("/files/")) return c.json({ error: "Your session has ended. Sign in again." }, 401);
-    // Keep the query for the Meet hand-back (/sso/meet?next=…) so people land where they started.
-    const q = c.req.path === "/sso/meet" ? new URL(c.req.url).search : "";
+    // Keep the query for the Meet and GraphIQ hand-backs (/sso/meet?next=…) so people land where they started.
+    const q = c.req.path === "/sso/meet" || c.req.path === "/sso/graphiq" ? new URL(c.req.url).search : "";
     const back = c.req.path === "/" ? "" : `?next=${encodeURIComponent(c.req.path + q)}`;
     return c.redirect(`/login${back}`, 302);
   }
@@ -156,6 +156,21 @@ app.get("/sso/meet", async (c) => {
   c.header("Cache-Control", "no-store");
   c.header("Referrer-Policy", "no-referrer");
   return c.redirect(`${meet}/auth/sso?t=${encodeURIComponent(t)}${next && /^\/[a-z0-9#/_-]*$/i.test(next) ? `&next=${encodeURIComponent(next)}` : ""}`, 302);
+});
+
+// Single sign-on to Kayak GraphIQ, the same way as Meet: a 60-second, one-time signed ticket.
+// GraphIQ manages its own roles (Admin, Approver, Analyst, Viewer); `ir` tells it the portal role.
+app.use("/sso/graphiq", guard);
+app.get("/sso/graphiq", async (c) => {
+  const u = c.get("user") as any;
+  if (!c.env.GRAPHIQ_SIGNING_KEY) return c.text("Kayak GraphIQ is not connected yet. Run the deploy workflow with graphiq included.", 503);
+  const t = await signMeet(c.env.GRAPHIQ_SIGNING_KEY, { r: "graphiq", role: "member", n: u.name || u.email, e: u.email, x: Date.now() + 60_000, j: crypto.randomUUID(), ir: u.role } as any);
+  await auditFull(c as any, c.env.DB, u.id, "graphiq.sso.issued", null);
+  const next = c.req.query("next");
+  const gq = new URL(c.req.url).hostname.endsWith("kayaksa.com") ? "https://graphiq.kayaksa.com" : "http://localhost:8705";
+  c.header("Cache-Control", "no-store");
+  c.header("Referrer-Policy", "no-referrer");
+  return c.redirect(`${gq}/auth/sso?t=${encodeURIComponent(t)}${next && /^\/app[a-z0-9#/_-]*$/i.test(next) ? `&next=${encodeURIComponent(next)}` : ""}`, 302);
 });
 
 // Static files. App code and the shared design system are public (they hold no data); /app/* is guarded above.

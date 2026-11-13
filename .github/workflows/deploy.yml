@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       apps:
-        description: "Which sites to publish (comma-separated: www, learn, internal, meet, or all)"
+        description: "Which sites to publish (comma-separated: www, learn, internal, meet, graphiq, or all)"
         default: "www"
         required: true
       replace_dns:
@@ -332,3 +332,59 @@ jobs:
           case ",${{ steps.apps.outputs.list }}," in *",learn,"*) H="$H learn.kayaksa.com";; esac
           case ",${{ steps.apps.outputs.list }}," in *",meet,"*) H="$H meet.kayaksa.com";; esac
           [ -n "$H" ] && node scripts/indexnow.mjs $H | tee -a "$GITHUB_STEP_SUMMARY" || true
+
+  # Kayak GraphIQ (graphiq.kayaksa.com). A separate job so it stays independent of the other sites.
+  # Runs after the main job (which publishes internal, where the /sso/graphiq hand-back lives).
+  # On a push to main it runs when the DEPLOY_APPS variable is unset or lists graphiq.
+  graphiq:
+    needs: deploy
+    if: ${{ !cancelled() && ((github.event_name == 'push' && (vars.DEPLOY_APPS == '' || contains(format(',{0},', vars.DEPLOY_APPS), ',graphiq,'))) || github.event.inputs.apps == 'all' || contains(format(',{0},', github.event.inputs.apps), ',graphiq,')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Build GraphIQ and run the engine tests
+        run: |
+          node scripts/build-graphiq.mjs
+          npm run typecheck
+          npm test
+      - name: Publish graphiq.kayaksa.com
+        env:
+          GRAPHIQ_DATA_KEY_INPUT: ${{ secrets.GRAPHIQ_DATA_KEY }}
+        run: |
+          set -e
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "::error::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository secrets."; exit 1; fi
+          # Use the account that owns kayaksa.com, as the main job does.
+          ACC=$(curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=$ZONE_NAME" | jq -r '.result[0].account.id // empty')
+          if [ -n "$ACC" ]; then echo "::add-mask::$ACC"; export CLOUDFLARE_ACCOUNT_ID="$ACC"; fi
+          # Database kayak-graphiq (created once) and its migrations
+          ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name=="kayak-graphiq") | .uuid')
+          if [ -z "$ID" ]; then npx wrangler d1 create kayak-graphiq --location apac >/dev/null; ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name=="kayak-graphiq") | .uuid'); echo "Created database kayak-graphiq" >> "$GITHUB_STEP_SUMMARY"; fi
+          [ -n "$ID" ] || { echo "::error::Could not create or find the D1 database kayak-graphiq. The token needs Account: D1 Edit."; exit 1; }
+          sed -i "s/00000000-0000-0000-0000-000000000006/$ID/" apps/graphiq/wrangler.jsonc
+          npx wrangler d1 migrations apply kayak-graphiq --remote -c apps/graphiq/wrangler.jsonc
+          # Private bucket for encrypted evidence files
+          npx wrangler r2 bucket list | grep -qE "^name:\s+kayak-graphiq-evidence$" || npx wrangler r2 bucket create kayak-graphiq-evidence
+          npx wrangler deploy -c apps/graphiq/wrangler.jsonc
+          have=$(npx wrangler secret list --name kayaksa-graphiq --format json 2>/dev/null | jq -r '.[].name' || true)
+          echo '{}' > /tmp/g.json
+          # Single sign-on key, shared with the internal portal (which issues the tickets). Created once.
+          if ! echo "$have" | grep -qx GRAPHIQ_SIGNING_KEY; then
+            K=$(node -e 'console.log(require("crypto").randomBytes(32).toString("base64url"))')
+            node -e 'const f="/tmp/g.json";const j=JSON.parse(require("fs").readFileSync(f));j.GRAPHIQ_SIGNING_KEY=process.argv[1];require("fs").writeFileSync(f,JSON.stringify(j))' "$K"
+            printf '%s' "$K" | npx wrangler secret put GRAPHIQ_SIGNING_KEY --name kayaksa-internal >/dev/null
+            echo "Created the GraphIQ single sign-on key (shared with the internal portal)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          # Evidence encryption key: set once and never replaced (replacing it would make stored evidence unreadable).
+          # Taken from the GRAPHIQ_DATA_KEY repository secret when present, otherwise generated here and never shown.
+          if ! echo "$have" | grep -qx GRAPHIQ_DATA_KEY; then
+            node -e 'const f="/tmp/g.json";const j=JSON.parse(require("fs").readFileSync(f));j.GRAPHIQ_DATA_KEY=process.env.GRAPHIQ_DATA_KEY_INPUT||require("crypto").randomBytes(32).toString("base64url");require("fs").writeFileSync(f,JSON.stringify(j))'
+            echo "Set the GraphIQ evidence encryption key." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          [ "$(cat /tmp/g.json)" = "{}" ] || npx wrangler secret bulk /tmp/g.json --name kayaksa-graphiq; rm -f /tmp/g.json
+          echo "### graphiq.kayaksa.com published" >> "$GITHUB_STEP_SUMMARY"
+          sleep 15
+          curl -fsS https://graphiq.kayaksa.com/healthz && echo || echo "graphiq.kayaksa.com is not answering yet (new address; give DNS a few minutes)"
