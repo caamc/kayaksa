@@ -42,10 +42,12 @@ export const needsMask = (t) => t.bg !== "none" || t.faceBlur;
 
 export function filterOf(t) {
   const b = 1 + t.bright / 100 + (t.light ? 0.12 : 0) + (t.exposure || 0) / 120, c = 1 + t.contrast / 100 - (t.light ? 0.04 : 0), sat = 1 + t.sat / 100;
-  let f = `brightness(${b.toFixed(3)}) contrast(${c.toFixed(3)}) saturate(${sat.toFixed(3)})`;
+  // Nothing to change: no filter at all, so the camera is drawn at full speed (a filter, even one that
+  // changes nothing, makes the browser process every pixel of every frame).
+  let f = Math.abs(b - 1) < 0.0005 && Math.abs(c - 1) < 0.0005 && Math.abs(sat - 1) < 0.0005 ? "" : `brightness(${b.toFixed(3)}) contrast(${c.toFixed(3)}) saturate(${sat.toFixed(3)})`;
   if (t.warm > 0) f += ` sepia(${(t.warm / 260).toFixed(3)})`; else if (t.warm < 0) f += ` hue-rotate(${(t.warm / 6).toFixed(1)}deg) saturate(${(1 + t.warm / 400).toFixed(3)})`;
   if (t.tint) f += ` hue-rotate(${(t.tint / 3).toFixed(1)}deg)`;
-  return f + (LOOK_FILTER[t.look] || "");
+  return (f + (LOOK_FILTER[t.look] || "")).trim();
 }
 
 /** Camera constraints from the Quality and Sound settings. */
@@ -86,10 +88,14 @@ export function drawFrame(ctx, canvas, video, t, env = {}) {
   const sx = Math.max(0, Math.min(vw - sw, (vw - sw) / 2 + (t.panx || 0) / 100 * (vw - sw) / 2));
   const sy = Math.max(0, Math.min(vh - sh, (vh - sh) / 2 - (vh - sh) * 0.15 + (t.pany || 0) / 100 * (vh - sh) / 2)); // a little headroom
   const f = filterOf(t);
-  const cam = (filter) => { ctx.save(); ctx.filter = filter; if (t.flip) { ctx.translate(W, 0); ctx.scale(-1, 1); } ctx.drawImage(video, sx, sy, sw, sh, 0, 0, W, H); ctx.restore(); };
+  const cam = (filter) => { ctx.save(); ctx.filter = (filter || "").trim() || "none"; if (t.flip) { ctx.translate(W, 0); ctx.scale(-1, 1); } ctx.drawImage(video, sx, sy, sw, sh, 0, 0, W, H); ctx.restore(); };
   const mask = env.mask;
   const background = () => {
-    if (t.bg === "blur") return cam(`blur(${Math.max(4, Math.min(40, t.blurAmt || 16))}px) ${f}`);
+    if (t.bg === "blur") {
+      // Drawn slightly larger than the frame: a blur fades to nothing at the picture's edge, which showed as a dark border.
+      const r = Math.max(4, Math.min(40, t.blurAmt || 16)), k = 1 + (r * 4) / Math.min(W, H);
+      ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(k, k); ctx.translate(-W / 2, -H / 2); cam(`blur(${r}px) ${f}`); ctx.restore(); return;
+    }
     if (t.bg === "color") { ctx.fillStyle = /^#[0-9a-f]{6}$/i.test(t.bgColor) ? t.bgColor : "#0E2F3C"; return ctx.fillRect(0, 0, W, H); }
     if (t.bg === "custom") { const im = customBackground(); if (im) return cover(ctx, im, W, H); }
     if (env.bgImg && t.bg.startsWith("kayak-")) return cover(ctx, env.bgImg, W, H);
@@ -103,17 +109,19 @@ export function drawFrame(ctx, canvas, video, t, env = {}) {
     else {
       ctx.globalCompositeOperation = "copy"; ctx.filter = "blur(4px)";
       if (t.flip) { ctx.translate(W, 0); ctx.scale(-1, 1); }
-      ctx.drawImage(mask, sx, sy, sw, sh, 0, 0, W, H); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(mask, sx, sy, sw, sh, 0, 0, W, H); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.filter = "none";
       ctx.globalCompositeOperation = "source-in"; cam(`blur(30px) ${f}`);
       ctx.globalCompositeOperation = "destination-over"; background();
     }
   } else if (t.bg !== "none" && mask) {
     ctx.globalCompositeOperation = "copy"; ctx.filter = "blur(3px)";
     if (t.flip) { ctx.translate(W, 0); ctx.scale(-1, 1); }
-    ctx.drawImage(mask, sx, sy, sw, sh, 0, 0, W, H); ctx.setTransform(1, 0, 0, 1, 0, 0); // the person, as a soft-edged mask
+    ctx.drawImage(mask, sx, sy, sw, sh, 0, 0, W, H); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.filter = "none"; // the person, as a soft-edged mask
     ctx.globalCompositeOperation = "source-in"; cam(f);                                 // the person, with the look
     ctx.globalCompositeOperation = "destination-over"; background();
   } else cam(f);
+  // Whatever was drawn, the frame goes out fully opaque (no see-through edges where the cut-out and background meet).
+  ctx.globalCompositeOperation = "destination-over"; ctx.filter = "none"; ctx.fillStyle = "#0E2F3C"; ctx.fillRect(0, 0, W, H);
   ctx.restore();
   // Light and finish
   const tint = LOOK_TINT[t.look];

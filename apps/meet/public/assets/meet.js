@@ -415,7 +415,7 @@ function startProc(raw) {
   const W = st.width || 1280, H = st.height || 720;
   const video = document.createElement("video"); video.muted = true; video.playsInline = true; video.srcObject = new MediaStream([raw]); video.play().catch(() => {});
   const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext("2d", { alpha: false });
+  const ctx = canvas.getContext("2d"); // needs transparency: the person is cut out, then the background is drawn behind
   const out = canvas.captureStream(24).getVideoTracks()[0];
   PROC = { raw, video, canvas, ctx, out, busy: false };
   PROC.timer = setInterval(drawProc, 1000 / 24);

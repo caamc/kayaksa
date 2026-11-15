@@ -37,7 +37,7 @@ export function install(K) {
   const DEFAULTS = {
     theme: "system", textSize: 100, density: "comfortable", reduceMotion: false, highContrast: false, clock: "auto", startView: "chat",
     notifyDesktop: true, notifySound: true, notifyPreview: true, notifyKinds: { mention: true, reply: true, dm: true, reaction: true, added: true, task: true, meeting: true, call: true, missed: true },
-    quietFrom: "", quietTo: "", ringtone: "kayak", callVideo: false, autoAway: 5,
+    quietFrom: "", quietTo: "", ringtone: "euphoria", callVideo: false, autoAway: 5,
     readReceipts: true, showPresence: true, enterToSend: true, spellcheck: true, linkPreviews: true, emojiBig: true,
     captionsDefault: false, captionSize: 100, keyboardHints: true,
     plugins: {},
@@ -132,15 +132,44 @@ export function install(K) {
   // ---------------------------------------------------------------- Meet Calls
   let ringAudio = null, outgoing = null;
   const RINGS = { kayak: [[659, 0.18], [784, 0.18], [988, 0.32]], classic: [[440, 0.4], [480, 0.4]], soft: [[523, 0.3], [659, 0.4]] };
-  function ring(start) {
-    if (ringAudio) { clearInterval(ringAudio.t); ringAudio.ac.close().catch(() => {}); ringAudio = null; }
-    if (!start || !S.xp.notifySound || S.xp.ringtone === "silent") return;
+  // "Kayak Euphoria": an original ringtone made for Meet by Kayak. A warm, slow-swelling chord under a
+  // bright rising arpeggio with a long echo, in D major. Synthesised on the device; no audio file, no samples.
+  function euphoria(ac, out) {
+    const t0 = ac.currentTime + 0.03;
+    const delay = ac.createDelay(1), fb = ac.createGain(), wet = ac.createGain();
+    delay.delayTime.value = 0.28; fb.gain.value = 0.42; wet.gain.value = 0.5;
+    delay.connect(fb).connect(delay); delay.connect(wet).connect(out);
+    // pad: D - A - F# - E (Dadd9), two slightly detuned voices each, opening filter
+    const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 0.7;
+    lp.frequency.setValueAtTime(500, t0); lp.frequency.exponentialRampToValueAtTime(2600, t0 + 2.2); lp.frequency.exponentialRampToValueAtTime(700, t0 + 4.2);
+    const pad = ac.createGain(); pad.gain.setValueAtTime(0.0001, t0); pad.gain.exponentialRampToValueAtTime(0.085, t0 + 1.1); pad.gain.setValueAtTime(0.085, t0 + 2.8); pad.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.4);
+    lp.connect(pad); pad.connect(out); pad.connect(delay);
+    for (const f of [146.83, 220, 369.99, 329.63]) for (const det of [-7, 7]) { const o = ac.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = det; o.connect(lp); o.start(t0); o.stop(t0 + 4.5); }
+    // arpeggio: bell-like notes climbing through the chord, twice
+    const notes = [587.33, 739.99, 880, 1174.66, 1318.51, 1174.66, 880, 1479.98];
+    notes.forEach((f, i) => {
+      const t = t0 + 0.35 + i * 0.24, g = ac.createGain();
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+      const o = ac.createOscillator(); o.type = "sine"; o.frequency.value = f;
+      const o2 = ac.createOscillator(), g2 = ac.createGain(); o2.type = "triangle"; o2.frequency.value = f * 2; g2.gain.value = 0.25;
+      o.connect(g); o2.connect(g2).connect(g); g.connect(out); g.connect(delay);
+      o.start(t); o.stop(t + 1); o2.start(t); o2.stop(t + 1);
+    });
+  }
+  function ring(start, preview = false) {
+    if (ringAudio) { clearInterval(ringAudio.t); const old = ringAudio; ringAudio = null; try { old.master.gain.setTargetAtTime(0.0001, old.ac.currentTime, 0.08); } catch {} setTimeout(() => old.ac.close().catch(() => {}), 500); }
+    const name = S.xp.ringtone;
+    // The Play button always plays, even when notification sounds are off.
+    if (!start || name === "silent" || (!preview && !S.xp.notifySound)) return;
     try {
-      const ac = new AudioContext(); const play = () => { let t = ac.currentTime; for (const [f, d] of RINGS[S.xp.ringtone] || RINGS.kayak) { const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d); t += d + 0.04; } };
-      play(); ringAudio = { ac, t: setInterval(play, 2200) };
+      const ac = new AudioContext(), master = ac.createGain(); master.gain.value = 0.9; master.connect(ac.destination);
+      if (ac.state === "suspended") ac.resume().catch(() => {});
+      const play = name === "euphoria" || !RINGS[name] ? () => euphoria(ac, master)
+        : () => { let t = ac.currentTime; for (const [f, d] of RINGS[name]) { const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g).connect(master); o.start(t); o.stop(t + d); t += d + 0.04; } };
+      play(); ringAudio = { ac, master, t: setInterval(play, name === "euphoria" || !RINGS[name] ? 4800 : 2200) };
     } catch {}
   }
-  K.previewRing = (name) => { const keep = S.xp.ringtone; S.xp.ringtone = name; ring(true); S.xp.ringtone = keep; setTimeout(() => ring(false), 2300); };
+  K.previewRing = (name) => { const keep = S.xp.ringtone; S.xp.ringtone = name; ring(true, true); S.xp.ringtone = keep; clearTimeout(K._rp); K._rp = setTimeout(() => ring(false), name === "euphoria" ? 5200 : 2300); };
   const shown = new Set();
   K.onRing = (calls) => {
     const live = new Set((calls || []).map((c) => c.id));
@@ -570,7 +599,7 @@ export function install(K) {
     },
     async calls(b) {
       b.innerHTML = `<h2 class="set-h">Calls</h2>
-        ${card("Ringing", sel("ringtone", "Ringtone", [["kayak", "Kayak"], ["classic", "Classic"], ["soft", "Soft"], ["silent", "Silent (show only)"]]) + `<div class="row"><button class="btn sm" id="rt">Play ringtone</button></div>`)}
+        ${card("Ringing", sel("ringtone", "Ringtone", [["euphoria", "Kayak Euphoria"], ["kayak", "Kayak chime"], ["classic", "Classic"], ["soft", "Soft"], ["silent", "Silent (show only)"]]) + `<div class="row"><button class="btn sm" id="rt">Play ringtone</button></div>`)}
         ${card("Starting calls", tog("callVideo", "Start calls with video", "Otherwise calls start as audio and you can turn on video during the call."))}
         ${card("About Meet Calls", `<p>Meet Calls are internet (VoIP) calls between people on Meet by Kayak, in the browser or the desktop app. They're free, encrypted between devices, and work on Wi-Fi or mobile data. Calls to ordinary phone numbers aren't available.</p>`)}`;
       $("#rt").onclick = () => K.previewRing(S.xp.ringtone);
