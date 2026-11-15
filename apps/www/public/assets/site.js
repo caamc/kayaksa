@@ -952,7 +952,10 @@ function beacon() {
   if (navigator.webdriver || /bot|crawl|spider/i.test(navigator.userAgent)) return;
   const send = (body) => { try { navigator.sendBeacon("/api/a", JSON.stringify(body)); } catch {} };
   let last = "";
-  const view = () => { if (location.pathname === last) return; last = location.pathname; send({ t: "pv", p: location.pathname, r: document.referrer && !document.referrer.startsWith(location.origin) ? new URL(document.referrer).hostname : "", w: innerWidth }); };
+  // Campaign tag (utm_source/utm_campaign) on the landing view only; counted in aggregate, never tied to a visitor.
+  const q = new URLSearchParams(location.search), utm = [q.get("utm_source"), q.get("utm_campaign")].filter(Boolean).join("/").slice(0, 60);
+  let u = utm;
+  const view = () => { if (location.pathname === last) return; last = location.pathname; send({ t: "pv", p: location.pathname, r: document.referrer && !document.referrer.startsWith(location.origin) ? new URL(document.referrer).hostname : "", w: innerWidth, ...(u ? { u } : {}) }); u = ""; };
   view();
   window.addEventListener("popstate", view);
   document.addEventListener("click", () => setTimeout(view, 50), true);
