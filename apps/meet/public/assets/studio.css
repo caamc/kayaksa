@@ -72,3 +72,7 @@ input[role=switch]:checked{background:var(--sx-teal)}input[role=switch]:checked:
 .toast{background:#EAF2F3;color:#0E2F3C;padding:10px 16px;border-radius:12px;font-weight:600;box-shadow:0 10px 30px #0006}
 @media (max-width:900px){.sx-main{grid-template-columns:1fr;overflow:auto}.sx-stage{overflow:visible}.sx-panel{border-left:0;border-top:1px solid var(--sx-line)}.sx-badge{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* A control that cannot work says so */
+.sx-warn{margin:0 0 14px;padding:10px 12px;border-radius:12px;background:#EE9B1E22;border:1px solid #EE9B1E66;color:#FFE3B0;font-size:.86rem;line-height:1.45}
+.sx-warn a,.sx-foot a{color:inherit;text-decoration:underline}
+.sx-foot{margin-top:18px}

@@ -63,7 +63,7 @@ const S = {
 const api = async (path, opts = {}) => {
   const r = await fetch(path, { ...opts, headers: { "X-Meet-Token": token || "", ...(opts.body && !(opts.body instanceof Blob) && !(opts.body instanceof ArrayBuffer) ? { "Content-Type": "application/json" } : {}), ...(opts.headers || {}) } });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || `Request failed (${r.status})`);
+  if (!r.ok) throw Object.assign(new Error(j.error || `Request failed (${r.status})`), { code: j.code || "", status: r.status });
   return j;
 };
 
@@ -162,7 +162,7 @@ async function prejoin() {
   const canPickSpeaker = outs.length > 0 && "setSinkId" in HTMLMediaElement.prototype;
   const isClient = S.info.kind === "client";
   app.innerHTML = `
-  <div class="top"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"><span class="title"></span><span class="pill e2e">${ic("lock")} End-to-end encrypted</span></div>
+  <div class="top"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"><span class="title"></span><span class="pill e2e">${ic("lock")} Encrypted</span></div>
   <div class="pre">
     <div class="pre-video"><video id="pv" autoplay playsinline muted></video><div class="off" id="poff" hidden>Camera is off</div><div class="meter" aria-hidden="true"><i id="pm"></i></div>
       <div class="pre-bar"><button class="kc" id="pmic" aria-pressed="true" aria-label="Microphone">${ic("mic")}</button><button class="kc" id="pcam" aria-pressed="true" aria-label="Camera">${ic("cam")}</button><button class="kc" id="pstudio" aria-label="Camera studio and backgrounds" data-tip="Camera studio">${ic("sparkle")}</button></div></div>
@@ -173,7 +173,7 @@ async function prejoin() {
       ${S.info.name ? `<p>Joining as <b>${esc(S.info.name)}</b></p>` : `<div class="field"><label for="nm">Your name</label><input class="input" id="nm" maxlength="60" autocomplete="name" value="${esc(S.name)}" placeholder="As you'd like others to see it"></div>`}
       <div class="devs"><div class="field"><label for="dmic">Microphone</label><select class="input" id="dmic">${opt("audioinput", S.devices.mic)}</select></div><div class="field"><label for="dcam">Camera</label><select class="input" id="dcam">${opt("videoinput", S.devices.cam)}</select></div>${canPickSpeaker ? `<div class="field"><label for="dspk">Speaker</label><div style="display:flex;gap:8px"><select class="input" id="dspk" style="flex:1">${opt("audiooutput", S.sinkId)}</select><button class="kb" type="button" id="dtest" title="Play a test sound">Test</button></div></div>` : ""}</div>
       <button class="kb primary" id="join">${S.info.role === "guest" && S.info.lobby ? "Ask to join" : "Join now"}</button>
-      <p class="note">Audio and video go directly between participants' browsers and are encrypted end to end. If the host turns on captions, speech is transcribed on Kayak's own servers. Everyone sees a notice when a meeting is recorded. <a href="https://www.kayaksa.com/legal" target="_blank" rel="noopener">Privacy</a></p>
+      <p class="note">Audio and video are encrypted and go directly between participants' browsers (in a town hall, through Kayak's media service). If the host turns on captions, speech is sent to Kayak's own servers to be transcribed. Everyone sees a notice when a meeting is recorded. <a href="https://www.kayaksa.com/legal" target="_blank" rel="noopener">Privacy</a></p>
     </div>
   </div>`;
   $(".top .title").textContent = "";
@@ -531,7 +531,7 @@ function setMic(on) {
   S.local.getAudioTracks().forEach((t) => (t.enabled = on));
   send({ t: "state", mic: on });
   bar(); render();
-  if (S.cap) S.cap.paused = !on;
+  if (S.cap) { S.cap.paused = !on; if (CAP.state !== "error" && CAP.state !== "blocked") capStatus(on ? "listening" : "nomic"); }
 }
 async function setCam(on) {
   S.camOn = on;
@@ -613,8 +613,8 @@ function toggleHand() { S.hand = !S.hand; send({ t: "state", hand: S.hand }); ba
 function roomUi() {
   app.innerHTML = `
   <div class="top"><img src="/_shared/logos/MeetByKayak_Logo_Reversed.svg" alt="Meet by Kayak"><span class="title" id="ttl"></span>
-    <span class="pill rec" id="recpill" hidden><i></i> Recording</span><span class="pill" id="cappill" hidden>${ic("cc")} Captions on</span>
-    <span class="pill e2e hide-sm" title="Audio and video travel directly between browsers and are encrypted end to end.">${ic("lock")} Encrypted</span><span class="pill" id="clock">0:00</span></div>
+    <span class="pill rec" id="recpill" hidden><i></i> Recording</span><span class="pill" id="cappill" hidden>${ic("cc")} <span id="captxt">Captions on</span></span>
+    <span class="pill e2e hide-sm" title="Audio and video are encrypted. They travel directly between browsers, or through Kayak's media service in a town hall. With captions on, speech is also sent to Kayak's servers to be transcribed.">${ic("lock")} Encrypted</span><span class="pill" id="clock">0:00</span></div>
   <div class="main"><div class="stage"><div class="grid" id="grid"></div><div class="caps" id="caps" aria-live="polite"></div></div><aside class="side" id="side" hidden></aside></div>
   <div class="bar" id="bar"></div>`;
   $("#ttl").textContent = S.info.title;
@@ -832,7 +832,8 @@ function drawCaptions() {
 function translateCaption(m) {
   if (!S.capLang || S.capLang === "en" || m.lang === S.capLang || !m.text) return;
   api(`/api/translate/${room}`, { method: "POST", body: JSON.stringify({ text: m.text, to: S.capLang, from: m.lang || undefined }) })
-    .then((r) => { if (r.text) { m.tr = r.text; drawCaptions(); if (S.panel === "transcript") renderPanel(); } }).catch(() => {});
+    .then((r) => { if (r.text) { m.tr = r.text; drawCaptions(); if (S.panel === "transcript") renderPanel(); } })
+    .catch((e) => { if (!S.trTold) { S.trTold = true; toast(`Captions can't be shown in ${langName(S.capLang)} right now: ${e?.message || "translation did not answer"} The original words are shown instead.`, "warn", 9000); } });
 }
 
 let lastChime = 0;
@@ -874,6 +875,7 @@ function renderPanel() {
   } else if (S.panel === "transcript") {
     const langs = {}; for (const m of S.transcript) if (m.lang) langs[m.lang] = (langs[m.lang] || 0) + 1;
     s.innerHTML = head(`${ic("notes")} Notes.AI`) + `<div class="body" id="tb">
+      <p class="capstat" id="capstat" role="status">${esc(capLine())}</p>
       <p class="km-muted" style="font-size:.85rem;margin:0">Every phrase is transcribed in the language it was spoken - Notes.AI detects it automatically, line by line, even when people switch languages.</p>
       ${Object.keys(langs).length ? `<div class="langs">${Object.entries(langs).sort((a, b) => b[1] - a[1]).map(([l, n]) => `<span class="lchip">${esc(langName(l))} · ${n}</span>`).join("")}</div>` : ""}
       <label class="row" style="display:grid;gap:4px;font-size:.9rem" for="ten">Show captions in<select class="input" id="ten" style="min-height:38px">${capOptions()}</select></label>
@@ -901,11 +903,36 @@ function setCapLang(lang) {
 const linkify = (h) => h.replace(/(https:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 
 // ---------------------------------------------------------------- captions: my own voice, transcribed on Kayak's servers
+// What captions are doing for THIS person, shown in the pill and the Notes.AI panel, so a fault is never silent.
+const CAP = { state: "off", msg: "", told: "" };
+function capStatus(state, msg = "", code = "") {
+  CAP.state = state; CAP.msg = msg;
+  const pill = $("#cappill"), txt = $("#captxt");
+  if (txt) txt.textContent = state === "error" ? "Captions: not working" : state === "blocked" ? "Captions: tap to start" : state === "nomic" ? "Captions on · your mic is off" : "Captions on";
+  if (pill) { pill.classList.toggle("warn", state === "error" || state === "blocked"); pill.title = msg; }
+  // Tell the person once per kind of fault, not on every phrase.
+  if ((state === "error" || state === "blocked") && CAP.told !== (code || state)) { CAP.told = code || state; toast(msg, "warn", 9000); }
+  if (state === "ok") CAP.told = "";
+  if (S.panel === "transcript") { const el = $("#capstat"); if (el) el.textContent = capLine(); }
+}
+const capLine = () => !S.room.captions ? (isHost() ? "Captions are off. Turn them on with the Captions button; everyone is told." : "Captions are off. Only the host can turn them on.")
+  : CAP.state === "error" || CAP.state === "blocked" ? CAP.msg
+  : CAP.state === "nomic" ? "Captions are on. Your microphone is off or unavailable, so your own speech is not being captioned."
+  : CAP.state === "ok" ? "Captions are on and working: your speech is being transcribed." : "Captions are on. Listening for speech…";
 async function startCaptions() {
   const mic = rawMic();
-  if (S.cap || !mic) return;
+  if (S.cap) return;
+  if (!mic) return capStatus("nomic");
+  if (!window.AudioWorkletNode) return capStatus("error", "This browser cannot capture speech for captions. Use Chrome, Edge or the Meet desktop app.", "nosupport");
   try {
     const ac = new AudioContext();
+    // Safari and iPhone keep audio processing paused until the person taps the page.
+    if (ac.state === "suspended") await ac.resume().catch(() => {});
+    if (ac.state !== "running") {
+      capStatus("blocked", "Captions are on, but this browser holds your microphone until you tap the page. Tap anywhere to start captions.");
+      const wake = () => ac.resume().then(() => { if (ac.state === "running") { removeEventListener("pointerdown", wake); capStatus("listening"); } }).catch(() => {});
+      addEventListener("pointerdown", wake);
+    } else capStatus(S.micOn ? "listening" : "nomic");
     await ac.audioWorklet.addModule("/assets/capture-worklet.js");
     const node = new AudioWorkletNode(ac, "kayak-capture");
     ac.createMediaStreamSource(new MediaStream([mic])).connect(node); // your real voice, even with the voice changer on
@@ -922,7 +949,7 @@ async function startCaptions() {
       else if (!cap.voiced && cap.buf.length > 5) cap.buf = [];
     };
     S.cap = cap;
-  } catch (e) { console.warn("captions", e); toast("Captions couldn't start on this browser."); }
+  } catch (e) { console.warn("captions", e); capStatus("error", `Captions couldn't start on this browser (${e?.message || e}). Run the self-test at meet.kayaksa.com/selftest.`, "start"); }
 }
 async function flushCaption(cap) {
   const chunks = cap.buf; cap.buf = []; cap.voiced = 0; cap.silent = 0;
@@ -940,10 +967,14 @@ async function flushCaption(cap) {
     const r = await api(`/api/transcribe/${room}${S.myLang ? `?hint=${S.myLang}` : ""}`, { method: "POST", body: new Blob([wav], { type: "audio/wav" }) });
     if (r.lang && (r.conf == null || r.conf >= 0.7)) S.myLang = r.lang;
     if (r.text) send({ t: "caption", text: r.text, en: r.en || null, lang: r.lang || null, conf: r.conf ?? null });
+    capStatus("ok");
   }
-  catch {} finally { cap.busy--; }
+  catch (e) {
+    console.warn("captions", e);
+    capStatus("error", e?.status === 429 ? "Captions are being sent too quickly from this device and were paused for a moment." : e?.status === 401 ? "Your invitation has expired, so your speech is no longer captioned. Open the meeting link again." : (e?.message && e.code ? e.message : `Your speech could not be transcribed (${e?.message || "no answer from Kayak's servers"}).`), e?.code || String(e?.status || "net"));
+  } finally { cap.busy--; }
 }
-function stopCaptions() { if (!S.cap) return; try { S.cap.node.disconnect(); S.cap.ac.close(); } catch {} S.cap = null; }
+function stopCaptions() { CAP.state = "off"; CAP.msg = ""; CAP.told = ""; if (!S.cap) return; try { S.cap.node.disconnect(); S.cap.ac.close(); } catch {} S.cap = null; }
 
 // ---------------------------------------------------------------- recording (host): composed in the browser, stored in Kayak's R2
 async function startRecording() {
@@ -988,7 +1019,17 @@ function flushRec(rec, last = false) {
   if (!rec.buf.length) return rec.chain || Promise.resolve();
   const blob = new Blob(rec.buf, { type: "video/webm" }); rec.buf = []; rec.bufSize = 0;
   const n = rec.part++;
-  rec.chain = (rec.chain || Promise.resolve()).then(() => fetch(`/api/rec/${room}/${rec.id}/${n}`, { method: "PUT", headers: { "X-Meet-Token": token || "" }, body: blob }).then((r) => { if (!r.ok) throw new Error("upload"); }).catch(() => toast("Part of the recording failed to upload. Keep this tab open.", "warn")));
+  const put = async () => {
+    for (let i = 0; i < 4; i++) {
+      const r = await fetch(`/api/rec/${room}/${rec.id}/${n}`, { method: "PUT", headers: { "X-Meet-Token": token || "" }, body: blob }).catch(() => null);
+      if (r?.ok) return;
+      if (r && r.status >= 400 && r.status < 500 && r.status !== 408 && r.status !== 429) break; // a refusal won't change on retry
+      await new Promise((ok) => setTimeout(ok, 1500 * (i + 1)));
+    }
+    rec.lost = (rec.lost || 0) + 1;
+    toast(`Part ${n} of the recording could not be uploaded after several tries, so about ${Math.round(blob.size / 200000)} seconds will be missing. Check your connection.`, "warn", 10000);
+  };
+  rec.chain = (rec.chain || Promise.resolve()).then(put);
   return rec.chain;
 }
 async function stopRecording() {
@@ -998,8 +1039,8 @@ async function stopRecording() {
   await new Promise((ok) => { rec.mr.onstop = ok; rec.mr.stop(); });
   clearInterval(rec.timer);
   await flushRec(rec, true);
-  try { await api(`/api/rec/${room}/${rec.id}/finish`, { method: "POST" }); toast("Recording saved. Find it in Kayak Meet on the internal portal."); }
-  catch (e) { toast(e.message, "warn"); }
+  try { await api(`/api/rec/${room}/${rec.id}/finish`, { method: "POST" }); toast(rec.lost ? `Recording saved, with ${rec.lost} part${rec.lost === 1 ? "" : "s"} missing. Find it in Kayak Meet on the internal portal.` : "Recording saved. Find it in Kayak Meet on the internal portal."); }
+  catch (e) { toast(`The recording was NOT saved. ${e.message}`, "warn", 0); }
   rec.ac.close();
 }
 
@@ -1047,7 +1088,7 @@ async function pollStats() {
 }
 function showStats() {
   const avg = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0);
-  toast(`Connected to ${S.peers.size} ${S.peers.size === 1 ? "person" : "people"} directly${S.relay ? " (relay available for strict networks)" : ""}. Average delay ${Math.round(avg(S.stats.rtt))} ms, video loss ${(avg(S.stats.loss) * 100).toFixed(1)}%. All media is encrypted end to end.`, "", 9000);
+  toast(`Connected to ${S.peers.size} ${S.peers.size === 1 ? "person" : "people"} directly${S.relay ? " (relay available for strict networks)" : ""}. Average delay ${Math.round(avg(S.stats.rtt))} ms, video loss ${(avg(S.stats.loss) * 100).toFixed(1)}%. All media is encrypted.`, "", 9000);
 }
 
 // ---------------------------------------------------------------- leaving and feedback

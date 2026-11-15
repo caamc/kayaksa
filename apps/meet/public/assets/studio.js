@@ -20,6 +20,11 @@ const ls = (k, d = "") => { try { return localStorage.getItem(k) ?? d; } catch {
 const lset = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 function toast(t, ms = 3000) { let b = $(".toasts"); if (!b) { b = document.createElement("div"); b.className = "toasts"; b.setAttribute("role", "status"); document.body.append(b); } const e = document.createElement("div"); e.className = "toast"; e.textContent = t; b.append(e); setTimeout(() => e.remove(), ms); }
 
+// What this browser can do. Safari (and every browser on iPhone and iPad) cannot apply picture effects to a
+// camera frame, so those controls are marked instead of silently doing nothing.
+const CAN = { filter: "filter" in document.createElement("canvas").getContext("2d") };
+const NEEDS_FILTER = { look: "Looks and soft focus", light: "Brightness, exposure, contrast and low-light boost", colour: "Colour, warmth and tint", privacy: "Face blur" };
+const cannot = (what) => `<p class="sx-warn" role="note"><b>${what} can't be applied in this browser.</b> Safari, and every browser on iPhone and iPad, lacks the picture-effects feature Meet uses. Use Chrome or Edge on a computer, or the Meet desktop app. <a href="/selftest">Run the self-test</a></p>`;
 const T = loadStudio();
 const ST = { stream: null, raw: null, video: null, canvas: null, ctx: null, seg: null, mask: null, busy: false, bgImg: null, bgKey: "", split: false, grid: false, mirror: ls("km:mirror", "1") !== "0", me: null, tab: "look", dirty: false, rec: null };
 const app = $("#studio");
@@ -113,7 +118,8 @@ function panel() {
       ${tog("km:ns", "Noise suppression", "Reduces keyboard, fan and street noise.", ls("km:ns", "1") !== "0", "data-ls")}${tog("km:ec", "Echo cancellation", "", ls("km:ec", "1") !== "0", "data-ls")}${tog("km:ag", "Automatic volume", "", ls("km:ag", "1") !== "0", "data-ls")}
       <div class="sx-row"><button class="sx-btn" id="micTest">${ic("mic")} Record 5 seconds and play back</button></div><p class="sx-help">The voice changer is in the meeting's More menu.</p>`,
   };
-  c.innerHTML = P2[ST.tab]();
+  c.innerHTML = (!CAN.filter && NEEDS_FILTER[ST.tab] ? cannot(NEEDS_FILTER[ST.tab]) : "") + (!CAN.filter && ST.tab === "bg" ? cannot("Background blur") : "") + (ST.segState && (ST.tab === "bg" || ST.tab === "privacy") ? `<p class="sx-warn" role="status" id="segNote">${esc(ST.segState)}</p>` : "") + P2[ST.tab]()
+    + `<p class="sx-help sx-foot">Something not working? <a href="/selftest">Run the self-test</a> to see why.</p>`;
   $$("[data-s]", c).forEach((el) => (el.oninput = () => { const k = el.dataset.s; T[k] = Number(el.value); $("#o-" + k).textContent = fmt(k, T[k]); changed(); }));
   $$("[data-t]", c).forEach((el) => (el.onchange = () => { T[el.dataset.t] = el.checked; if (["flip", "tag", "brand"].includes(el.dataset.t)) applyMirror(); changed(true); if (["tag", "faceBlur"].includes(el.dataset.t)) panel(); }));
   $$("[data-v]", c).forEach((el) => (el.oninput = () => { T[el.dataset.v] = el.value; changed(); }));
@@ -146,8 +152,15 @@ async function devicePickers() {
 async function startCam() {
   ST.stream?.getTracks().forEach((t) => t.stop());
   const c = constraints({ cam: ls("km:cam"), mic: ls("km:mic") });
-  try { ST.stream = await navigator.mediaDevices.getUserMedia(c); }
-  catch { try { ST.stream = await navigator.mediaDevices.getUserMedia({ video: c.video }); } catch { $("#camOff").hidden = false; return; } }
+  const why = (e) => ({ NotAllowedError: "Camera access was refused. Allow the camera for Meet in your browser's site settings (or in your computer's privacy settings for the Meet app), then turn it on again.", NotFoundError: "No camera was found on this device.", NotReadableError: "The camera is in use by another app, or the system blocked it. Close other apps that use the camera and try again." })[e?.name] || `The camera could not be opened (${e?.name || "error"}).`;
+  const open = async (v) => { try { return await navigator.mediaDevices.getUserMedia({ audio: c.audio, video: v }); } catch (e) { if (e?.name === "NotAllowedError" || e?.name === "NotFoundError") { try { return await navigator.mediaDevices.getUserMedia({ video: v }); } catch (e2) { throw e2; } } throw e; } };
+  try { ST.stream = await open(c.video); }
+  catch (e) {
+    // The camera Meet remembered may have been unplugged: use whichever camera is there.
+    const any = { ...c.video }; delete any.deviceId; delete c.audio.deviceId;
+    try { ST.stream = await open(any); if (ls("km:cam")) { lset("km:cam", ""); toast("The camera you used last time isn't connected, so Meet is using another one."); } }
+    catch (e2) { $("#camOff").hidden = false; $("#camOff p").textContent = why(e2); return; }
+  }
   $("#camOff").hidden = true;
   ST.raw = ST.stream.getVideoTracks()[0];
   if (!ST.video) { ST.video = document.createElement("video"); ST.video.muted = true; ST.video.playsInline = true; }
@@ -173,13 +186,20 @@ let segLoading = null;
 function loadScript(src) { return new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = () => rej(new Error("load")); document.head.append(el); }); }
 function loadSeg() {
   if (ST.seg || segLoading) return segLoading;
+  const note = (t) => { ST.segState = t; const el = $("#segNote"); if (el) { if (t) el.textContent = t; else el.remove(); } else if (t && (ST.tab === "bg" || ST.tab === "privacy")) panel(); };
+  note("Getting backgrounds ready… this takes a few seconds the first time.");
   segLoading = (async () => {
     try {
       await loadScript("/seg/selfie_segmentation.js");
       const seg = new window.SelfieSegmentation({ locateFile: (f) => `/seg/${f}` });
       seg.setOptions({ modelSelection: 1 }); seg.onResults((r) => { ST.mask = r.segmentationMask; });
-      await seg.initialize(); ST.seg = seg;
-    } catch { segLoading = null; toast("Backgrounds and face blur aren't available on this device right now. Face blur blurs the whole picture instead."); }
+      await seg.initialize(); ST.seg = seg; note("");
+    } catch (e) {
+      segLoading = null;
+      const missing = !(await fetch("/seg/selfie_segmentation.js", { method: "HEAD" }).then((r) => r.ok).catch(() => false));
+      const msg = missing ? "Backgrounds and face blur are unavailable: the person-detection model is missing from this release of Meet. Tell your Kayak administrator." : `Backgrounds and face blur couldn't start on this device (${e?.message || "graphics acceleration may be off"}). Face blur blurs the whole picture instead.`;
+      note(msg); toast(msg, 8000);
+    }
   })();
   return segLoading;
 }
