@@ -222,3 +222,6 @@ dialog.studio::backdrop{background:#06171Ecc;-webkit-backdrop-filter:blur(6px);b
 .st-prev canvas{width:100%;height:auto;display:block;border-radius:18px;background:#0B2833}
 .sws{display:flex;gap:8px;flex-wrap:wrap}.sws button{width:34px;height:34px;border-radius:50%;border:2px solid #ffffff33;cursor:pointer;box-shadow:inset 0 2px 4px #0003}.sws button.on{outline:3px solid #EE9B1E;outline-offset:2px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+/* Captions state: a fault is shown, never silent */
+.pill.warn{background:#EE9B1E2e;color:#FFD28A}
+.capstat{margin:0 0 10px;padding:9px 12px;border-radius:10px;background:#ffffff10;font-size:.88rem;line-height:1.45}

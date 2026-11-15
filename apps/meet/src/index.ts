@@ -11,7 +11,7 @@ import { Space } from "./space";
 export { Room, Space };
 
 import type { Env } from "./env";
-import { auth, currentMember, needMember } from "./auth";
+import { auth, currentMember, needMember, employeeOnly } from "./auth";
 import { ws, serveFile, mayJoin } from "./workspace";
 import { people, castPublic } from "./people";
 import { calApi, calPages } from "./calendar";
@@ -99,7 +99,7 @@ app.get("/ws/:room", async (c) => {
 
 // ---------------------------------------------------------------- live captions (Workers AI Whisper)
 app.post("/api/transcribe/:room", needRoom, async (c) => {
-  if (!c.env.AI) return c.json({ error: "Captions are not available yet." }, 503);
+  if (!c.env.AI) return c.json({ error: "Captions are not switched on for Meet (Kayak AI is not connected). Tell your Kayak administrator.", code: "ai_off" }, 503);
   const cl = c.get("claims");
   if (!(await rateLimit(c.env.DB, `cap:${cl.r}:${cl.e || cl.n || "g"}:${c.req.header("CF-Connecting-IP")}`, 40, 60))) return c.json({ error: "slow down" }, 429);
   const buf = await c.req.arrayBuffer();
@@ -131,15 +131,28 @@ app.post("/api/transcribe/:room", needRoom, async (c) => {
       en = clean(t?.text);
     }
     return c.json({ text, lang: lang || null, en: en && en.toLowerCase() !== text.toLowerCase() ? en : null, conf: Number.isFinite(conf) ? conf : null });
-  } catch {
+  } catch (first: any) {
     try {
       const r: any = await c.env.AI.run("@cf/openai/whisper" as any, { audio: [...b] } as any);
-      return c.json({ text: clean(r?.text) });
+      return c.json({ text: clean(r?.text), fallback: true });
     } catch (e: any) {
-      return c.json({ text: "", error: "Captions are busy. They will resume shortly." }, 200);
+      // Say why, to the person and in the log: a silent empty caption looks like "captions don't work".
+      const why = aiProblem(e, first);
+      console.error("meet.transcribe failed", JSON.stringify({ room: cl.r, code: why.code, first: String(first?.message || first).slice(0, 300), second: String(e?.message || e).slice(0, 300) }));
+      return c.json({ text: "", error: why.message, code: why.code }, 502);
     }
   }
 });
+
+/** Turns a Workers AI failure into a short reason a person can act on (never the raw provider text). */
+function aiProblem(...errs: any[]): { code: string; message: string } {
+  const t = errs.map((e) => String(e?.message || e || "")).join(" ").toLowerCase();
+  if (/neuron|quota|allocation|limit.*(exceed|reach)|4006|3036|429|capacity/.test(t)) return { code: "ai_limit", message: "Kayak AI has reached its usage limit for now, so captions, translation and minutes are paused. Tell your Kayak administrator." };
+  if (/no such model|model.*not found|5007|unknown model/.test(t)) return { code: "ai_model", message: "The speech model is not available on Kayak's AI service. Tell your Kayak administrator." };
+  if (/auth|permission|10000|forbidden|unauthor/.test(t)) return { code: "ai_access", message: "Kayak AI is not switched on for Meet. Tell your Kayak administrator." };
+  if (/timeout|timed out|network|fetch failed|503|502/.test(t)) return { code: "ai_unreachable", message: "Kayak AI could not be reached. Captions will try again." };
+  return { code: "ai_error", message: "Kayak AI returned an error, so this was not transcribed. Captions will try again." };
+}
 
 /** Translates to English on Workers AI. m2m100 when the language is known, otherwise an LLM. */
 async function toEnglish(ai: Ai, text: string, lang?: string): Promise<string> {
@@ -157,7 +170,7 @@ async function toEnglish(ai: Ai, text: string, lang?: string): Promise<string> {
 
 // Chat and anything else on demand: translate a short text to English.
 app.post("/api/translate/:room", needRoom, async (c) => {
-  if (!c.env.AI) return c.json({ error: "Translation is not available yet." }, 503);
+  if (!c.env.AI) return c.json({ error: "Translation is not switched on for Meet (Kayak AI is not connected). Tell your Kayak administrator.", code: "ai_off" }, 503);
   const cl = c.get("claims");
   if (!(await rateLimit(c.env.DB, `tr:${cl.r}:${c.req.header("CF-Connecting-IP")}`, 60, 60))) return c.json({ error: "Too many translations. Wait a moment." }, 429);
   const b = await c.req.json<any>().catch(() => ({}));
@@ -165,10 +178,20 @@ app.post("/api/translate/:room", needRoom, async (c) => {
   if (!text) return c.json({ en: "", text: "" });
   // Captions and chat into the viewer's own language (m2m100 covers 100 languages); English by default.
   const to = typeof b.to === "string" && /^[a-z]{2,3}$/.test(b.to) ? b.to : "en";
-  if (to === "en") { const en = await toEnglish(c.env.AI, text, str(b.from, 8) || undefined); return c.json({ en, text: en, to }); }
-  const r: any = await c.env.AI.run("@cf/meta/m2m100-1.2b" as any, { text, target_lang: to, ...(b.from ? { source_lang: str(b.from, 8) } : {}) } as any).catch(() => null);
+  if (to === "en") {
+    const en = await toEnglish(c.env.AI, text, str(b.from, 8) || undefined);
+    if (!en) return c.json({ en: "", text: "", to, error: "This could not be translated just now.", code: "ai_error" }, 502);
+    return c.json({ en, text: en, to });
+  }
+  let failure: any = null;
+  const r: any = await c.env.AI.run("@cf/meta/m2m100-1.2b" as any, { text, target_lang: to, ...(b.from ? { source_lang: str(b.from, 8) } : {}) } as any).catch((e: any) => { failure = e; return null; });
   const out = String(r?.translated_text || "").trim().slice(0, 2000);
-  return c.json({ en: null, text: out || text, to });
+  if (!out) {
+    const why = aiProblem(failure);
+    console.error("meet.translate failed", JSON.stringify({ to, code: why.code, error: String(failure?.message || failure || "empty").slice(0, 300) }));
+    return c.json({ en: null, text: "", to, error: why.code === "ai_error" ? "This could not be translated just now." : why.message, code: why.code }, 502);
+  }
+  return c.json({ en: null, text: out, to });
 });
 
 // Whisper sometimes "hears" stock phrases in silence; drop them.
@@ -316,7 +339,13 @@ app.post("/api/rec/:room/:id/finish", needRoom, hostOnly, async (c) => {
   if (!r) return c.json({ error: "Recording not found." }, 404);
   const parts = (JSON.parse(r.parts || "[]") as R2UploadedPart[]).sort((a, b) => a.partNumber - b.partNumber);
   const up = c.env.REC.resumeMultipartUpload(r.r2_key, r.upload_id);
-  if (parts.length) await up.complete(parts); else await up.abort();
+  try { if (parts.length) await up.complete(parts); else await up.abort(); }
+  catch (e: any) {
+    // Kept as 'recording' so the upload is not lost; the reason goes to the host and the log.
+    console.error("meet.recording finish failed", JSON.stringify({ room: r.meeting_id, recording: r.id, parts: parts.length, sizes: parts.slice(0, 6).map((p: any) => p.size ?? null), error: String(e?.message || e).slice(0, 300) }));
+    await auditFull(c as any, c.env.DB, c.get("claims").e || null, "meet.recording_failed", { room: r.meeting_id, recording: r.id, parts: parts.length });
+    return c.json({ error: `The recording could not be saved (${parts.length} parts were uploaded, but storage refused to join them). This is a known fault with longer recordings; tell your Kayak administrator.`, code: "rec_finish" }, 500);
+  }
   await c.env.DB.prepare("UPDATE recordings SET status = ?, ended_at = ? WHERE id = ?").bind(parts.length ? "ready" : "empty", new Date().toISOString(), r.id).run();
   return c.json({ ok: true });
 });
@@ -357,6 +386,63 @@ app.post("/api/feedback/:room", needRoom, async (c) => {
     .bind(cl.r, cl.n || str(b.name, 60) || null, cl.role, n(b.overall), n(b.audio), n(b.video), n(b.ease), JSON.stringify(issues), str(b.comment, 2000) || null, JSON.stringify(b.stats || {}).slice(0, 4000), new Date().toISOString()).run();
   return c.json({ ok: true });
 });
+
+// ---------------------------------------------------------------- self-test (Kayak team)
+// One request that tries each service Meet depends on and says, in plain words, which ones work.
+// It never returns secrets or provider error text beyond a short reason. Kayak team only; rate limited.
+app.get("/api/diag", needMember, employeeOnly, async (c) => {
+  const m: any = (c as any).get("member");
+  if (!(await rateLimit(c.env.DB, `diag:${m.id}`, 6, 600))) return c.json({ error: "The self-test was run several times just now. Wait a few minutes." }, 429);
+  const out: { id: string; label: string; ok: boolean; detail: string; ms: number }[] = [];
+  const check = async (id: string, label: string, fn: () => Promise<string>) => {
+    const t = Date.now();
+    try { out.push({ id, label, ok: true, detail: await fn(), ms: Date.now() - t }); }
+    catch (e: any) { out.push({ id, label, ok: false, detail: String(e?.message || e).replace(/\s+/g, " ").slice(0, 240), ms: Date.now() - t }); }
+  };
+  const need = (v: unknown, msg: string) => { if (!v) throw new Error(msg); };
+  await check("signing", "Invitation signing key", async () => { need(c.env.MEET_SIGNING_KEY, "MEET_SIGNING_KEY is not set: invitation links, client sign-in and integrations cannot work."); return "Set."; });
+  await check("db", "Database", async () => { const r: any = await c.env.DB.prepare("SELECT COUNT(*) n FROM meetings").first(); return `Reachable (${r?.n ?? 0} meetings).`; });
+  await check("storage", "Storage for recordings and files", async () => {
+    const key = `diag/${crypto.randomUUID()}`;
+    await c.env.REC.put(key, "ok"); const o = await c.env.REC.get(key); const t = o ? await o.text() : ""; await c.env.REC.delete(key);
+    need(t === "ok", "A test file could not be read back."); return "A test file was written, read and deleted.";
+  });
+  await check("ai", "Kayak AI connection", async () => { need(c.env.AI, "Workers AI is not connected to Meet: captions, translation and minutes cannot work."); return "Connected."; });
+  if (c.env.AI) {
+    await check("speech", "Speech to text (captions)", async () => {
+      // Two seconds of a 440 Hz tone: no words are expected back, only a successful answer from the model.
+      const n = 32000, wav = new ArrayBuffer(44 + n * 2), d = new DataView(wav);
+      const w = (p: number, t: string) => [...t].forEach((ch, i) => d.setUint8(p + i, ch.charCodeAt(0)));
+      w(0, "RIFF"); d.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); d.setUint32(16, 16, true); d.setUint16(20, 1, true); d.setUint16(22, 1, true);
+      d.setUint32(24, 16000, true); d.setUint32(28, 32000, true); d.setUint16(32, 2, true); d.setUint16(34, 16, true); w(36, "data"); d.setUint32(40, n * 2, true);
+      for (let i = 0; i < n; i++) d.setInt16(44 + i * 2, Math.round(Math.sin((i / 16000) * 2 * Math.PI * 440) * 6000), true);
+      const b = new Uint8Array(wav); let bin = ""; for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000));
+      let note = "whisper-large-v3-turbo answered.";
+      try { await c.env.AI!.run("@cf/openai/whisper-large-v3-turbo" as any, { audio: btoa(bin), task: "transcribe", vad_filter: true, condition_on_previous_text: false } as any); }
+      catch (first: any) {
+        try { await c.env.AI!.run("@cf/openai/whisper" as any, { audio: [...b] } as any); note = `The main model failed (${aiProblem(first).code}); the fallback model answered, so captions work in English only.`; }
+        catch (e: any) { const why = aiProblem(e, first); throw new Error(`${why.message} [${why.code}] ${String(first?.message || first).slice(0, 120)}`); }
+      }
+      return note;
+    });
+    await check("translate", "Translation", async () => {
+      const r: any = await c.env.AI!.run("@cf/meta/m2m100-1.2b" as any, { text: "नमस्ते, आप कैसे हैं?", source_lang: "hi", target_lang: "en" } as any).catch((e: any) => { const why = aiProblem(e); throw new Error(`${why.message} [${why.code}] ${String(e?.message || e).slice(0, 120)}`); });
+      const t = String(r?.translated_text || "").trim(); need(t, "The translation model returned nothing."); return `Hindi to English: "${t.slice(0, 80)}"`;
+    });
+    await check("minutes", "Minutes and summaries", async () => {
+      const r: any = await c.env.AI!.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast" as any, { messages: [{ role: "user", content: "Reply with the single word: ready" }], max_tokens: 8 } as any).catch((e: any) => { const why = aiProblem(e); throw new Error(`${why.message} [${why.code}] ${String(e?.message || e).slice(0, 120)}`); });
+      need(String(r?.response || "").trim(), "The writing model returned nothing."); return "The writing model answered.";
+    });
+  }
+  const asset = async (path: string) => (await c.env.ASSETS.fetch(new Request(new URL(path, c.req.url)))).ok;
+  await check("seg", "Background and face-blur model", async () => { need(await asset("/seg/selfie_segmentation.js"), "The person-detection model is missing from this release: backgrounds, blur and face blur cannot work until Meet is published again."); return "Present in this release."; });
+  await check("face", "Kayak Avatar face tracking", async () => { need(await asset("/face/face_mesh.js"), "The face-tracking model is missing from this release: the avatar follows your voice only."); return "Present in this release."; });
+  await check("relay", "Relay for strict firewalls (TURN)", async () => { need(c.env.TURN_KEY_ID && c.env.TURN_KEY_API_TOKEN, "Not configured: people behind strict office firewalls may fail to connect."); return (await usageGate(c.env)).turn ? "Configured, with allowance left this month." : "Configured, but this month's allowance is used up."; });
+  await check("townhall", "Town halls (Cloudflare Realtime)", async () => { need(c.env.CF_REALTIME_APP_ID && c.env.CF_REALTIME_APP_SECRET, "Not configured: town halls run as ordinary meetings, limited to 12 people."); return "Configured."; });
+  await auditFull(c as any, c.env.DB, m.id, "meet.selftest", { failed: out.filter((x) => !x.ok).map((x) => x.id) });
+  return c.json({ at: new Date().toISOString(), checks: out });
+});
+app.get("/selftest", async (c) => ((await currentMember(c)) ? page(c, "/selftest.html") : c.redirect(`/login?next=${encodeURIComponent("/selftest")}`, 302)));
 
 // ---------------------------------------------------------------- desktop app downloads and updates
 // Installers and update manifests live in Kayak's own R2 bucket under desktop/{mac,win}/, uploaded by
