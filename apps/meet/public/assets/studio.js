@@ -34,7 +34,7 @@ async function boot() {
   if (!T.tagName && ST.me) T.tagName = ST.me.name;
   shell();
   await startCam();
-  loop();
+  if (ST.video) loop(); else { const wait = setInterval(() => { if (ST.video) { clearInterval(wait); loop(); } }, 500); }
 }
 
 function shell() {
@@ -73,7 +73,8 @@ function shell() {
   addEventListener("beforeunload", (e) => { if (ST.dirty) { e.preventDefault(); e.returnValue = ""; } });
 }
 // Mirror the preview like a mirror, except when overlays are on, so their text reads the right way round.
-function applyMirror() { const m = ST.mirror && !T.flip && !T.tag && !T.brand; $("#out").style.transform = $("#before").style.transform = m ? "scaleX(-1)" : ""; const b = $("#tMirror"); if (b) b.title = T.tag || T.brand ? "Preview isn't mirrored while overlays are on, so you can read them" : ""; }
+const pictureBg = () => T.bg === "custom" || T.bg.startsWith("kayak-");
+function applyMirror() { const m = ST.mirror && !T.flip && !T.tag && !T.brand && !pictureBg(); $("#out").style.transform = $("#before").style.transform = m ? "scaleX(-1)" : ""; const b = $("#tMirror"); if (b) b.title = T.tag || T.brand || pictureBg() ? "Preview isn't mirrored while overlays or a background picture are on, so you see them the way others do" : ""; }
 
 // ---------------------------------------------------------------- controls
 const slider = (k, label, min, max, step = 1, hint = "") => `<label class="sx-sl"><span><b>${label}</b><output id="o-${k}">${fmt(k, T[k])}</output></span><input type="range" data-s="${k}" min="${min}" max="${max}" step="${step}" value="${T[k]}" aria-label="${label}">${hint ? `<small>${hint}</small>` : ""}</label>`;
@@ -124,7 +125,7 @@ function panel() {
   $$("[data-t]", c).forEach((el) => (el.onchange = () => { T[el.dataset.t] = el.checked; if (["flip", "tag", "brand"].includes(el.dataset.t)) applyMirror(); changed(true); if (["tag", "faceBlur"].includes(el.dataset.t)) panel(); }));
   $$("[data-v]", c).forEach((el) => (el.oninput = () => { T[el.dataset.v] = el.value; changed(); }));
   $$("[data-look]", c).forEach((b) => (b.onclick = () => { T.look = b.dataset.look; $$("[data-look]", c).forEach((x) => x.classList.toggle("on", x === b)); changed(); }));
-  $$("[data-bg]", c).forEach((b) => (b.onclick = () => { T.bg = b.dataset.bg; changed(true); panel(); }));
+  $$("[data-bg]", c).forEach((b) => (b.onclick = () => { T.bg = b.dataset.bg; changed(true); applyMirror(); panel(); }));
   $("#bgColor") && ($("#bgColor").oninput = (e) => { T.bgColor = e.target.value; changed(); });
   $("#bgUp") && ($("#bgUp").onclick = uploadBg);
   $("#bgDel") && ($("#bgDel").onclick = () => { try { localStorage.removeItem("km:studio-bg"); } catch {} if (T.bg === "custom") T.bg = "none"; changed(true); panel(); });
@@ -166,7 +167,7 @@ async function startCam() {
   if (!ST.video) { ST.video = document.createElement("video"); ST.video.muted = true; ST.video.playsInline = true; }
   ST.video.srcObject = new MediaStream([ST.raw]); await ST.video.play().catch(() => {});
   const s = ST.raw.getSettings(); const W = s.width || 1280, H = s.height || 720;
-  ST.canvas = $("#out"); ST.canvas.width = W; ST.canvas.height = H; ST.ctx = ST.canvas.getContext("2d", { alpha: false });
+  ST.canvas = $("#out"); ST.canvas.width = W; ST.canvas.height = H; ST.ctx = ST.canvas.getContext("2d"); // needs transparency: the person is cut out, then the background is drawn behind
   const b = $("#before"); b.width = W; b.height = H;
   meter();
   if (needsMask(T)) loadSeg();
@@ -177,10 +178,11 @@ function loop() {
   const v = ST.video;
   if (v && ST.ctx && v.readyState >= 2) {
     drawFrame(ST.ctx, ST.canvas, v, T, { mask: needsMask(T) ? ST.mask : null, bgImg: ST.bgImg });
-    if (ST.split) { const b = $("#before"), bc = b.getContext("2d"); bc.drawImage(v, 0, 0, b.width, b.height); b.style.clipPath = ST.mirror && !T.flip && !T.tag && !T.brand ? "inset(0 0 0 50%)" : "inset(0 50% 0 0)"; }
-    if (needsMask(T) && ST.seg && !ST.busy) { ST.busy = true; ST.seg.send({ image: v }).catch(() => {}).finally(() => (ST.busy = false)); }
+    if (ST.split) { const b = $("#before"), bc = b.getContext("2d"); bc.drawImage(v, 0, 0, b.width, b.height); b.style.clipPath = ST.mirror && !T.flip && !T.tag && !T.brand && !pictureBg() ? "inset(0 0 0 50%)" : "inset(0 50% 0 0)"; }
+    if (needsMask(T) && ST.seg && !ST.busy) { ST.busy = true; ST.seg.send({ image: v }).catch((e) => { if (!ST.segErr) { ST.segErr = true; console.warn("studio segmentation", e); } }).finally(() => (ST.busy = false)); }
   }
-  requestAnimationFrame(loop);
+  // Draw each camera frame the moment it arrives (no waiting for the next screen refresh), where the browser can.
+  if (v && v.requestVideoFrameCallback) v.requestVideoFrameCallback(loop); else requestAnimationFrame(loop);
 }
 let segLoading = null;
 function loadScript(src) { return new Promise((res, rej) => { const el = document.createElement("script"); el.src = src; el.onload = res; el.onerror = () => rej(new Error("load")); document.head.append(el); }); }
