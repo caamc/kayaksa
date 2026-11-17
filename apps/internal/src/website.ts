@@ -23,7 +23,7 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
 website.get("/overview", async (c) => {
   const d = db(c);
   const since = new Date(Date.now() - 30 * 86400_000).toISOString().slice(0, 10);
-  const [views, enq, newEnq, subs, kay, pending, top, refs, vit] = await Promise.all([
+  const [views, enq, newEnq, subs, kay, pending, top, refs, vit, camps] = await Promise.all([
     d.prepare("SELECT day, SUM(views) n FROM stat_views WHERE day >= ? GROUP BY day ORDER BY day").bind(since).all(),
     d.prepare("SELECT COUNT(*) n FROM enquiries WHERE created_at >= ?").bind(since).first<any>(),
     d.prepare("SELECT COUNT(*) n FROM enquiries WHERE status = 'new'").first<any>(),
@@ -33,9 +33,10 @@ website.get("/overview", async (c) => {
     d.prepare("SELECT path, SUM(views) n FROM stat_views WHERE day >= ? GROUP BY path ORDER BY n DESC LIMIT 10").bind(since).all(),
     d.prepare("SELECT value, SUM(n) n FROM stat_dims WHERE dim = 'referrer' AND day >= ? GROUP BY value ORDER BY n DESC LIMIT 8").bind(since).all(),
     d.prepare("SELECT lcp, cls, inp FROM stat_vitals WHERE day >= ? ORDER BY id DESC LIMIT 2000").bind(since).all<any>(),
+    d.prepare("SELECT value, SUM(n) n FROM stat_dims WHERE dim = 'campaign' AND day >= ? GROUP BY value ORDER BY n DESC LIMIT 8").bind(since).all(),
   ]);
   const p75 = (k: string) => { const a = vit.results.map((r: any) => r[k]).filter((x: any) => x != null).sort((x: number, y: number) => x - y); return a.length ? a[Math.floor(a.length * 0.75)] : null; };
-  return c.json({ views: views.results, enquiries30: enq?.n || 0, newEnquiries: newEnq?.n || 0, subscribers: subs.results, kay: kay || {}, pendingAnswers: pending?.n || 0, top: top.results, referrers: refs.results, vitals: { lcp: p75("lcp"), cls: p75("cls"), inp: p75("inp"), samples: vit.results.length } });
+  return c.json({ views: views.results, enquiries30: enq?.n || 0, newEnquiries: newEnq?.n || 0, subscribers: subs.results, kay: kay || {}, pendingAnswers: pending?.n || 0, top: top.results, referrers: refs.results, campaigns: camps.results, vitals: { lcp: p75("lcp"), cls: p75("cls"), inp: p75("inp"), samples: vit.results.length } });
 });
 
 // ---------------- enquiries

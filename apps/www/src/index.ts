@@ -410,6 +410,7 @@ app.post("/api/a", async (c) => {
     await db.batch([
       db.prepare("INSERT INTO stat_views (day, path, views) VALUES (?,?,1) ON CONFLICT(day, path) DO UPDATE SET views = views + 1").bind(day, path),
       up("referrer", ref), up("country", country), up("device", device), up("browser", browser), up("hour", String(new Date().getUTCHours())),
+      ...(b.u ? [up("campaign", String(b.u).toLowerCase().replace(/[^a-z0-9_.\/-]/g, "").slice(0, 60) || "other")] : []),
     ]);
   } else if (b.t === "cwv") {
     const n = (v: any) => (Number.isFinite(Number(v)) ? Number(v) : null);
