@@ -154,7 +154,7 @@ const STATIC_PAGES: Record<string, [string, string]> = {
   industries: ["Industries we advise", "Advisory experience across financial services, healthcare and pharma, manufacturing, infrastructure, consumer, technology and the public sector in India."],
   insights: ["Insights: Confluence, the Kayak monthly", "Confluence, the Kayak monthly on strategy, risk and regulation in India: analysis of new laws, deals, enforcement and technology, with scenarios for boards and promoters."],
   about: ["About us", "Kayak Strategic Advisors: independent, senior-led advisory from Mumbai and Thane. Our values, promises and standards."],
-  careers: ["Careers: advisory, technology and sales jobs", "Eleven open roles across the Kayak Group: senior advisory, product engineering, three paid internships, SEO and business development in Mumbai, and Marketing & Sales Solutions Leads for NexaPair and DocuVow in the UAE and Delhi NCR. Kayak never charges a candidate: read the fraud warning before applying."],
+  careers: ["Careers: advisory, technology and sales jobs", "Fourteen open roles across the Kayak Group: three M&A Advisory roles (Director, Manager, Senior Associate) with Kayak Strategic Advisors in Mumbai; senior advisory, product engineering, three paid internships, SEO and business development in Mumbai; and Marketing & Sales Solutions Leads for NexaPair and DocuVow in the UAE and Delhi NCR. Browse by practice. Kayak never charges a candidate: read the fraud warning before applying."],
   contact: ["Contact us", "Start a confidential conversation with Kayak Strategic Advisors. A senior member of the team replies within one working day."],
   legal: ["Privacy and terms", "How Kayak Strategic Advisors handles personal data, measures this site without cookies, and the terms of use."],
   solutions: ["Kayak Solutions: governance, risk and compliance software", "Thought, Designed and Developed in India for the World: SayUsNow, SeeCounter, NexaPair and DocuVow, platforms born of Kayak's advisory practice."],
@@ -200,6 +200,17 @@ function render(path: string, data: any): PageMeta {
     const body = (a.body || []).map((x: string) => (x.startsWith("## ") ? `<h2>${esc(x.slice(3))}</h2>` : `<p>${esc(x)}</p>`)).join("");
     return { status: 200, title: a.title, desc: (a.dek || "").slice(0, 300), type: "article", crumbs: [["Insights", "/insights"], [a.title, `/insights/${a.id}`]], ssr: `<article><p>${esc(a.section)} · Confluence</p><h1>${esc(a.title)}</h1><p><em>${esc(a.dek)}</em></p>${body}</article>`,
       ld: { "@type": "Article", "@id": `${BASE}/insights/${a.id}#article`, author: { "@id": ORG_ID }, isPartOf: { "@id": SITE_ID }, inLanguage: "en-IN", image: `${BASE}/assets/og.png`, articleSection: a.section, headline: a.title, description: a.dek, datePublished: a.published_at || "2026-11-03", publisher: { "@type": "Organization", name: "Kayak Strategic Advisors", logo: { "@type": "ImageObject", url: "https://www.kayaksa.com/assets/kayak-logo.svg" } }, mainEntityOfPage: `https://www.kayaksa.com/insights/${a.id}` } };
+  }
+  if ((m = p.match(/^\/careers\/practice\/([\w-]+)$/)) && C(m[1])) {
+    const c = C(m[1])!;
+    const jobs = (data.careers.jobs || []).filter((j: any) => j.cluster === c.id);
+    const n = jobs.length;
+    const title = `Careers in ${c.name}`;
+    const desc = n ? `${n} open ${n === 1 ? "role" : "roles"} in Kayak's ${c.name} practice. ${jobs.map((j: any) => j.title).slice(0, 3).join("; ")}.` : `Kayak's ${c.name} practice. We hire when the right person reaches us; send a general note from our careers page.`;
+    return { status: 200, title, desc,
+      crumbs: [["Careers", "/careers"], [c.name, `/careers/practice/${c.id}`]],
+      ssr: `<p><a href="/careers">Careers</a> · <a href="/services/${c.id}">${esc(c.name)} services</a></p><h1>Careers in ${esc(c.name)}</h1><p>${n ? `${n} open ${n === 1 ? "role" : "roles"} in this practice. Each landscape and salary is set by the actual employer (Kayak Strategic Advisors, Kayak Technology Solutions or Kayak Innovations). Kayak never charges a candidate: read the <a href="/careers">fraud warning</a> before applying.` : `We are not advertising a role in this practice today. Send us a general note from the <a href="/careers#apply">careers page</a> and we will reply personally.`}</p>${n ? `<h2>Open roles</h2><ul>${jobs.map((j: any) => `<li><a href="/careers/${j.id}">${esc(j.title)}</a>${j.employer ? ` (${esc(j.employer)})` : ""}: ${esc(j.summary)}</li>`).join("")}</ul>` : ""}<p><a href="/careers#apply">Apply, or send a general note</a></p>`,
+      pageType: "CollectionPage" };
   }
   if ((m = p.match(/^\/careers\/([\w-]+)$/))) {
     const j = (data.careers.jobs || []).find((x: any) => x.id === m![1]);
@@ -362,12 +373,17 @@ app.post("/api/forms", async (c) => {
       .bind(id, kind, b.source === "kay" ? "kay" : "form", name, e, str(f.org, 160), str(f.phone, 40), str(kind === "career" && f.role && !/^General/.test(String(f.role)) ? `Role: ${f.role}` : f.cluster, 120), stored, link, str(b.transcript, 12000), str(b.page, 200), country, now, now,
         NOTICE_VERSION, kind === "career" ? "Considering you for a role at Kayak" : "Replying to your enquiry", cv?.key || null, cv?.name || null, cv?.size || null).run();
     await auditFull(c, c.env.DB, null, `www.${kind}.submitted`, { id, via: b.source === "kay" ? "kay" : "form", page: str(b.page, 200) });
-    if (mailEnabled(c.env) && c.env.ENQUIRY_TO) {
+    if (mailEnabled(c.env)) {
       const rows = [["Name", name], ["Email", e], ["Organisation", str(f.org, 160)], ["Phone", str(f.phone, 40)], ["Role", kind === "career" ? str(f.role, 120) : ""], ["Area", str(f.cluster, 120)], ["Link", link], ["Résumé", cv ? `${cv.name} (${Math.round(cv.size / 1024)} KB), in Kayak Internal` : ""], ["Came via", b.source === "kay" ? "Kay" : "Website form"]].filter((r) => r[1]);
       const emailBody = kind === "career" && assoc
         ? `<table cellpadding="4">${rows.map((r) => `<tr><td style="color:#4E6470">${esc(r[0])}</td><td><b>${esc(r[1])}</b></td></tr>`).join("")}</table><h3 style="margin:14px 0 4px;color:#0E2F3C">Professional associations and references</h3><p style="white-space:pre-wrap;margin:0 0 16px">${esc(assoc)}</p><h3 style="margin:14px 0 4px;color:#0E2F3C">About the applicant</h3><p style="white-space:pre-wrap;margin:0">${esc(msg)}</p>`
         : `<table cellpadding="4">${rows.map((r) => `<tr><td style="color:#4E6470">${esc(r[0])}</td><td><b>${esc(r[1])}</b></td></tr>`).join("")}<p style="white-space:pre-wrap">${esc(msg)}</p>`;
-      c.executionCtx.waitUntil(sendMail(c.env, c.env.ENQUIRY_TO, `${kind === "career" ? (f.role && !/^General/.test(String(f.role)) ? `Application, ${str(f.role, 80)}` : "Careers note") : "New enquiry"}: ${name}${f.org ? `, ${str(f.org, 80)}` : ""}`, mailHtml({ site: "WWW",
+      // Career applications are always routed to the Director (Anuj Choudhary), by Kayak policy.
+      // Contact enquiries go to the general ENQUIRY_TO mailbox when set.
+      const recipients: string[] = kind === "career"
+        ? ["Anuj@kayaksa.com", "ca.anuj.choudhary@outlook.com", ...(c.env.ENQUIRY_TO ? [c.env.ENQUIRY_TO] : [])]
+        : (c.env.ENQUIRY_TO ? [c.env.ENQUIRY_TO] : []);
+      if (recipients.length) c.executionCtx.waitUntil(sendMail(c.env, recipients, `${kind === "career" ? (f.role && !/^General/.test(String(f.role)) ? `Application, ${str(f.role, 80)}` : "Careers note") : "New enquiry"}: ${name}${f.org ? `, ${str(f.org, 80)}` : ""}`, mailHtml({ site: "WWW",
         title: kind === "career" ? "A new careers note" : "A new enquiry",
         intro: emailBody,
         action: { label: "Open in Kayak Internal", url: "https://internal.kayaksa.com/app#/website" }, outro: "Reply within one working day, as the website promises." })).then(() => {}));
@@ -500,7 +516,7 @@ app.get("/BingSiteAuth.xml", (c) => (c.env.BING_SITE_VERIFICATION ? c.body(`<?xm
 app.get("/sitemap.xml", async (c) => {
   const data = await siteData(c);
   const base = site(c);
-  const paths = ["/", ...Object.keys(STATIC_PAGES).map((k) => `/${k}`), ...(data.careers.jobs || []).map((j: any) => `/careers/${j.id}`), ...data.clusters.map((x: any) => `/services/${x.id}`), ...SV.map((x) => `/services/${x.cluster}/${x.slug}`), ...data.tools.map((x: any) => `/solutions/${x.id}`), ...data.articles.map((x: any) => `/insights/${x.id}`), ...Object.keys(await releasedEditions(c)).map((id) => `/confluence/${id}`)];
+  const paths = ["/", ...Object.keys(STATIC_PAGES).map((k) => `/${k}`), ...(data.careers.jobs || []).map((j: any) => `/careers/${j.id}`), ...data.clusters.map((x: any) => `/careers/practice/${x.id}`), ...data.clusters.map((x: any) => `/services/${x.id}`), ...SV.map((x) => `/services/${x.cluster}/${x.slug}`), ...data.tools.map((x: any) => `/solutions/${x.id}`), ...data.articles.map((x: any) => `/insights/${x.id}`), ...Object.keys(await releasedEditions(c)).map((id) => `/confluence/${id}`)];
   const mod: Record<string, string> = {};
   for (const a of data.articles) if (a.published_at) mod[`/insights/${a.id}`] = String(a.published_at).slice(0, 10);
   for (const j of data.careers.jobs || []) mod[`/careers/${j.id}`] = j.posted;
@@ -516,6 +532,10 @@ app.get("/llms.txt", async (c) => {
     `## Services in detail`, ...SV.map((x) => `- [${x.name}](${base}/services/${x.cluster}/${x.slug}): ${x.summary}`), ``,
     `## Kayak Solutions (Thought, Designed and Developed in India for the World)`, ...d.tools.map((x: any) => `- [${x.name}](${base}/solutions/${x.id}): ${x.kind}. ${x.line}`), ``,
     `## Confluence (monthly insights)`, ...d.articles.map((x: any) => `- [${x.title}](${base}/insights/${x.id}): ${x.dek || ""}`), ``,
+    `## Careers`, `- [All open roles](${base}/careers): the main careers page, with a fraud warning (Kayak never charges a candidate), 'Life at Kayak Group' section and the application form.`, ...d.clusters.map((x: any) => {
+      const n = (d.careers.jobs || []).filter((j: any) => j.cluster === x.id).length;
+      return `- [Careers in ${x.name}](${base}/careers/practice/${x.id}): ${n} open ${n === 1 ? "role" : "roles"} in Kayak's ${x.name} practice.`;
+    }), ``,
     `## About`, `- [About us](${base}/about)`, `- [Contact](${base}/contact)`, `- [Kayak Learn: professional courses with verifiable certificates](https://learn.kayaksa.com)`, `- Affiliates: Kayak Innovations (OPC) Private Limited (holds the IP of Kayak's solutions); Brand Defence & Integrity™ (www.bdiglobe.com); Kayak Technology Solutions, a partnership firm that develops and markets Kayak's SaaS solutions, led by Tan.ai (https://tanai.online), CTO for the group.`];
   return c.text(t.join("\n"), 200, { "Cache-Control": "public, max-age=3600" });
 });

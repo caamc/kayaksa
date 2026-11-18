@@ -959,6 +959,19 @@ main:focus{outline:none}
 .cv-fill svg{flex:none}
 .field input.autofilled,.field textarea.autofilled{background:rgba(238,155,30,.08);border-left:3px solid var(--saffron);padding-left:9px}
 
+/* Careers: practice (cluster) card grid */
+.prac-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.prac-card{display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;padding:22px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--pc, var(--water));color:var(--fg);text-decoration:none;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.prac-card:hover{transform:translateY(-2px);box-shadow:0 18px 38px -24px rgba(14,47,60,.35);border-color:var(--pc, var(--water))}
+.prac-ico{display:inline-grid;place-items:center;width:40px;height:40px;background:color-mix(in srgb,var(--pc, var(--water)) 14%, transparent);color:var(--pc, var(--water))}
+.prac-ico svg{width:22px;height:22px}
+.prac-card h3{margin:0;font-size:1.15rem;line-height:1.3;color:var(--fg)}
+.prac-card p{margin:0;color:var(--muted);font-size:.95rem;line-height:1.5}
+.prac-count{margin-top:4px;font-size:.84rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--pc, var(--water));display:inline-flex;align-items:center;gap:6px}
+.prac-count svg{width:14px;height:14px}
+.job-cl-link{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+.job-cl-link:hover{border-bottom-color:currentColor}
+
 .job-emp{font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:none}
 
 /* Careers: fraud-warning band */

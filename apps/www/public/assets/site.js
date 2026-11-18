@@ -536,10 +536,14 @@ P.careers = () => `
   <p style="color:var(--muted);margin-top:14px">Most of our roles suit experienced professionals from consulting, investigation, audit, law, technology and industry. We are open to people who have worked across more than one of these.</p></div>
   <div><span class="eyebrow">How we hire</span><ol class="steps" style="margin-top:16px">${DATA.careers.steps.map((s) => `<li><div><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div></li>`).join("")}</ol></div>
 </div></section>
+${DATA.clusters.length ? `<section class="sec" id="practices"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Browse by practice</span><h2>Our six practices</h2><p class="lead">Jobs are grouped by Kayak's six practice clusters. Open one to see only its live roles, or scroll on for the full list.</p></div></div>
+  <div class="prac-grid">${DATA.clusters.map((c) => { const n = (DATA.careers.jobs || []).filter((j) => j.cluster === c.id).length; return `<a class="prac-card" href="/careers/practice/${esc(c.id)}" style="--pc:${esc(c.color || "var(--water)")}"><span class="prac-ico">${ic(c.icon || "network")}</span><h3>${esc(c.name)}</h3><p>${esc(c.line || c.short || "")}</p><span class="prac-count">${n} open ${n === 1 ? "role" : "roles"} ${arrow}</span></a>`; }).join("")}</div>
+</div></section>` : ""}
 ${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class="wrap">
-  <div class="sec-head"><div><span class="eyebrow">Open roles</span><h2>Join us now</h2><p class="lead">${DATA.careers.jobs.length} ${DATA.careers.jobs.length === 1 ? "role is" : "roles are"} open. Read the full description, then apply below.</p></div></div>
+  <div class="sec-head"><div><span class="eyebrow">Open roles</span><h2>Join us now</h2><p class="lead">${DATA.careers.jobs.length} ${DATA.careers.jobs.length === 1 ? "role is" : "roles are"} open across the Kayak Group. Read the full description, then apply below.</p></div></div>
   <div class="jobs">${DATA.careers.jobs.map((j) => `<article class="job" id="job-${esc(j.id)}">
-    <div class="job-top"><div><span class="job-cl">${esc(C[j.cluster]?.name || "")}${j.employer ? ` <span class="job-emp">· ${esc(j.employer)}</span>` : ""}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button></div>
+    <div class="job-top"><div><span class="job-cl"><a href="/careers/practice/${esc(j.cluster)}" class="job-cl-link">${esc(C[j.cluster]?.name || "")}</a>${j.employer ? ` <span class="job-emp">· ${esc(j.employer)}</span>` : ""}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button></div>
     <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li>${j.compensation ? `<li>${ic("card")}<span><b>Compensation</b>${esc(j.compensation.split(".")[0] + ".")}</span></li>` : ""}</ul>
     <details class="job-jd"><summary>Read the full description</summary><div class="job-body">
       <h4>About the role</h4><p>${esc(j.about)}</p>
@@ -596,6 +600,47 @@ ${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class
   <div class="side"><div class="box"><h3>${ic("user")} Who we are looking for</h3><p>Partners, directors and senior consultants across all six clusters, and people who can help build the firm itself.</p></div>
   <div class="box"><h3>${ic("location")} Where</h3><p>Mumbai and Thane, with travel to clients across India and, for the International Desk, overseas.</p></div></div>
 </div></section>`;
+
+// Careers: one page per practice (cluster), with only that practice's open roles.
+P.careersPractice = (c) => {
+  const jobs = (DATA.careers.jobs || []).filter((j) => j.cluster === c.id);
+  const n = jobs.length;
+  return `
+<section class="phero" style="--p:var(--pc-managed-services);--ps:var(--ps-managed-services)"><div class="wrap">${crumbs([["Careers", "/careers"], [c.name]])}
+  <span class="eyebrow" style="color:${esc(c.color || "var(--water)")}">${ic(c.icon || "network")} ${esc(c.name)} practice</span>
+  <h1>Careers in ${esc(c.name)}</h1>
+  <p class="lead">${n ? `${n} open ${n === 1 ? "role" : "roles"} in this practice today.` : `We are not advertising a role in this practice today.`} Every genuine Kayak role is listed on this page and on our verified <a href="https://www.linkedin.com/company/kayaksa/" rel="noopener">LinkedIn page</a>. Kayak never charges a candidate: read the <a href="/careers#fraud" data-route="careers">fraud warning</a> before applying.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+    <a class="btn btn-primary" href="/careers#apply" data-route="careers">Apply, or send a general note ${arrow}</a>
+    <a class="btn btn-ghost" href="/careers">See all practices</a>
+    <a class="btn btn-ghost" href="/services/${esc(c.id)}">${esc(c.name)} services ${arrow}</a>
+  </div>
+</div></section>
+${n ? `<section class="sec" id="roles"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Open roles · ${esc(c.name)}</span><h2>Join this practice</h2></div></div>
+  <div class="jobs">${jobs.map((j) => `<article class="job" id="job-${esc(j.id)}">
+    <div class="job-top"><div><span class="job-cl">${esc(c.name)}${j.employer ? ` <span class="job-emp">· ${esc(j.employer)}</span>` : ""}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}" data-apply-goto>Apply for this role ${arrow}</button></div>
+    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li>${j.compensation ? `<li>${ic("card")}<span><b>Compensation</b>${esc(j.compensation.split(".")[0] + ".")}</span></li>` : ""}</ul>
+    <details class="job-jd"><summary>Read the full description</summary><div class="job-body">
+      <h4>About the role</h4><p>${esc(j.about)}</p>
+      <h4>What you will do</h4><ul>${j.do.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <h4>What you will bring</h4><ul>${j.must.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <h4>Good to have</h4><ul>${j.nice.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      ${j.compensation ? `<h4>Compensation</h4><p>${esc(j.compensation)}</p>` : ""}
+      ${j.notes ? `<p>${esc(j.notes)}</p>` : ""}
+      <p class="job-eeo">${esc(DATA.careers.eeo || "")}</p>
+    </div></details>
+  </article>`).join("")}</div>
+</div></section>` : `<section class="sec"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">No open roles here today</span><h2>Send us a general note anyway</h2><p class="lead">We hire when the right person reaches us. Tell us what you do and we will reply personally.</p></div></div>
+  <p><a class="btn btn-primary" href="/careers#apply" data-route="careers">Open the application form ${arrow}</a></p>
+</div></section>`}
+<section class="sec alt"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Also in careers</span><h2>Other practices</h2></div></div>
+  <div class="prac-grid">${DATA.clusters.filter((x) => x.id !== c.id).map((x) => { const n2 = (DATA.careers.jobs || []).filter((j) => j.cluster === x.id).length; return `<a class="prac-card" href="/careers/practice/${esc(x.id)}" style="--pc:${esc(x.color || "var(--water)")}"><span class="prac-ico">${ic(x.icon || "network")}</span><h3>${esc(x.name)}</h3><p>${esc(x.line || x.short || "")}</p><span class="prac-count">${n2} open ${n2 === 1 ? "role" : "roles"} ${arrow}</span></a>`; }).join("")}</div>
+</div></section>
+${ctaBand("Make the crossing with us")}`;
+};
 
 const field = (id, label, type, req, ac = "") => `<div class="field"><label for="${id}">${esc(label)}${req ? "" : ' <span style="color:var(--muted);font-weight:400">(optional)</span>'}</label><input id="${id}" name="${id}" type="${type}" ${req ? "required" : ""} ${ac ? `autocomplete="${ac}"` : ""}><span class="err" aria-live="polite"></span></div>`;
 const selectField = (id, label, opts, full = false) => `<div class="field${full ? " full" : ""}"><label for="${id}">${esc(label)}</label><select id="${id}" name="${id}"><option value="">Choose one</option>${opts.map((o) => `<option>${esc(o)}</option>`).join("")}</select><span class="err" aria-live="polite"></span></div>`;
@@ -681,14 +726,15 @@ function openMega(btn) {
 
 /* ---------- Router ---------- */
 let pendingScroll = null, pendingCluster = null;
-const ROUTE_SKIP = ["cluster", "article", "notfound", "tool"];
+const ROUTE_SKIP = ["cluster", "article", "notfound", "tool", "careersPractice"];
 function isRouteKey(k) {
-  return k === "home" || k === "top" || !!T[k] || !!C[k] || (k.startsWith("insight-") && !!A[k.slice(8)]) || (k.startsWith("svc-") && !!SV[k.slice(4)]) || (!!P[k] && !ROUTE_SKIP.includes(k));
+  return k === "home" || k === "top" || !!T[k] || !!C[k] || (k.startsWith("insight-") && !!A[k.slice(8)]) || (k.startsWith("svc-") && !!SV[k.slice(4)]) || (k.startsWith("cp-") && !!C[k.slice(3)]) || (!!P[k] && !ROUTE_SKIP.includes(k));
 }
 function keyToPath(k) {
   if (!k || k === "home" || k === "top") return "/";
   if (k.startsWith("insight-")) return `/insights/${k.slice(8)}`;
   if (k.startsWith("svc-")) { const x = SV[k.slice(4)]; return `/services/${x.cluster}/${x.slug}`; }
+  if (k.startsWith("cp-")) return `/careers/practice/${k.slice(3)}`;
   if (k === "tools") return "/solutions";
   if (T[k]) return `/solutions/${k}`;
   if (C[k]) return `/services/${k}`;
@@ -699,6 +745,7 @@ function pathToKey(p) {
   if (p === "/") return "home";
   let m;
   if ((m = p.match(/^\/insights\/([\w-]+)$/))) return "insight-" + m[1];
+  if ((m = p.match(/^\/careers\/practice\/([\w-]+)$/))) return "cp-" + m[1];
   if (/^\/careers\/[\w-]+$/.test(p)) return "careers";
   if ((m = p.match(/^\/services\/[\w-]+\/([\w-]+)$/))) return "svc-" + m[1];
   if (p === "/solutions" || p === "/tools") return "tools";
@@ -723,6 +770,7 @@ function route() {
   if (key === "home" || key === "top") { html = P.home(); title = "Kayak Strategic Advisors"; sec = ""; }
   else if (T[key]) { html = P.tool(T[key]); title = `${T[key].name}: ${T[key].kind}`; sec = "services"; }
   else if (C[key]) { html = P.cluster(C[key]); title = C[key].name; sec = "services"; }
+  else if (key.startsWith("cp-") && C[key.slice(3)]) { const c = C[key.slice(3)]; html = P.careersPractice(c); title = `Careers in ${c.name}`; sec = "careers"; }
   else if (key.startsWith("svc-") && SV[key.slice(4)]) { const x = SV[key.slice(4)]; html = P.service(x); title = x.name; sec = "services"; }
   else if (key.startsWith("insight-") && A[key.slice(8)]) { const a = A[key.slice(8)]; html = P.article(a); title = a.title; sec = "insights"; }
   else if (P[key] && !["cluster", "article", "notfound", "tool", "service"].includes(key)) { html = P[key](); title = { services: "Services", industries: "Industries", insights: "Confluence insights", about: "About us", careers: "Careers", contact: "Contact us", legal: "Privacy and terms", tools: "Kayak Solutions" }[key]; if (key === "tools") sec = "services"; }
@@ -999,14 +1047,30 @@ for (const ev of ["dragover", "dragleave", "drop"]) document.addEventListener(ev
 });
 
 /* ---------- Careers: "Apply for this role" ---------- */
+let pendingApply = null;
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-apply]"); if (!b) return;
-  const sel = $("#c-role"); if (sel) sel.value = b.dataset.apply;
+  // If the form isn't on this page (e.g. a practice sub-page), remember the role and go to /careers first.
+  if (!$("#c-role")) { e.preventDefault(); pendingApply = b.dataset.apply; go("careers"); return; }
+  const sel = $("#c-role"); sel.value = b.dataset.apply;
   const j = DATA.careers.jobs?.find((x) => x.title === b.dataset.apply), cl = $("#c-cluster");
   if (j && cl && C[j.cluster]) cl.value = C[j.cluster].name;
   $("#apply")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   setTimeout(() => $("#c-name")?.focus({ preventScroll: true }), 450);
 });
+// After routing to /careers, finish the pending apply (fill the role, scroll to the form).
+function finishPendingApply() {
+  if (!pendingApply) return;
+  const sel = $("#c-role"); if (!sel) return;
+  sel.value = pendingApply;
+  const j = DATA.careers.jobs?.find((x) => x.title === pendingApply), cl = $("#c-cluster");
+  if (j && cl && C[j.cluster]) cl.value = C[j.cluster].name;
+  pendingApply = null;
+  requestAnimationFrame(() => {
+    $("#apply")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    setTimeout(() => $("#c-name")?.focus({ preventScroll: true }), 450);
+  });
+}
 
 /* ---------- Search ---------- */
 const INDEX = [
@@ -1046,6 +1110,7 @@ const fmtD = (iso) => (iso ? new Date(iso).toLocaleDateString("en-IN", { day: "n
 function afterRoute(key) {
   if (key === "seecounter") casesSection();
   if (key === "legal") import("/assets/consent.js").then((m) => m.renderChoices($("#privacy-choices"))).catch(() => {});
+  if (key === "careers") finishPendingApply();
   dispatchEvent(new CustomEvent("kayak:route"));
 }
 async function casesSection() {
