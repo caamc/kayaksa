@@ -132,10 +132,13 @@ function graph(data: any, meta: PageMeta, canonical: string) {
 function jobPosting(j: any, data: any) {
   const C = data.clusters.find((x: any) => x.id === j.cluster);
   const months = (Number(String(j.experience).match(/\d+/)?.[0]) || 0) * 12;
-  const html = `<p>${esc(j.summary)}</p><p>${esc(j.about)}</p><h3>What you will do</h3><ul>${j.do.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h3>What you will bring</h3><ul>${j.must.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h3>Good to have</h3><ul>${j.nice.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><p>${esc(data.careers.eeo || "")}</p>`;
+  const employer = j.employer || "Kayak Strategic Advisors Private Limited";
+  const extra = [j.compensation ? `<p><b>Compensation.</b> ${esc(j.compensation)}</p>` : "", j.notes ? `<p>${esc(j.notes)}</p>` : ""].join("");
+  const html = `<p>${esc(j.summary)}</p><p>${esc(j.about)}</p><h3>What you will do</h3><ul>${j.do.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h3>What you will bring</h3><ul>${j.must.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h3>Good to have</h3><ul>${j.nice.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul>${extra}<p>${esc(data.careers.eeo || "")}</p>`;
+  // The hiringOrganization is the actual employer (KSA, KTS, or KI); every group entity is still presented on the KSA careers page.
   return {
     "@type": "JobPosting", title: j.title, description: html, datePosted: j.posted, validThrough: `${j.validThrough}T23:59:59+05:30`, employmentType: "FULL_TIME",
-    hiringOrganization: { "@type": "Organization", name: "Kayak Strategic Advisors Private Limited", sameAs: `${BASE}/`, logo: `${BASE}/assets/apple-touch-icon.png` },
+    hiringOrganization: { "@type": "Organization", name: employer, sameAs: `${BASE}/`, logo: `${BASE}/assets/apple-touch-icon.png` },
     jobLocation: [{ "@type": "Place", address: { "@type": "PostalAddress", streetAddress: "A/2, 314, Shah & Nahar Industrial Estate, Delisle Road", addressLocality: "Mumbai", addressRegion: "Maharashtra", postalCode: "400013", addressCountry: "IN" } }, { "@type": "Place", address: { "@type": "PostalAddress", addressLocality: "Thane", addressRegion: "Maharashtra", addressCountry: "IN" } }],
     identifier: { "@type": "PropertyValue", name: "Kayak Strategic Advisors", value: j.id }, directApply: true, industry: "Professional services, management consulting", occupationalCategory: C?.name || "",
     experienceRequirements: { "@type": "OccupationalExperienceRequirements", monthsOfExperience: months },
@@ -151,7 +154,7 @@ const STATIC_PAGES: Record<string, [string, string]> = {
   industries: ["Industries we advise", "Advisory experience across financial services, healthcare and pharma, manufacturing, infrastructure, consumer, technology and the public sector in India."],
   insights: ["Insights: Confluence, the Kayak monthly", "Confluence, the Kayak monthly on strategy, risk and regulation in India: analysis of new laws, deals, enforcement and technology, with scenarios for boards and promoters."],
   about: ["About us", "Kayak Strategic Advisors: independent, senior-led advisory from Mumbai and Thane. Our values, promises and standards."],
-  careers: ["Careers: advisory jobs in Mumbai", "Open roles at Kayak Strategic Advisors: Senior Manager - Tax, Legal & Regulatory Services, and Manager - Crisis, Risk & Resilience Services. Mumbai and Thane."],
+  careers: ["Careers: advisory, technology and sales jobs", "Eleven open roles across the Kayak Group: senior advisory, product engineering, three paid internships, SEO and business development in Mumbai, and Marketing & Sales Solutions Leads for NexaPair and DocuVow in the UAE and Delhi NCR. Kayak never charges a candidate: read the fraud warning before applying."],
   contact: ["Contact us", "Start a confidential conversation with Kayak Strategic Advisors. A senior member of the team replies within one working day."],
   legal: ["Privacy and terms", "How Kayak Strategic Advisors handles personal data, measures this site without cookies, and the terms of use."],
   solutions: ["Kayak Solutions: governance, risk and compliance software", "Thought, Designed and Developed in India for the World: SayUsNow, SeeCounter, NexaPair and DocuVow, platforms born of Kayak's advisory practice."],
@@ -201,7 +204,7 @@ function render(path: string, data: any): PageMeta {
   if ((m = p.match(/^\/careers\/([\w-]+)$/))) {
     const j = (data.careers.jobs || []).find((x: any) => x.id === m![1]);
     if (j) return { status: 200, title: `${j.title} (${j.experience})`, desc: `${j.summary} ${j.qualification}. ${j.location}.`.slice(0, 300), crumbs: [["Careers", "/careers"], [j.title, `/careers/${j.id}`]],
-      ssr: `<p><a href="/careers">Careers</a></p><h1>${esc(j.title)}</h1><p><b>${esc(j.summary)}</b></p><p>Experience: ${esc(j.experience)}. Qualification: ${esc(j.qualification)}. Location: ${esc(j.location)}. ${esc(j.type)}.</p><p>${esc(j.about)}</p><h2>What you will do</h2><ul>${j.do.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h2>What you will bring</h2><ul>${j.must.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h2>Good to have</h2><ul>${j.nice.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><p><a href="/careers#apply">Apply for this role</a></p>`,
+      ssr: `<p><a href="/careers">Careers</a></p><h1>${esc(j.title)}</h1>${j.employer ? `<p><b>Employer:</b> ${esc(j.employer)} (a Kayak Group company)</p>` : ""}<p><b>${esc(j.summary)}</b></p><p>Experience: ${esc(j.experience)}. Qualification: ${esc(j.qualification)}. Location: ${esc(j.location)}. ${esc(j.type)}.${j.compensation ? ` Compensation: ${esc(j.compensation)}` : ""}</p><p>${esc(j.about)}</p><h2>What you will do</h2><ul>${j.do.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h2>What you will bring</h2><ul>${j.must.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul><h2>Good to have</h2><ul>${j.nice.map((x: string) => `<li>${esc(x)}</li>`).join("")}</ul>${j.notes ? `<p>${esc(j.notes)}</p>` : ""}<p><a href="/careers#apply">Apply for this role</a></p>`,
       ld: jobPosting(j, data) };
   }
   const key = p.slice(1);
@@ -214,7 +217,11 @@ function render(path: string, data: any): PageMeta {
     if (key === "industries") extra = data.groups.map((g: any) => `<h2>${esc(g.name)}</h2><p>${g.members.map((x: any) => esc(x.name)).join(", ")}</p>`).join("");
     if (key === "services") extra += SV.map((v) => `<p><a href="/services/${v.cluster}/${v.slug}">${esc(v.name)}</a></p>`).join("");
     if (key === "about") extra = `<h2>Values</h2><ul>${data.values.map((v: any) => `<li><b>${esc(v[1])}</b>: ${esc(v[2])}</li>`).join("")}</ul><h2>Promises</h2><ul>${data.promises.map((v: any) => `<li><b>${esc(v[0])}</b>: ${esc(v[1])}</li>`).join("")}</ul><h2>Affiliate entities</h2><ul><li><b>Kayak Innovations (OPC) Private Limited</b>: holds the intellectual property in every Kayak solution.</li><li><b>Brand Defence &amp; Integrity™</b>: the name belongs to Kayak's leadership and is currently used by Brand Defence Consulting Private Limited (Brand Defence India), known for market intelligence and IPR matters. <a href="https://www.bdiglobe.com">www.bdiglobe.com</a></li><li><b>Kayak Technology Solutions</b>: a partnership firm that develops and markets the Kayak Group's SaaS solutions, led by Tan.ai, CTO for the group.</li></ul>`;
-    if (key === "careers" && data.careers.jobs?.length) extra = `<h2>Open roles</h2><ul>${data.careers.jobs.map((j: any) => `<li><a href="/careers/${j.id}">${esc(j.title)}</a>: ${esc(j.summary)}</li>`).join("")}</ul>`;
+    if (key === "careers") {
+      extra = `<h2>Fraud warning</h2><p>Kayak never charges a candidate a fee, deposit, training charge, security amount, laptop fee or anything else, at any stage, for any role with Kayak Strategic Advisors Private Limited, Kayak Technology Solutions, Kayak Innovations (OPC) Private Limited, or any of our products (SayUsNow, DocuVow, NexaPair, SeeCounter, Qriocity). Every genuine role is listed on this page and on our verified LinkedIn page, and our recruiters write only from @kayaksa.com. Report suspected fraud to report-fraud@kayaksa.com and, if it has caused loss, on the National Cyber Crime Reporting Portal at <a href="https://cybercrime.gov.in" rel="noopener">cybercrime.gov.in</a> or helpline 1930.</p>`;
+      if (data.careers.jobs?.length) extra += `<h2>Open roles</h2><ul>${data.careers.jobs.map((j: any) => `<li><a href="/careers/${j.id}">${esc(j.title)}</a>: ${esc(j.summary)}</li>`).join("")}</ul>`;
+      extra += `<h2>Life at Kayak Group</h2><p>Small, senior teams across six clusters in Mumbai and Thane. Partners stay on an engagement from scoping to result. A short film and six pillars (small senior teams; six clusters, one craft; evidence then opinion; craft built on technology; two cities, one bench; partnerships that last) are on the <a href="/careers#life">Life at Kayak Group</a> section of this page.</p>`;
+    }
     const pageType = key === "about" ? "AboutPage" : key === "contact" ? "ContactPage" : ["services", "industries", "insights", "solutions", "careers"].includes(key) ? "CollectionPage" : "WebPage";
     return { status: 200, title, desc, ssr: `<h1>${esc(title)}</h1><p>${esc(desc)}</p>${extra}`, crumbs: [[title.split(":")[0], `/${key}`]], pageType };
   }
@@ -329,6 +336,10 @@ app.post("/api/forms", async (c) => {
     if (f.consent !== true) return c.json({ error: "Please tick the consent box so that we can reply." }, 400);
     const link = str(f.link, 300);
     if (link && !/^https:\/\//i.test(link)) return c.json({ error: "Links must start with https://" }, 400);
+    // Careers: professional associations and references are required (they appear on every role on this page).
+    const assoc = kind === "career" ? str(f.assoc, 3000) : "";
+    if (kind === "career" && !assoc) return c.json({ error: "Please list your professional associations and two referees. These appear in the Professional associations and references field on the form." }, 400);
+    const stored = assoc ? `PROFESSIONAL ASSOCIATIONS AND REFERENCES\n${assoc}\n\n---\n\nABOUT THE APPLICANT\n${msg}` : msg;
     const id = crypto.randomUUID();
     // Careers: a résumé, PDF or Word, up to 2 MB, checked by its contents rather than its name.
     let cv: { key: string; name: string; size: number } | null = null;
@@ -348,14 +359,17 @@ app.post("/api/forms", async (c) => {
       cv = { key, name: r.name, size: r.bytes.length };
     } else if (forRole) return c.json({ error: "Please attach your résumé (PDF or Word, up to 2 MB)." }, 400);
     await c.env.DB.prepare("INSERT INTO enquiries (id, kind, source, name, email, organisation, phone, area, message, link, transcript, page, country, consent_at, created_at, notice_version, purpose, resume_key, resume_name, resume_size) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-      .bind(id, kind, b.source === "kay" ? "kay" : "form", name, e, str(f.org, 160), str(f.phone, 40), str(kind === "career" && f.role && !/^General/.test(String(f.role)) ? `Role: ${f.role}` : f.cluster, 120), msg, link, str(b.transcript, 12000), str(b.page, 200), country, now, now,
+      .bind(id, kind, b.source === "kay" ? "kay" : "form", name, e, str(f.org, 160), str(f.phone, 40), str(kind === "career" && f.role && !/^General/.test(String(f.role)) ? `Role: ${f.role}` : f.cluster, 120), stored, link, str(b.transcript, 12000), str(b.page, 200), country, now, now,
         NOTICE_VERSION, kind === "career" ? "Considering you for a role at Kayak" : "Replying to your enquiry", cv?.key || null, cv?.name || null, cv?.size || null).run();
     await auditFull(c, c.env.DB, null, `www.${kind}.submitted`, { id, via: b.source === "kay" ? "kay" : "form", page: str(b.page, 200) });
     if (mailEnabled(c.env) && c.env.ENQUIRY_TO) {
       const rows = [["Name", name], ["Email", e], ["Organisation", str(f.org, 160)], ["Phone", str(f.phone, 40)], ["Role", kind === "career" ? str(f.role, 120) : ""], ["Area", str(f.cluster, 120)], ["Link", link], ["Résumé", cv ? `${cv.name} (${Math.round(cv.size / 1024)} KB), in Kayak Internal` : ""], ["Came via", b.source === "kay" ? "Kay" : "Website form"]].filter((r) => r[1]);
+      const emailBody = kind === "career" && assoc
+        ? `<table cellpadding="4">${rows.map((r) => `<tr><td style="color:#4E6470">${esc(r[0])}</td><td><b>${esc(r[1])}</b></td></tr>`).join("")}</table><h3 style="margin:14px 0 4px;color:#0E2F3C">Professional associations and references</h3><p style="white-space:pre-wrap;margin:0 0 16px">${esc(assoc)}</p><h3 style="margin:14px 0 4px;color:#0E2F3C">About the applicant</h3><p style="white-space:pre-wrap;margin:0">${esc(msg)}</p>`
+        : `<table cellpadding="4">${rows.map((r) => `<tr><td style="color:#4E6470">${esc(r[0])}</td><td><b>${esc(r[1])}</b></td></tr>`).join("")}<p style="white-space:pre-wrap">${esc(msg)}</p>`;
       c.executionCtx.waitUntil(sendMail(c.env, c.env.ENQUIRY_TO, `${kind === "career" ? (f.role && !/^General/.test(String(f.role)) ? `Application, ${str(f.role, 80)}` : "Careers note") : "New enquiry"}: ${name}${f.org ? `, ${str(f.org, 80)}` : ""}`, mailHtml({ site: "WWW",
         title: kind === "career" ? "A new careers note" : "A new enquiry",
-        intro: `<table cellpadding="4">${rows.map((r) => `<tr><td style="color:#4E6470">${esc(r[0])}</td><td><b>${esc(r[1])}</b></td></tr>`).join("")}</table><p style="white-space:pre-wrap">${esc(msg)}</p>`,
+        intro: emailBody,
         action: { label: "Open in Kayak Internal", url: "https://internal.kayaksa.com/app#/website" }, outro: "Reply within one working day, as the website promises." })).then(() => {}));
     }
     return c.json({ ok: true });
