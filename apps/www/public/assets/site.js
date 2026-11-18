@@ -510,6 +510,23 @@ ${ctaBand("Make the crossing with us")}`;
 
 P.careers = () => `
 <section class="phero" style="--p:var(--pc-managed-services);--ps:var(--ps-managed-services)"><div class="wrap">${crumbs([["Careers"]])}<h1>Build the firm with us</h1><p class="lead">We are a new firm assembling a senior, multidisciplinary founding team. If you want to do consequential work with people who stay close to it, we would like to hear from you.</p></div></section>
+<section class="scam-band" aria-labelledby="scam-head"><div class="wrap">
+  <div class="scam">
+    <div class="scam-ic" aria-hidden="true">${ic("brand-protection")}</div>
+    <div class="scam-body">
+      <p class="scam-eye">Fraud warning · Please read before applying</p>
+      <h2 id="scam-head">Kayak never charges a candidate, ever.</h2>
+      <p>If anyone asks you to pay a fee, deposit, training charge, security amount, laptop fee or anything else to apply for or accept a role with <b>Kayak Strategic Advisors Private Limited</b>, <b>Kayak Technology Solutions</b>, <b>Kayak Innovations (OPC) Private Limited</b>, or any of our products — <b>SayUsNow</b>, <b>DocuVow</b>, <b>NexaPair</b>, <b>SeeCounter</b>, <b>Qriocity</b> — that message is fraudulent. Do not pay. Do not share bank, UPI, OTP, PAN or Aadhaar details with anyone claiming to recruit on our behalf outside the channels listed below.</p>
+      <ul class="scam-list">
+        <li>${ic("check")}<span>Every genuine Kayak role is listed on <a href="/careers#roles">kayaksa.com/careers</a> and on our verified <a href="https://www.linkedin.com/company/kayaksa/" rel="noopener">LinkedIn page</a>.</span></li>
+        <li>${ic("check")}<span>Our recruiters write only from <b>@kayaksa.com</b>. We never use Gmail, Yahoo, Outlook, WhatsApp-only numbers, or free domains that look similar to ours.</span></li>
+        <li>${ic("check")}<span>Interviews happen on Meet by Kayak (<b>meet.kayaksa.com</b>) or in person at our Mumbai or Thane office. We do not conduct interviews only over SMS or Telegram.</span></li>
+        <li>${ic("check")}<span>You will not be asked for identity, bank or payment information until after a written offer you receive from a <b>@kayaksa.com</b> address, and even then through our documented onboarding, never into a stranger's account.</span></li>
+      </ul>
+      <p class="scam-report">If you have been approached, or paid, in Kayak's name outside these channels, please write to <a href="mailto:report-fraud@kayaksa.com">report-fraud@kayaksa.com</a> with every message, number and receipt you have. We investigate each report, report serious cases to the police under the Bharatiya Nyaya Sanhita, 2023 and the Information Technology Act, 2000, and will help you with your complaint on the National Cyber Crime Reporting Portal at <a href="https://cybercrime.gov.in" rel="noopener">cybercrime.gov.in</a> or on helpline <b>1930</b>.</p>
+    </div>
+  </div>
+</div></section>
 <section class="sec"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Why join Kayak</span><h2>Senior work, from day one</h2></div></div>
   <div class="why">${DATA.careers.why.map((w) => `<article>${ic(w[0])}<h3>${esc(w[1])}</h3><p>${esc(w[2])}</p></article>`).join("")}</div>
@@ -519,21 +536,48 @@ P.careers = () => `
   <p style="color:var(--muted);margin-top:14px">Most of our roles suit experienced professionals from consulting, investigation, audit, law, technology and industry. We are open to people who have worked across more than one of these.</p></div>
   <div><span class="eyebrow">How we hire</span><ol class="steps" style="margin-top:16px">${DATA.careers.steps.map((s) => `<li><div><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div></li>`).join("")}</ol></div>
 </div></section>
+${DATA.clusters.length ? `<section class="sec" id="practices"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Browse by practice</span><h2>Our six practices</h2><p class="lead">Jobs are grouped by Kayak's six practice clusters. Open one to see only its live roles, or scroll on for the full list.</p></div></div>
+  <div class="prac-grid">${DATA.clusters.map((c) => { const n = (DATA.careers.jobs || []).filter((j) => j.cluster === c.id).length; return `<a class="prac-card" href="/careers/practice/${esc(c.id)}" style="--pc:${esc(c.color || "var(--water)")}"><span class="prac-ico">${ic(c.icon || "network")}</span><h3>${esc(c.name)}</h3><p>${esc(c.line || c.short || "")}</p><span class="prac-count">${n} open ${n === 1 ? "role" : "roles"} ${arrow}</span></a>`; }).join("")}</div>
+</div></section>` : ""}
 ${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class="wrap">
-  <div class="sec-head"><div><span class="eyebrow">Open roles</span><h2>Join us now</h2><p class="lead">${DATA.careers.jobs.length} ${DATA.careers.jobs.length === 1 ? "role is" : "roles are"} open. Read the full description, then apply below.</p></div></div>
+  <div class="sec-head"><div><span class="eyebrow">Open roles</span><h2>Join us now</h2><p class="lead">${DATA.careers.jobs.length} ${DATA.careers.jobs.length === 1 ? "role is" : "roles are"} open across the Kayak Group. Read the full description, then apply below.</p></div></div>
   <div class="jobs">${DATA.careers.jobs.map((j) => `<article class="job" id="job-${esc(j.id)}">
-    <div class="job-top"><div><span class="job-cl">${esc(C[j.cluster]?.name || "")}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button></div>
-    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li></ul>
+    <div class="job-top"><div><span class="job-cl"><a href="/careers/practice/${esc(j.cluster)}" class="job-cl-link">${esc(C[j.cluster]?.name || "")}</a>${j.employer ? ` <span class="job-emp">· ${esc(j.employer)}</span>` : ""}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button></div>
+    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li>${j.compensation ? `<li>${ic("card")}<span><b>Compensation</b>${esc(j.compensation.split(".")[0] + ".")}</span></li>` : ""}</ul>
     <details class="job-jd"><summary>Read the full description</summary><div class="job-body">
       <h4>About the role</h4><p>${esc(j.about)}</p>
       <h4>What you will do</h4><ul>${j.do.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
       <h4>What you will bring</h4><ul>${j.must.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
       <h4>Good to have</h4><ul>${j.nice.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      ${j.compensation ? `<h4>Compensation</h4><p>${esc(j.compensation)}</p>` : ""}
+      ${j.notes ? `<p>${esc(j.notes)}</p>` : ""}
       <p class="job-eeo">${esc(DATA.careers.eeo || "")}</p>
       <button class="btn btn-ghost" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button>
     </div></details>
   </article>`).join("")}</div>
 </div></section>` : ""}
+<section class="sec life-sec" id="life"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Life at Kayak Group</span><h2>What it feels like to be a Kayaker</h2><p class="lead">Six clusters. Two cities. One craft: senior people, close to the work, from scoping to result.</p></div></div>
+  <div class="life-hero">
+    <video class="life-video" controls preload="metadata" playsinline muted poster="/assets/life/life-at-kayak.jpg" aria-label="Life at Kayak Group of Companies — a 32-second film">
+      <source src="/assets/life/life-at-kayak.mp4" type="video/mp4">
+      Your browser doesn't play this video. <a href="/assets/life/life-at-kayak.mp4">Download the film</a>.
+    </video>
+    <div class="life-note">
+      <p><b>A 32-second film.</b> The Kayak Technology Solutions reveal opens it; six moments from a working week follow. No music by design — the point is the work.</p>
+    </div>
+  </div>
+  <div class="life-grid">
+    <article class="life-card" style="--bgi:url(/assets/life/teams.jpg)"><div class="life-txt">${ic("human-resources")}<h3>Small, senior teams</h3><p>Partners and directors stay on the engagement from scoping to result. No layers between you and the problem.</p></div></article>
+    <article class="life-card" style="--bgi:url(/assets/life/clusters.jpg)"><div class="life-txt">${ic("network")}<h3>Six clusters, one craft</h3><p>Strategy, Investigations, Risk, Governance, Transactions, Technology — move across them when the question needs it.</p></div></article>
+    <article class="life-card" style="--bgi:url(/assets/life/evidence.jpg)"><div class="life-txt">${ic("due-diligence")}<h3>Evidence, then opinion</h3><p>We read the record before we offer a view. The craft is in the reading, not the closing slide.</p></div></article>
+    <article class="life-card" style="--bgi:url(/assets/life/craft.jpg)"><div class="life-txt">${ic("technology")}<h3>Craft, built on technology</h3><p>Kayak Technology Solutions carries the build. SayUsNow, DocuVow, NexaPair, SeeCounter, Qriocity — real products behind the advisory.</p></div></article>
+    <article class="life-card" style="--bgi:url(/assets/life/cities.jpg)"><div class="life-txt">${ic("location")}<h3>Mumbai and Thane</h3><p>Two offices, one bench. Hybrid working, with the week scheduled so the people on an engagement can meet in person when the work needs it.</p></div></article>
+    <article class="life-card" style="--bgi:url(/assets/life/partnerships.jpg)"><div class="life-txt">${ic("partnership")}<h3>Partnerships that last</h3><p>Client relationships measured in years, not quarters. You will see the same questions mature over several engagements.</p></div></article>
+  </div>
+  <p class="life-credit">Film and imagery under the Pexels licence. The Kayak Technology Solutions logo reveal is our own. Courtesy of the Pexels photographers: Fox, Christina Morillo and ThisIsEngineering.</p>
+</div></section>
 <section class="sec" id="apply"><div class="wrap contact-grid">
   <div><span class="eyebrow">Apply</span><h2 style="font-size:var(--step3);margin:10px 0 12px">Tell us where you would fit</h2><p class="lead" style="margin-bottom:28px">${(DATA.careers.jobs || []).length ? "Apply for an open role, or send a general note if you would fit the founding team elsewhere. We reply to every application personally." : "We have no open listings yet. Send us a short note and we will reply personally."}</p>
   <form class="js-form" id="careerForm" novalidate data-kind="career"><div class="formgrid">
@@ -543,6 +587,11 @@ ${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class
     ${field("c-link", "LinkedIn or portfolio link", "url", false, "url")}
     <div class="field full"><label for="c-cv">Résumé <span style="color:var(--muted);font-weight:400">${(DATA.careers.jobs || []).length ? "(needed for an open role; PDF or Word, up to 2 MB)" : "(optional; PDF or Word, up to 2 MB)"}</span></label>
       <label class="cv-drop" for="c-cv"><input id="c-cv" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">${ic("report")}<span class="cv-t">Choose a file or drop it here</span><span class="cv-n" aria-live="polite"></span></label>
+      <span class="cv-fill" aria-live="polite"></span>
+      <span class="err" aria-live="polite"></span></div>
+    <div class="field full"><label for="c-assoc">Professional associations and references <span style="color:var(--muted);font-weight:400">(required)</span></label>
+      <textarea id="c-assoc" name="assoc" required rows="3" placeholder="List the professional bodies you are associated with (ICAI, ICSI, Bar Council of India, IBBI, ISACA, PMI, NASSCOM, ACFE, etc.) with your membership number and status, and two professional referees we may contact — name, role, organisation, email and phone — with a short note on how they know your work."></textarea>
+      <small style="color:var(--muted);display:block;margin-top:6px">Please list genuine memberships and referees you have told. We check references before any offer.</small>
       <span class="err" aria-live="polite"></span></div>
     <div class="field full"><label for="c-msg">A few lines about you${(DATA.careers.jobs || []).length ? ' <span style="color:var(--muted);font-weight:400">(your qualifications, years of experience and notice period)</span>' : ""}</label><textarea id="c-msg" name="msg" required></textarea><span class="err" aria-live="polite"></span></div>
     <div class="field full"><label class="check"><input id="c-consent" type="checkbox" required> I agree that Kayak may use these details to consider my application, as described in the privacy notice.</label><span class="err" aria-live="polite"></span></div>
@@ -551,6 +600,47 @@ ${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class
   <div class="side"><div class="box"><h3>${ic("user")} Who we are looking for</h3><p>Partners, directors and senior consultants across all six clusters, and people who can help build the firm itself.</p></div>
   <div class="box"><h3>${ic("location")} Where</h3><p>Mumbai and Thane, with travel to clients across India and, for the International Desk, overseas.</p></div></div>
 </div></section>`;
+
+// Careers: one page per practice (cluster), with only that practice's open roles.
+P.careersPractice = (c) => {
+  const jobs = (DATA.careers.jobs || []).filter((j) => j.cluster === c.id);
+  const n = jobs.length;
+  return `
+<section class="phero" style="--p:var(--pc-managed-services);--ps:var(--ps-managed-services)"><div class="wrap">${crumbs([["Careers", "/careers"], [c.name]])}
+  <span class="eyebrow" style="color:${esc(c.color || "var(--water)")}">${ic(c.icon || "network")} ${esc(c.name)} practice</span>
+  <h1>Careers in ${esc(c.name)}</h1>
+  <p class="lead">${n ? `${n} open ${n === 1 ? "role" : "roles"} in this practice today.` : `We are not advertising a role in this practice today.`} Every genuine Kayak role is listed on this page and on our verified <a href="https://www.linkedin.com/company/kayaksa/" rel="noopener">LinkedIn page</a>. Kayak never charges a candidate: read the <a href="/careers#fraud" data-route="careers">fraud warning</a> before applying.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+    <a class="btn btn-primary" href="/careers#apply" data-route="careers">Apply, or send a general note ${arrow}</a>
+    <a class="btn btn-ghost" href="/careers">See all practices</a>
+    <a class="btn btn-ghost" href="/services/${esc(c.id)}">${esc(c.name)} services ${arrow}</a>
+  </div>
+</div></section>
+${n ? `<section class="sec" id="roles"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Open roles · ${esc(c.name)}</span><h2>Join this practice</h2></div></div>
+  <div class="jobs">${jobs.map((j) => `<article class="job" id="job-${esc(j.id)}">
+    <div class="job-top"><div><span class="job-cl">${esc(c.name)}${j.employer ? ` <span class="job-emp">· ${esc(j.employer)}</span>` : ""}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}" data-apply-goto>Apply for this role ${arrow}</button></div>
+    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li>${j.compensation ? `<li>${ic("card")}<span><b>Compensation</b>${esc(j.compensation.split(".")[0] + ".")}</span></li>` : ""}</ul>
+    <details class="job-jd"><summary>Read the full description</summary><div class="job-body">
+      <h4>About the role</h4><p>${esc(j.about)}</p>
+      <h4>What you will do</h4><ul>${j.do.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <h4>What you will bring</h4><ul>${j.must.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <h4>Good to have</h4><ul>${j.nice.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      ${j.compensation ? `<h4>Compensation</h4><p>${esc(j.compensation)}</p>` : ""}
+      ${j.notes ? `<p>${esc(j.notes)}</p>` : ""}
+      <p class="job-eeo">${esc(DATA.careers.eeo || "")}</p>
+    </div></details>
+  </article>`).join("")}</div>
+</div></section>` : `<section class="sec"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">No open roles here today</span><h2>Send us a general note anyway</h2><p class="lead">We hire when the right person reaches us. Tell us what you do and we will reply personally.</p></div></div>
+  <p><a class="btn btn-primary" href="/careers#apply" data-route="careers">Open the application form ${arrow}</a></p>
+</div></section>`}
+<section class="sec alt"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Also in careers</span><h2>Other practices</h2></div></div>
+  <div class="prac-grid">${DATA.clusters.filter((x) => x.id !== c.id).map((x) => { const n2 = (DATA.careers.jobs || []).filter((j) => j.cluster === x.id).length; return `<a class="prac-card" href="/careers/practice/${esc(x.id)}" style="--pc:${esc(x.color || "var(--water)")}"><span class="prac-ico">${ic(x.icon || "network")}</span><h3>${esc(x.name)}</h3><p>${esc(x.line || x.short || "")}</p><span class="prac-count">${n2} open ${n2 === 1 ? "role" : "roles"} ${arrow}</span></a>`; }).join("")}</div>
+</div></section>
+${ctaBand("Make the crossing with us")}`;
+};
 
 const field = (id, label, type, req, ac = "") => `<div class="field"><label for="${id}">${esc(label)}${req ? "" : ' <span style="color:var(--muted);font-weight:400">(optional)</span>'}</label><input id="${id}" name="${id}" type="${type}" ${req ? "required" : ""} ${ac ? `autocomplete="${ac}"` : ""}><span class="err" aria-live="polite"></span></div>`;
 const selectField = (id, label, opts, full = false) => `<div class="field${full ? " full" : ""}"><label for="${id}">${esc(label)}</label><select id="${id}" name="${id}"><option value="">Choose one</option>${opts.map((o) => `<option>${esc(o)}</option>`).join("")}</select><span class="err" aria-live="polite"></span></div>`;
@@ -636,14 +726,15 @@ function openMega(btn) {
 
 /* ---------- Router ---------- */
 let pendingScroll = null, pendingCluster = null;
-const ROUTE_SKIP = ["cluster", "article", "notfound", "tool"];
+const ROUTE_SKIP = ["cluster", "article", "notfound", "tool", "careersPractice"];
 function isRouteKey(k) {
-  return k === "home" || k === "top" || !!T[k] || !!C[k] || (k.startsWith("insight-") && !!A[k.slice(8)]) || (k.startsWith("svc-") && !!SV[k.slice(4)]) || (!!P[k] && !ROUTE_SKIP.includes(k));
+  return k === "home" || k === "top" || !!T[k] || !!C[k] || (k.startsWith("insight-") && !!A[k.slice(8)]) || (k.startsWith("svc-") && !!SV[k.slice(4)]) || (k.startsWith("cp-") && !!C[k.slice(3)]) || (!!P[k] && !ROUTE_SKIP.includes(k));
 }
 function keyToPath(k) {
   if (!k || k === "home" || k === "top") return "/";
   if (k.startsWith("insight-")) return `/insights/${k.slice(8)}`;
   if (k.startsWith("svc-")) { const x = SV[k.slice(4)]; return `/services/${x.cluster}/${x.slug}`; }
+  if (k.startsWith("cp-")) return `/careers/practice/${k.slice(3)}`;
   if (k === "tools") return "/solutions";
   if (T[k]) return `/solutions/${k}`;
   if (C[k]) return `/services/${k}`;
@@ -654,6 +745,7 @@ function pathToKey(p) {
   if (p === "/") return "home";
   let m;
   if ((m = p.match(/^\/insights\/([\w-]+)$/))) return "insight-" + m[1];
+  if ((m = p.match(/^\/careers\/practice\/([\w-]+)$/))) return "cp-" + m[1];
   if (/^\/careers\/[\w-]+$/.test(p)) return "careers";
   if ((m = p.match(/^\/services\/[\w-]+\/([\w-]+)$/))) return "svc-" + m[1];
   if (p === "/solutions" || p === "/tools") return "tools";
@@ -678,6 +770,7 @@ function route() {
   if (key === "home" || key === "top") { html = P.home(); title = "Kayak Strategic Advisors"; sec = ""; }
   else if (T[key]) { html = P.tool(T[key]); title = `${T[key].name}: ${T[key].kind}`; sec = "services"; }
   else if (C[key]) { html = P.cluster(C[key]); title = C[key].name; sec = "services"; }
+  else if (key.startsWith("cp-") && C[key.slice(3)]) { const c = C[key.slice(3)]; html = P.careersPractice(c); title = `Careers in ${c.name}`; sec = "careers"; }
   else if (key.startsWith("svc-") && SV[key.slice(4)]) { const x = SV[key.slice(4)]; html = P.service(x); title = x.name; sec = "services"; }
   else if (key.startsWith("insight-") && A[key.slice(8)]) { const a = A[key.slice(8)]; html = P.article(a); title = a.title; sec = "insights"; }
   else if (P[key] && !["cluster", "article", "notfound", "tool", "service"].includes(key)) { html = P[key](); title = { services: "Services", industries: "Industries", insights: "Confluence insights", about: "About us", careers: "Careers", contact: "Contact us", legal: "Privacy and terms", tools: "Kayak Solutions" }[key]; if (key === "tools") sec = "services"; }
@@ -842,15 +935,110 @@ function bindForm(f) {
   });
 }
 
-/* ---------- Careers: résumé field ---------- */
+/* ---------- Careers: résumé field, with PDF autofill ---------- */
 const CV_MAX = 2 * 1024 * 1024;
 const cvError = (file) => (!/\.(pdf|docx?)$/i.test(file.name) ? "Please choose a PDF or Word document (.pdf, .doc or .docx)." : file.size > CV_MAX ? `That file is ${(file.size / 1048576).toFixed(1)} MB. Résumés can be up to 2 MB.` : file.size < 200 ? "That file looks empty." : "");
 const fileB64 = (file) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(file); });
+let PDFJS_LIB = null;
+async function pdfjs() {
+  if (PDFJS_LIB) return PDFJS_LIB;
+  try {
+    PDFJS_LIB = await import("/vendor/pdf.min.mjs");
+    PDFJS_LIB.GlobalWorkerOptions.workerSrc = "/vendor/pdf.worker.min.mjs";
+  } catch (e) { console.warn("pdf.js load failed", e); PDFJS_LIB = null; }
+  return PDFJS_LIB;
+}
+async function extractPdfText(file) {
+  const lib = await pdfjs(); if (!lib) return "";
+  const buf = await file.arrayBuffer();
+  const doc = await lib.getDocument({ data: buf, disableFontFace: true, isEvalSupported: false }).promise;
+  const pages = Math.min(doc.numPages, 4);  // first four pages is enough for contact and headline block
+  const parts = [];
+  for (let i = 1; i <= pages; i++) {
+    const p = await doc.getPage(i);
+    const tc = await p.getTextContent();
+    parts.push(tc.items.map((x) => (x.str || "")).join("\n"));
+  }
+  return parts.join("\n");
+}
+// Guess name/email/phone/LinkedIn from résumé text; conservative, never overwrite fields the user has already touched.
+function parseCvText(text) {
+  const g = { name: "", email: "", phone: "", link: "" };
+  const emailM = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  if (emailM) g.email = emailM[0].toLowerCase();
+  const phoneM = text.match(/(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,5}[\s.-]?\d{3,5}/);
+  if (phoneM) {
+    const digits = phoneM[0].replace(/\D/g, "");
+    if (digits.length >= 10 && digits.length <= 15) g.phone = phoneM[0].trim();
+  }
+  const linkM = text.match(/https?:\/\/(?:[a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?/i) || text.match(/\b(?:[a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?/i);
+  if (linkM) g.link = (linkM[0].startsWith("http") ? linkM[0] : "https://" + linkM[0]).replace(/\/$/, "");
+  // Name: the first non-empty line that looks like a person's name (2-4 words, each starting with a capital, no email/phone chars)
+  const emailStart = g.email ? text.indexOf(g.email) : -1;
+  const search = emailStart > 0 ? text.slice(0, emailStart + 10) : text.slice(0, 800);
+  const lines = search.split(/\n+/).map((s) => s.trim()).filter(Boolean).slice(0, 25);
+  const bad = /@|\d{3,}|resume|curriculum|cv\b|contact|address|phone|mobile|email|linkedin|profile/i;
+  for (const l of lines) {
+    if (bad.test(l)) continue;
+    if (l.length > 60) continue;
+    const words = l.replace(/[^A-Za-z. '-]/g, " ").split(/\s+/).filter(Boolean);
+    if (words.length < 2 || words.length > 5) continue;
+    // All words start with uppercase or are a name particle (van/von/de/da)
+    if (words.every((w) => /^[A-Z][a-zA-Z'.-]*$/.test(w) || /^(?:van|von|de|da|del|la|le|bin|binte|al)$/i.test(w))) {
+      g.name = words.join(" ");
+      break;
+    }
+  }
+  return g;
+}
+async function autofillFromResume(file, fld) {
+  const status = fld.querySelector(".cv-fill");
+  if (!/\.pdf$/i.test(file.name)) {
+    if (status) { status.innerHTML = '<svg aria-hidden="true" class="ico" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4M8 11v.01"/></svg>Auto-fill reads PDF résumés only — please complete the fields below.'; status.dataset.kind = "info"; }
+    return;
+  }
+  if (status) { status.textContent = "Reading your résumé…"; status.dataset.kind = "info"; }
+  try {
+    const text = await extractPdfText(file);
+    if (!text || text.replace(/\s+/g, "").length < 40) throw new Error("No text in this PDF (it may be a scan). Please fill the fields manually.");
+    const g = parseCvText(text);
+    const set = (id, val) => {
+      if (!val) return false;
+      const el = document.getElementById(id); if (!el || (el.value || "").trim()) return false;
+      el.value = val; el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.classList.add("autofilled");
+      return true;
+    };
+    const filled = [];
+    if (set("c-name", g.name))  filled.push("name");
+    if (set("c-email", g.email)) filled.push("email");
+    if (set("c-link", g.link))  filled.push("LinkedIn");
+    // phone may not have a dedicated field in careers; skip unless present.
+    if (status) {
+      if (filled.length) {
+        status.innerHTML = '<svg aria-hidden="true" class="ico" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5l3 3L13 4.5"/></svg>Auto-filled from your résumé: <b>' + filled.join(", ") + '</b>. Please review and correct before sending.';
+        status.dataset.kind = "ok";
+      } else {
+        status.textContent = "We couldn't auto-fill anything confidently. Please complete the fields below.";
+        status.dataset.kind = "info";
+      }
+    }
+  } catch (e) {
+    console.warn("CV autofill failed", e);
+    if (status) { status.textContent = "We couldn't read this PDF automatically — please fill the fields below."; status.dataset.kind = "warn"; }
+  }
+}
 document.addEventListener("change", (e) => {
   if (e.target.id !== "c-cv") return;
   const file = e.target.files?.[0], fld = e.target.closest(".field"), msg = file ? cvError(file) : "";
   fld.querySelector(".cv-n").textContent = file ? `${file.name} · ${file.size < 1048576 ? Math.max(1, Math.round(file.size / 1024)) + " KB" : (file.size / 1048576).toFixed(1) + " MB"}` : "";
+  const fill = fld.querySelector(".cv-fill"); if (fill) { fill.textContent = ""; fill.dataset.kind = ""; }
   fld.querySelector(".err").textContent = msg; fld.classList.toggle("bad", !!msg); fld.querySelector(".cv-drop").classList.toggle("has", !!file && !msg);
+  if (file && !msg) autofillFromResume(file, fld);
+});
+// Clear the "autofilled" flag the moment the applicant edits a prefilled field: it's now theirs, not a guess.
+document.addEventListener("input", (e) => {
+  if (e.target.matches && e.target.matches(".autofilled")) e.target.classList.remove("autofilled");
 });
 for (const ev of ["dragover", "dragleave", "drop"]) document.addEventListener(ev, (e) => {
   const d = e.target.closest?.(".cv-drop"); if (!d) return;
@@ -859,14 +1047,30 @@ for (const ev of ["dragover", "dragleave", "drop"]) document.addEventListener(ev
 });
 
 /* ---------- Careers: "Apply for this role" ---------- */
+let pendingApply = null;
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-apply]"); if (!b) return;
-  const sel = $("#c-role"); if (sel) sel.value = b.dataset.apply;
+  // If the form isn't on this page (e.g. a practice sub-page), remember the role and go to /careers first.
+  if (!$("#c-role")) { e.preventDefault(); pendingApply = b.dataset.apply; go("careers"); return; }
+  const sel = $("#c-role"); sel.value = b.dataset.apply;
   const j = DATA.careers.jobs?.find((x) => x.title === b.dataset.apply), cl = $("#c-cluster");
   if (j && cl && C[j.cluster]) cl.value = C[j.cluster].name;
   $("#apply")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   setTimeout(() => $("#c-name")?.focus({ preventScroll: true }), 450);
 });
+// After routing to /careers, finish the pending apply (fill the role, scroll to the form).
+function finishPendingApply() {
+  if (!pendingApply) return;
+  const sel = $("#c-role"); if (!sel) return;
+  sel.value = pendingApply;
+  const j = DATA.careers.jobs?.find((x) => x.title === pendingApply), cl = $("#c-cluster");
+  if (j && cl && C[j.cluster]) cl.value = C[j.cluster].name;
+  pendingApply = null;
+  requestAnimationFrame(() => {
+    $("#apply")?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    setTimeout(() => $("#c-name")?.focus({ preventScroll: true }), 450);
+  });
+}
 
 /* ---------- Search ---------- */
 const INDEX = [
@@ -906,6 +1110,7 @@ const fmtD = (iso) => (iso ? new Date(iso).toLocaleDateString("en-IN", { day: "n
 function afterRoute(key) {
   if (key === "seecounter") casesSection();
   if (key === "legal") import("/assets/consent.js").then((m) => m.renderChoices($("#privacy-choices"))).catch(() => {});
+  if (key === "careers") finishPendingApply();
   dispatchEvent(new CustomEvent("kayak:route"));
 }
 async function casesSection() {

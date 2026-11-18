@@ -947,3 +947,80 @@ main:focus{outline:none}
 .cv-drop:focus-within{outline:3px solid rgba(23,128,126,.35);outline-offset:2px}
 .cv-drop{position:relative}
 .job-link{color:inherit;text-decoration:none}.job-link:hover{color:var(--water);text-decoration:underline}
+
+/* Careers: CV autofill status chip */
+.cv-fill{display:block;margin-top:8px;font-size:.88rem;color:var(--muted);min-height:1.3em;line-height:1.3;display:flex;gap:6px;align-items:center}
+.cv-fill:empty{display:none}
+.cv-fill[data-kind="ok"]{color:var(--water);font-weight:600}
+.cv-fill[data-kind="ok"] svg{color:var(--water)}
+.cv-fill[data-kind="warn"]{color:#B5651A}
+.cv-fill[data-kind="warn"] svg{color:#B5651A}
+.cv-fill[data-kind="info"] svg{color:var(--muted)}
+.cv-fill svg{flex:none}
+.field input.autofilled,.field textarea.autofilled{background:rgba(238,155,30,.08);border-left:3px solid var(--saffron);padding-left:9px}
+
+/* Careers: practice (cluster) card grid */
+.prac-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.prac-card{display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;padding:22px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--pc, var(--water));color:var(--fg);text-decoration:none;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.prac-card:hover{transform:translateY(-2px);box-shadow:0 18px 38px -24px rgba(14,47,60,.35);border-color:var(--pc, var(--water))}
+.prac-ico{display:inline-grid;place-items:center;width:40px;height:40px;background:color-mix(in srgb,var(--pc, var(--water)) 14%, transparent);color:var(--pc, var(--water))}
+.prac-ico svg{width:22px;height:22px}
+.prac-card h3{margin:0;font-size:1.15rem;line-height:1.3;color:var(--fg)}
+.prac-card p{margin:0;color:var(--muted);font-size:.95rem;line-height:1.5}
+.prac-count{margin-top:4px;font-size:.84rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--pc, var(--water));display:inline-flex;align-items:center;gap:6px}
+.prac-count svg{width:14px;height:14px}
+.job-cl-link{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+.job-cl-link:hover{border-bottom-color:currentColor}
+
+.job-emp{font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:none}
+
+/* Careers: fraud-warning band */
+.scam-band{background:linear-gradient(180deg,#FFF8E6 0%,#FFF2D1 100%);border-block:1px solid #F0C96B;position:relative;isolation:isolate}
+.scam-band::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 92% 20%,rgba(238,155,30,.14) 0,transparent 42%);z-index:-1;pointer-events:none}
+.scam-band .wrap{padding-block:clamp(28px,4vw,48px)}
+.scam{display:grid;grid-template-columns:72px 1fr;gap:22px;align-items:start;background:#fff;border:2px solid var(--saffron);padding:clamp(20px,3vw,32px) clamp(20px,3vw,34px);box-shadow:0 18px 42px -24px rgba(238,155,30,.45);clip-path:polygon(0 0,100% 0,100% calc(100% - 20px),calc(100% - 20px) 100%,0 100%)}
+.scam-ic{width:68px;height:68px;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none}
+.scam-ic svg{width:40px;height:40px;color:var(--saffron)}
+.scam-body{min-width:0}
+.scam-eye{font-size:.72rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#B5651A;margin:0 0 6px}
+.scam-body h2{margin:0 0 10px;font-size:var(--step2);line-height:1.2;color:var(--ink)}
+.scam-body p{margin:0 0 10px;color:var(--fg);line-height:1.55}
+.scam-list{list-style:none;margin:12px 0 10px;padding:0;display:grid;gap:8px}
+.scam-list li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:var(--mist);border-left:3px solid var(--water)}
+.scam-list li svg{width:18px;height:18px;flex:none;color:var(--water);margin-top:3px}
+.scam-list li span{min-width:0}
+.scam-report{font-size:.95rem;color:var(--muted);margin-top:14px!important}
+.scam-report a{color:var(--water);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.scam a{color:var(--water)}
+@media(max-width:640px){.scam{grid-template-columns:1fr}.scam-ic{width:52px;height:52px}.scam-ic svg{width:30px;height:30px}}
+
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .scam-band{background:linear-gradient(180deg,#2A1F0A 0%,#1E1707 100%);border-block-color:#5A4213}
+:root:not([data-theme="light"]) .scam{background:#141E24;border-color:var(--saffron);box-shadow:0 18px 42px -22px rgba(0,0,0,.65)}
+:root:not([data-theme="light"]) .scam-body h2{color:#F3F7F6}
+:root:not([data-theme="light"]) .scam-eye{color:var(--saffron)}
+:root:not([data-theme="light"]) .scam-body p,:root:not([data-theme="light"]) .scam-list li span,:root:not([data-theme="light"]) .scam-list li b{color:var(--on-deep)}
+:root:not([data-theme="light"]) .scam-list li{background:rgba(255,255,255,.04);border-left-color:var(--water)}}
+:root[data-theme="dark"] .scam-band{background:linear-gradient(180deg,#2A1F0A 0%,#1E1707 100%);border-block-color:#5A4213}
+:root[data-theme="dark"] .scam{background:#141E24;border-color:var(--saffron);box-shadow:0 18px 42px -22px rgba(0,0,0,.65)}
+:root[data-theme="dark"] .scam-body h2{color:#F3F7F6}
+:root[data-theme="dark"] .scam-eye{color:var(--saffron)}
+:root[data-theme="dark"] .scam-body p,:root[data-theme="dark"] .scam-list li span,:root[data-theme="dark"] .scam-list li b{color:var(--on-deep)}
+:root[data-theme="dark"] .scam-list li{background:rgba(255,255,255,.04);border-left-color:var(--water)}
+
+/* Careers: Life at Kayak Group */
+.life-sec{background:var(--alt)}
+.life-hero{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(220px,1fr);gap:24px;align-items:start;margin:22px 0 28px}
+.life-video{width:100%;height:auto;aspect-ratio:16/9;background:var(--ink);display:block;box-shadow:0 30px 60px -36px rgba(14,47,60,.55);clip-path:polygon(0 0,100% 0,100% calc(100% - 28px),calc(100% - 28px) 100%,0 100%)}
+.life-note{padding:18px 20px;background:var(--surface);border-left:3px solid var(--saffron);color:var(--muted);font-size:.95rem;line-height:1.55;align-self:stretch;display:flex;align-items:center}
+.life-note p{margin:0}
+.life-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:4px}
+.life-card{position:relative;overflow:hidden;min-height:260px;background:#0E2F3C var(--bgi) center/cover no-repeat;background-blend-mode:multiply;color:#fff;isolation:isolate;display:flex;flex-direction:column;justify-content:flex-end;transition:transform .35s ease, box-shadow .35s ease}
+.life-card::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,47,60,.0) 30%,rgba(14,47,60,.78) 70%,rgba(11,37,48,.92) 100%);z-index:-1}
+.life-card::after{content:"";position:absolute;top:0;right:0;width:40px;height:40px;background:var(--saffron);clip-path:polygon(100% 0,100% 100%,0 0)}
+.life-card:hover{transform:translateY(-3px);box-shadow:0 24px 44px -24px rgba(14,47,60,.55)}
+.life-txt{padding:22px 22px 24px;display:grid;gap:8px}
+.life-txt svg{width:28px;height:28px;color:var(--saffron)}
+.life-txt h3{margin:4px 0 2px;color:#fff;font-size:1.2rem;line-height:1.25}
+.life-txt p{margin:0;color:rgba(255,255,255,.88);font-size:.95rem;line-height:1.5}
+.life-credit{margin-top:22px;font-size:.82rem;color:var(--muted);text-align:center}
+@media(max-width:860px){.life-hero{grid-template-columns:1fr}}

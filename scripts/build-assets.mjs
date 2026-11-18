@@ -43,6 +43,22 @@ for (const app of ["internal", "learn", "meet"]) {
   if (app === "internal") cpSync(join(brand, "fonts-ttf"), join(dir, "fonts-ttf"), { recursive: true });
 }
 
+// www-only: pdf.js for CV autofill in the careers form. Lazily imported by site.js
+// when a candidate uploads a PDF résumé; served from our own origin.
+{
+  const dir = join(root, "apps/www/public/vendor");
+  mkdirSync(dir, { recursive: true });
+  const wwwVendor = {
+    "pdf.min.mjs": "node_modules/pdfjs-dist/build/pdf.min.mjs",
+    "pdf.worker.min.mjs": "node_modules/pdfjs-dist/build/pdf.worker.min.mjs",
+  };
+  for (const [name, src] of Object.entries(wwwVendor)) {
+    const from = join(root, src);
+    if (!existsSync(from)) throw new Error(`Missing ${src}; run npm install`);
+    cpSync(from, join(dir, name));
+  }
+}
+
 // Brand library manifest
 const lib = join(root, "brand-assets");
 const MIME = { ".pdf": "application/pdf", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",

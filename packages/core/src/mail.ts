@@ -33,12 +33,18 @@ ${opts.outro ? `<tr><td style="font:13px/1.6 Arial,sans-serif;color:#4E6470;padd
 </table></td></tr></table></body></html>`;
 }
 
-export async function sendMail(env: MailEnv, to: string, subject: string, html: string): Promise<{ sent: boolean; error?: string }> {
+export async function sendMail(env: MailEnv, to: string | string[], subject: string, html: string): Promise<{ sent: boolean; error?: string }> {
   if (!env.RESEND_API_KEY) return { sent: false, error: "Email is not configured." };
+  // Accept a string (one address, or comma-separated) or an array; deduplicate case-insensitively.
+  const parts = (Array.isArray(to) ? to : String(to || "").split(","))
+    .map((s) => s.trim()).filter(Boolean);
+  const seen = new Set<string>();
+  const list = parts.filter((x) => { const k = x.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  if (!list.length) return { sent: false, error: "No recipient addresses." };
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.MAIL_FROM || "Kayak Strategic Advisors <no-reply@kayaksa.com>", to: [to], subject, html }),
+    body: JSON.stringify({ from: env.MAIL_FROM || "Kayak Strategic Advisors <no-reply@kayaksa.com>", to: list, subject, html }),
   });
   if (!r.ok) return { sent: false, error: `Email provider answered ${r.status}.` };
   return { sent: true };
