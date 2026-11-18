@@ -510,7 +510,7 @@ ${ctaBand("Make the crossing with us")}`;
 
 P.careers = () => `
 <section class="phero" style="--p:var(--pc-managed-services);--ps:var(--ps-managed-services)"><div class="wrap">${crumbs([["Careers"]])}<h1>Build the firm with us</h1><p class="lead">We are a new firm assembling a senior, multidisciplinary founding team. If you want to do consequential work with people who stay close to it, we would like to hear from you.</p></div></section>
-<section class="scam-band" aria-labelledby="scam-head"><div class="wrap">
+<section class="scam-band" id="fraud" aria-labelledby="scam-head"><div class="wrap">
   <div class="scam">
     <div class="scam-ic" aria-hidden="true">${ic("brand-protection")}</div>
     <div class="scam-body">
@@ -544,7 +544,7 @@ ${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class
   <div class="sec-head"><div><span class="eyebrow">Open roles</span><h2>Join us now</h2><p class="lead">${DATA.careers.jobs.length} ${DATA.careers.jobs.length === 1 ? "role is" : "roles are"} open across the Kayak Group. Read the full description, then apply below.</p></div></div>
   <div class="jobs">${DATA.careers.jobs.map((j) => `<article class="job" id="job-${esc(j.id)}">
     <div class="job-top"><div><span class="job-cl"><a href="/careers/practice/${esc(j.cluster)}" class="job-cl-link">${esc(C[j.cluster]?.name || "")}</a>${j.employer ? ` <span class="job-emp">· ${esc(j.employer)}</span>` : ""}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}">Apply for this role ${arrow}</button></div>
-    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li>${j.compensation ? `<li>${ic("card")}<span><b>Compensation</b>${esc(j.compensation.split(".")[0] + ".")}</span></li>` : ""}</ul>
+    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li>${j.compensation ? `<li>${ic("finance")}<span><b>Compensation</b>${esc(j.compensation.split(".")[0] + ".")}</span></li>` : ""}</ul>
     <details class="job-jd"><summary>Read the full description</summary><div class="job-body">
       <h4>About the role</h4><p>${esc(j.about)}</p>
       <h4>What you will do</h4><ul>${j.do.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
@@ -578,6 +578,10 @@ ${(DATA.careers.jobs || []).length ? `<section class="sec" id="roles"><div class
   </div>
   <p class="life-credit">Film and imagery under the Pexels licence. The Kayak Technology Solutions logo reveal is our own. Courtesy of the Pexels photographers: Fox, Christina Morillo and ThisIsEngineering.</p>
 </div></section>
+${(DATA.careers.conduct || []).length ? `<section class="sec conduct-sec" id="conduct"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Code of Conduct</span><h2>How every Kayaker works</h2><p class="lead">One code applies across Kayak Strategic Advisors, Kayak Technology Solutions and Kayak Innovations, to every role on this page, from intern to partner. Applying means agreeing to work this way.</p></div></div>
+  <div class="conduct">${DATA.careers.conduct.map((c, i) => `<article><span class="conduct-n">${String(i + 1).padStart(2, "0")}</span>${ic(c[0])}<h3>${esc(c[1])}</h3><p>${esc(c[2])}</p></article>`).join("")}</div>
+</div></section>` : ""}
 <section class="sec" id="apply"><div class="wrap contact-grid">
   <div><span class="eyebrow">Apply</span><h2 style="font-size:var(--step3);margin:10px 0 12px">Tell us where you would fit</h2><p class="lead" style="margin-bottom:28px">${(DATA.careers.jobs || []).length ? "Apply for an open role, or send a general note if you would fit the founding team elsewhere. We reply to every application personally." : "We have no open listings yet. Send us a short note and we will reply personally."}</p>
   <form class="js-form" id="careerForm" novalidate data-kind="career"><div class="formgrid">
@@ -609,10 +613,11 @@ P.careersPractice = (c) => {
 <section class="phero" style="--p:var(--pc-managed-services);--ps:var(--ps-managed-services)"><div class="wrap">${crumbs([["Careers", "/careers"], [c.name]])}
   <span class="eyebrow" style="color:${esc(c.color || "var(--water)")}">${ic(c.icon || "network")} ${esc(c.name)} practice</span>
   <h1>Careers in ${esc(c.name)}</h1>
-  <p class="lead">${n ? `${n} open ${n === 1 ? "role" : "roles"} in this practice today.` : `We are not advertising a role in this practice today.`} Every genuine Kayak role is listed on this page and on our verified <a href="https://www.linkedin.com/company/kayaksa/" rel="noopener">LinkedIn page</a>. Kayak never charges a candidate: read the <a href="/careers#fraud" data-route="careers">fraud warning</a> before applying.</p>
+  <p class="lead">${n ? `${n} open ${n === 1 ? "role" : "roles"} in this practice today.` : `We are not advertising a role in this practice today.`} Every genuine Kayak role is listed on this page and on our verified <a href="https://www.linkedin.com/company/kayaksa/" rel="noopener">LinkedIn page</a>. Kayak never charges a candidate: read the <a href="/careers#fraud" data-route="careers" data-scroll="fraud">fraud warning</a> before applying.</p>
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
-    <a class="btn btn-primary" href="/careers#apply" data-route="careers">Apply, or send a general note ${arrow}</a>
+    <a class="btn btn-primary" href="/careers#apply" data-route="careers" data-scroll="apply">Apply, or send a general note ${arrow}</a>
     <a class="btn btn-ghost" href="/careers">See all practices</a>
+    <a class="btn btn-ghost" href="/careers#conduct" data-route="careers" data-scroll="conduct">Our Code of Conduct</a>
     <a class="btn btn-ghost" href="/services/${esc(c.id)}">${esc(c.name)} services ${arrow}</a>
   </div>
 </div></section>
@@ -620,7 +625,7 @@ ${n ? `<section class="sec" id="roles"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Open roles · ${esc(c.name)}</span><h2>Join this practice</h2></div></div>
   <div class="jobs">${jobs.map((j) => `<article class="job" id="job-${esc(j.id)}">
     <div class="job-top"><div><span class="job-cl">${esc(c.name)}${j.employer ? ` <span class="job-emp">· ${esc(j.employer)}</span>` : ""}</span><h3><a href="/careers/${esc(j.id)}" class="job-link">${esc(j.title)}</a></h3><p>${esc(j.summary)}</p></div><button class="btn btn-primary" type="button" data-apply="${esc(j.title)}" data-apply-goto>Apply for this role ${arrow}</button></div>
-    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li>${j.compensation ? `<li>${ic("card")}<span><b>Compensation</b>${esc(j.compensation.split(".")[0] + ".")}</span></li>` : ""}</ul>
+    <ul class="job-facts"><li>${ic("user")}<span><b>Experience</b>${esc(j.experience)}</span></li><li>${ic("check")}<span><b>Qualification</b>${esc(j.qualification)}</span></li><li>${ic("location")}<span><b>Location</b>${esc(j.location)}</span></li><li>${ic("briefcase")}<span><b>Type</b>${esc(j.type)}</span></li>${j.compensation ? `<li>${ic("finance")}<span><b>Compensation</b>${esc(j.compensation.split(".")[0] + ".")}</span></li>` : ""}</ul>
     <details class="job-jd"><summary>Read the full description</summary><div class="job-body">
       <h4>About the role</h4><p>${esc(j.about)}</p>
       <h4>What you will do</h4><ul>${j.do.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
@@ -633,7 +638,7 @@ ${n ? `<section class="sec" id="roles"><div class="wrap">
   </article>`).join("")}</div>
 </div></section>` : `<section class="sec"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">No open roles here today</span><h2>Send us a general note anyway</h2><p class="lead">We hire when the right person reaches us. Tell us what you do and we will reply personally.</p></div></div>
-  <p><a class="btn btn-primary" href="/careers#apply" data-route="careers">Open the application form ${arrow}</a></p>
+  <p><a class="btn btn-primary" href="/careers#apply" data-route="careers" data-scroll="apply">Open the application form ${arrow}</a></p>
 </div></section>`}
 <section class="sec alt"><div class="wrap">
   <div class="sec-head"><div><span class="eyebrow">Also in careers</span><h2>Other practices</h2></div></div>
