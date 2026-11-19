@@ -1,0 +1,125 @@
+{
+  "version": "kayaksa-1",
+  "_note": "Public repository. Builds and tests only; never deploys (deploy.yml is separate and not triggered by QCQT files).",
+  "max_fix_revisions": 2,
+  "conditional_is_success": false,
+  "command_allowlist": [
+    "python3",
+    "npm",
+    "node"
+  ],
+  "checks": [
+    {
+      "id": "qcqt-selftest",
+      "argv": [
+        "python3",
+        "-m",
+        "qcqt.selftest",
+        "--junit",
+        "reports/qcqt-selftest.xml"
+      ],
+      "junit": "reports/qcqt-selftest.xml",
+      "timeout_s": 300
+    },
+    {
+      "id": "repo-hygiene",
+      "argv": [
+        "python3",
+        "-m",
+        "qcqt.hygiene",
+        "--junit",
+        "reports/qcqt-hygiene.xml"
+      ],
+      "junit": "reports/qcqt-hygiene.xml",
+      "timeout_s": 300
+    },
+    {
+      "id": "deps-install",
+      "argv": [
+        "npm",
+        "ci",
+        "--no-audit",
+        "--no-fund"
+      ],
+      "timeout_s": 900
+    },
+    {
+      "id": "typecheck",
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "timeout_s": 600
+    },
+    {
+      "id": "unit",
+      "argv": [
+        "node",
+        "--test",
+        "--test-reporter=spec",
+        "--test-reporter-destination=stdout",
+        "--test-reporter=junit",
+        "--test-reporter-destination=reports/qcqt-node-unit.xml",
+        "tests/unit/*.test.mjs"
+      ],
+      "junit": "reports/qcqt-node-unit.xml",
+      "timeout_s": 600
+    },
+    {
+      "id": "asset-build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "timeout_s": 600
+    }
+  ],
+  "events": {
+    "build": [
+      "qcqt-selftest",
+      "repo-hygiene",
+      "deps-install",
+      "typecheck",
+      "unit",
+      "asset-build"
+    ],
+    "push": [
+      "qcqt-selftest",
+      "repo-hygiene",
+      "deps-install",
+      "typecheck",
+      "unit",
+      "asset-build"
+    ],
+    "pull_request": [
+      "qcqt-selftest",
+      "repo-hygiene",
+      "deps-install",
+      "typecheck",
+      "unit",
+      "asset-build"
+    ],
+    "merge_group": [
+      "qcqt-selftest",
+      "repo-hygiene",
+      "deps-install",
+      "typecheck",
+      "unit",
+      "asset-build"
+    ]
+  },
+  "no_skips": [
+    "qcqt-selftest",
+    "repo-hygiene",
+    "unit"
+  ],
+  "live_provider_required": [],
+  "not_applicable_allowed": {},
+  "expected_versions": {},
+  "exception_authorities": [
+    "repository-owner"
+  ],
+  "exceptions": []
+}

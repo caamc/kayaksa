@@ -13,3 +13,8 @@ desktop/node_modules/
 desktop/dist/
 apps/meet/public/seg/
 apps/meet/public/face/
+
+# QCQT local run evidence and reports
+/.qcqt/runs/
+/reports/qcqt-*.xml
+/evidence/
