@@ -161,3 +161,22 @@ class Hygiene(unittest.TestCase):
         d = self._repo({"a.txt": key + "\n", "src/b.js": "const t = '" + tok + "'\n", ".env": "X=1\n"})
         kinds = sorted(k for _, _, k in scan(d, []))
         self.assertEqual(kinds, ["github-token", "private-key-block", "tracked-env-file"])
+
+
+class JUnitParsing(unittest.TestCase):
+    def _xml(self, body):
+        fd, p = tempfile.mkstemp(suffix=".xml"); os.close(fd)
+        self.addCleanup(os.remove, p)
+        with open(p, "w") as fh:
+            fh.write(body)
+        return p
+
+    def test_counts_testcases_without_suite_totals(self):
+        from qcqt.runner import parse_junit
+        p = self._xml('<testsuites><testcase name="a"/><testcase name="b"><failure/></testcase>'
+                      '<testcase name="c"><skipped/></testcase></testsuites>')
+        self.assertEqual(parse_junit(p), {"tests": 3, "failures": 1, "errors": 0, "skipped": 1})
+
+    def test_empty_report_counts_zero(self):
+        from qcqt.runner import parse_junit
+        self.assertEqual(parse_junit(self._xml('<testsuites/>'))["tests"], 0)

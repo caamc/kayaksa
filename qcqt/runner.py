@@ -21,8 +21,18 @@ def tree_identity(cwd):
 
 
 def parse_junit(path):
+    """Count from <testcase> elements, so reports without suite totals (Node's junit reporter) still count.
+    Falls back to suite attributes when a report has totals but no testcase elements."""
     root = ET.parse(path).getroot()
-    suites = [root] if root.tag == "testsuite" else root.findall("testsuite")
+    cases = list(root.iter("testcase"))
+    if cases:
+        tot = {"tests": len(cases), "failures": 0, "errors": 0, "skipped": 0}
+        for c in cases:
+            tot["failures"] += 1 if c.find("failure") is not None else 0
+            tot["errors"] += 1 if c.find("error") is not None else 0
+            tot["skipped"] += 1 if c.find("skipped") is not None else 0
+        return tot
+    suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
     tot = {"tests": 0, "failures": 0, "errors": 0, "skipped": 0}
     for s in suites:
         for k in tot:
