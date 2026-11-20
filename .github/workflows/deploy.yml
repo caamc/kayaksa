@@ -18,9 +18,8 @@ on:
         description: "Upload the brand library to R2 (internal portal)"
         type: boolean
         default: false
-  push:
-    branches: [main]
-    paths: ["apps/**", "packages/**", "scripts/**", "brand-assets/07_Office_Templates_and_Toolbar/**", ".github/workflows/deploy.yml"]
+  # Publishing is deliberate: merging into main does not deploy. Run this workflow by hand
+  # (Actions, Deploy, Run workflow) once the owner gives the go-ahead.
 
 concurrency: { group: deploy, cancel-in-progress: false }
 
@@ -50,8 +49,7 @@ jobs:
         id: apps
         run: |
           A="${{ github.event.inputs.apps }}"
-          # A push to main republishes the sites listed in the DEPLOY_APPS repository variable (default: all three).
-          if [ -z "$A" ]; then A="${{ vars.DEPLOY_APPS || 'www,learn,internal,meet' }},toolbar"; fi
+          [ -n "$A" ] || { echo "::error::Choose the sites to publish."; exit 1; }
           if [ "$A" = "all" ]; then A="www,learn,internal,meet,toolbar"; fi
           echo "list=$A" >> "$GITHUB_OUTPUT"
           echo "Publishing: $A" >> "$GITHUB_STEP_SUMMARY"
@@ -347,10 +345,9 @@ jobs:
 
   # Kayak GraphIQ (graphiq.kayaksa.com). A separate job so it stays independent of the other sites.
   # Runs after the main job (which publishes internal, where the /sso/graphiq hand-back lives).
-  # On a push to main it runs when the DEPLOY_APPS variable is unset or lists graphiq.
   graphiq:
     needs: deploy
-    if: ${{ !cancelled() && ((github.event_name == 'push' && (vars.DEPLOY_APPS == '' || contains(format(',{0},', vars.DEPLOY_APPS), ',graphiq,'))) || github.event.inputs.apps == 'all' || contains(format(',{0},', github.event.inputs.apps), ',graphiq,')) }}
+    if: ${{ !cancelled() && (github.event.inputs.apps == 'all' || contains(format(',{0},', github.event.inputs.apps), ',graphiq,')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
