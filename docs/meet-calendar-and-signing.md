@@ -13,7 +13,7 @@ but only if the Cloudflare API token it deploys with is allowed to.
 1. Cloudflare dashboard → **My Profile → API Tokens** → edit the token stored in the `CLOUDFLARE_API_TOKEN` secret.
 2. Add the permission **Account → Realtime → Edit**. In some dashboards this permission is called
    *Realtime Admin* or *Calls Write*.
-3. Save. Then re-run the **Deploy** workflow (Actions → Deploy → Run workflow), or push any change to `apps/meet`.
+3. Save. Then re-run the **Deploy** workflow (Actions → Deploy → Run workflow).
 4. The run summary says "Created the Cloudflare Realtime app for Meet town halls" and "Created a TURN relay key".
 
 **Monthly limits** are enforced in code (`apps/meet/src/usage.ts`). Each service stops a little before its limit:
