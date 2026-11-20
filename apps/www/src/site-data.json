@@ -2065,7 +2065,49 @@
     "validThrough": "2027-02-28"
    }
   ],
-  "eeo": "Kayak is an equal opportunity employer. We consider every applicant on merit, without regard to gender, religion, caste, disability, age or any other personal characteristic. We never charge candidates a fee or ask for payment at any stage."
+  "eeo": "Kayak is an equal opportunity employer. We consider every applicant on merit, without regard to gender, religion, caste, disability, age or any other personal characteristic. We never charge candidates a fee or ask for payment at any stage.",
+  "conduct": [
+   [
+    "compliance",
+    "Act lawfully, everywhere",
+    "We follow the law in India and in every country we work in, and we decline work that would breach the law or our values."
+   ],
+   [
+    "contract",
+    "Keep confidences",
+    "Client and company information is shared on a need-to-know basis, protected under non-disclosure agreements, and never used for personal gain or for trading in securities."
+   ],
+   [
+    "check",
+    "Declare conflicts early",
+    "Disclose any personal, financial or family interest that could affect your judgement before it affects the work. Every new engagement is conflict-checked before we accept it."
+   ],
+   [
+    "finance",
+    "No bribes, no favours",
+    "We never offer, give or accept bribes, kickbacks or facilitation payments. Gifts and hospitality are accepted only when modest, open and recorded, in line with the Prevention of Corruption Act, 1988."
+   ],
+   [
+    "report",
+    "Evidence, honestly",
+    "We never fabricate, alter or overstate evidence. Every finding is sourced, tested and shown, and we say plainly what we do not know."
+   ],
+   [
+    "human-resources",
+    "Respect and dignity",
+    "Everyone is treated with respect. We do not tolerate harassment or discrimination, we hire and promote on merit, and we uphold the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013."
+   ],
+   [
+    "governance",
+    "Protect data and systems",
+    "Personal data is processed in line with the Digital Personal Data Protection Act, 2023. Company and client work stays in approved tools and accounts, including the AI tools we provide."
+   ],
+   [
+    "chat",
+    "Speak up, safely",
+    "Anyone can raise a concern without fear of retaliation. We listen, look into it fairly, and protect people who raise concerns in good faith."
+   ]
+  ]
  },
  "next": [
   [

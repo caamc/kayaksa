@@ -959,6 +959,28 @@ main:focus{outline:none}
 .cv-fill svg{flex:none}
 .field input.autofilled,.field textarea.autofilled{background:rgba(238,155,30,.08);border-left:3px solid var(--saffron);padding-left:9px}
 
+/* Careers: comfortable tap targets on phones */
+.job-jd summary{min-height:44px;padding:8px 0}
+.field label.check{min-height:44px;align-items:center}
+.field label.check input[type=checkbox]{width:22px;height:22px;flex:none}
+@media(max-width:640px){
+  .job-top .btn{width:100%;box-sizing:border-box;justify-content:center;min-height:48px}
+  .job-facts{grid-template-columns:minmax(0,1fr);gap:8px}
+  .job-facts span{overflow-wrap:break-word}
+  .job-facts b{white-space:nowrap}
+  .job-facts li{padding:10px}
+  .scam{padding:18px 16px}
+  .life-card{min-height:230px}
+}
+
+/* Careers: Code of Conduct */
+.conduct{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}
+.conduct article{position:relative;padding:22px 22px 24px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--ink);display:grid;gap:8px;align-content:start}
+.conduct article svg{width:26px;height:26px;color:var(--water)}
+.conduct h3{margin:2px 0 0;font-size:1.08rem;line-height:1.3}
+.conduct p{margin:0;color:var(--muted);font-size:.95rem;line-height:1.55}
+.conduct-n{position:absolute;top:18px;right:20px;font-weight:800;font-size:.8rem;letter-spacing:.08em;color:var(--saffron)}
+
 /* Careers: practice (cluster) card grid */
 .prac-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
 .prac-card{display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;padding:22px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--pc, var(--water));color:var(--fg);text-decoration:none;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
