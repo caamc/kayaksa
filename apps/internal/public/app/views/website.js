@@ -1,7 +1,7 @@
 import { $, $$, api, esc, html, raw, ico, toast, dialog, fmtDateTime, fmtDate } from "/_shared/js/ui.js";
 import { bars } from "/app/charts.js";
 
-const TABS = [["overview", "Overview"], ["sections", "Sections and consent"], ["competitors", "Competitor watch"], ["enquiries", "Enquiries"], ["kay", "Kay's answers"], ["articles", "Confluence"], ["cases", "SeeCounter cases"]];
+const TABS = [["overview", "Overview"], ["sections", "Sections and consent"], ["competitors", "Competitor watch"], ["enquiries", "Enquiries"], ["kay", "Kay's answers"], ["voice", "Voice recordings"], ["articles", "Confluence"], ["cases", "SeeCounter cases"]];
 const ST = { new: ["New", "accent"], in_progress: ["In progress", "warn"], closed: ["Closed", "ok"], spam: ["Spam", ""] };
 
 export async function render(main, ctx) {
@@ -12,7 +12,7 @@ export async function render(main, ctx) {
     <nav class="chips" aria-label="Website sections">${TABS.map(([id, l]) => raw(`<a class="chip${id === tab ? " on" : ""}" href="#/website/${id}">${esc(l)}</a>`))}</nav>
     <div id="wb"><div class="row muted"><span class="spinner"></span> Loading…</div></div></div>`);
   const box = $("#wb");
-  try { await ({ overview, sections, competitors, enquiries, kay, articles, cases })[tab](box, ctx.me); }
+  try { await ({ overview, sections, competitors, enquiries, kay, voice, articles, cases })[tab](box, ctx.me); }
   catch (e) { box.innerHTML = String(html`<div class="note danger">${e.message}</div>`); }
 }
 
@@ -88,6 +88,41 @@ async function kay(box, me) {
     actions: [{ id: "x", label: "Cancel" }, { id: "s", label: "Save and approve", kind: "primary", handler: async (d) => { await api("/api/website/kay", { body: { id: m.id, question: $("#kq", d).value, answer: $("#ka", d).value, voice: $("#kv", d).value, status: "approved" } }); toast("Saved."); kay(box, me); } }] });
   $$("[data-edit]", box).forEach((b) => (b.onclick = () => editor(memory.find((x) => x.id === b.closest("[data-id]").dataset.id))));
   $("#addk")?.addEventListener("click", () => editor());
+}
+
+// What Kay heard on www.kayaksa.com. Administrators review; only a super administrator can hold or release.
+const VST = { kept: ["To review", "accent"], validated: ["Validated", "ok"], training: ["For training", "ok"], rejected: ["Rejected", ""], legal_hold: ["Legal hold", "warn"], released: ["Released", "warn"] };
+async function voice(box, me) {
+  if (!me.can.admin) { box.innerHTML = `<div class="empty">Voice recordings are open to administrators only.</div>`; return; }
+  const o = await api("/api/website/voice");
+  const name = (c) => { try { return new Intl.DisplayNames(["en"], { type: "language" }).of(c); } catch { return c; } };
+  box.innerHTML = `<div class="stack">
+    <div class="note"><b>What these are.</b> When a visitor talks to Kay after accepting the voice notice, the recording and its transcript are kept here, sealed, for 365 days. Use them only to check Kay's answers and to improve Kayak's AI: correct the transcript, then mark it validated or for training. They are not shared with Kayak's investigators or any client's investigators. Only a super administrator can place a legal hold or release a recording, and only under a law or a court order. Every listen is logged.</div>
+    ${o.keyOk ? "" : `<div class="note warn">The recordings bucket or KAY_VOICE_KEY is not connected to the portal, so recordings cannot be opened here.</div>`}
+    <div class="chips">${o.counts.map((x) => `<span class="badge">${esc((VST[x.status] || [x.status])[0])}: ${x.n}</span>`).join(" ") || `<span class="muted small">No recordings yet.</span>`}</div>
+    ${o.recordings.map((r) => `<article class="card stack-sm" data-id="${esc(r.id)}">
+      <div class="row between"><b>${esc(name(r.heardLang || r.lang) || "Unknown language")} · ${(r.durationMs / 1000).toFixed(1)} s · ${esc(r.mode === "kayak_ai" ? "Kayak AI" : "Kayak AI+")}</b><span><span class="badge ${(VST[r.status] || [])[1] || ""}">${esc((VST[r.status] || [r.status])[0])}</span> <span class="small muted">${fmtDateTime(r.at)}</span></span></div>
+      <audio controls preload="none" src="/api/website/voice/${esc(r.id)}/audio" style="width:100%"></audio>
+      <p dir="auto" style="margin:0"><span class="small muted">Heard (${esc(r.engine)}):</span> ${esc(r.transcript)}</p>
+      ${r.status === "legal_hold" || r.status === "released" ? `<p class="small" style="margin:0"><b>Hold:</b> ${esc(r.holdReason)}${r.released ? ` · released ${fmtDate(r.released.at)} by ${esc(r.released.by)} under ${esc(r.released.basis === "court_order" ? "a court order" : "a law")} (${esc(r.released.ref)}) to ${esc(r.released.to)}` : ""}</p>` : `
+      <div class="field"><label>Corrected transcript (what the visitor actually said)</label><textarea class="input" rows="2" data-cor dir="auto">${esc(r.corrected || r.transcript)}</textarea></div>
+      <div class="field"><label>Note</label><input class="input" data-note value="${esc(r.note || "")}" maxlength="500"></div>
+      <div class="row"><button class="btn btn-primary btn-sm" data-st="validated">${ico("check")} Validated</button><button class="btn btn-ghost btn-sm" data-st="training">Use for training</button><button class="btn btn-quiet btn-sm" data-st="rejected">Reject</button><button class="btn btn-quiet btn-sm" data-del>Delete now</button></div>`}
+      ${o.canHold ? `<div class="row"><button class="btn btn-quiet btn-sm" data-hold="${r.status === "legal_hold" ? "off" : "on"}">${r.status === "legal_hold" ? "Lift legal hold" : "Place legal hold"}</button>${r.released ? "" : `<button class="btn btn-quiet btn-sm" data-rel>Release under a law or court order</button>`}</div>` : ""}
+      <p class="small muted" style="margin:0">Kept until ${fmtDate(r.retainUntil)}${r.page ? ` · asked on ${esc(r.page)}` : ""}${r.reviewedBy ? ` · reviewed by ${esc(r.reviewedBy)}` : ""}</p></article>`).join("")}</div>`;
+  const id = (b) => b.closest("[data-id]").dataset.id;
+  // Returns false on failure, which keeps a dialog open with what was typed.
+  const run = async (f, msg) => { try { await f(); toast(msg); voice(box, me); return true; } catch (e) { toast(e.message, "err"); return false; } };
+  $$("[data-st]", box).forEach((b) => (b.onclick = () => { const card = b.closest("[data-id]"); run(() => api(`/api/website/voice/${id(b)}`, { body: { status: b.dataset.st, corrected: $("[data-cor]", card).value, note: $("[data-note]", card).value } }), "Saved."); }));
+  $$("[data-del]", box).forEach((b) => (b.onclick = () => dialog({ title: "Delete this recording?", body: "<p>The audio and transcript are deleted at once. This cannot be undone.</p>", actions: [{ id: "x", label: "Cancel" }, { id: "d", label: "Delete", kind: "danger", handler: () => run(() => api(`/api/website/voice/${id(b)}/delete`, { body: {} }), "Deleted.") }] })));
+  $$("[data-hold]", box).forEach((b) => (b.onclick = () => dialog({ title: b.dataset.hold === "on" ? "Place a legal hold" : "Lift the legal hold", body: b.dataset.hold === "on" ? `<div class="field"><label for="hr">Reason: the law, notice or court order that requires the recording to be kept</label><input class="input" id="hr" maxlength="300"></div>` : "<p>The recording returns to its normal retention period.</p>",
+    actions: [{ id: "x", label: "Cancel" }, { id: "s", label: "Confirm", kind: "primary", handler: (d) => run(() => api(`/api/website/voice/${id(b)}/hold`, { body: { on: b.dataset.hold === "on", reason: $("#hr", d)?.value || "" } }), "Done.") }] })));
+  $$("[data-rel]", box).forEach((b) => (b.onclick = () => dialog({ title: "Release under a law or court order", wide: true,
+    body: `<div class="stack-sm"><p>Release a recording only when a law or an order of a court requires it. Kayak's investigators and clients' investigators never receive recordings otherwise. The release is recorded with its reference and the recording is placed under a legal hold.</p>
+      <div class="field"><label for="rb">Legal basis</label><select class="input" id="rb"><option value="court_order">Order of a court</option><option value="law">Requirement of law (statutory notice)</option></select></div>
+      <div class="field"><label for="rr">Reference of the order or notice</label><input class="input" id="rr" maxlength="300"></div>
+      <div class="field"><label for="rt">Recipient (authority or court)</label><input class="input" id="rt" maxlength="200"></div></div>`,
+    actions: [{ id: "x", label: "Cancel" }, { id: "s", label: "Record the release", kind: "danger", handler: (d) => run(() => api(`/api/website/voice/${id(b)}/release`, { body: { basis: $("#rb", d).value, reference: $("#rr", d).value, recipient: $("#rt", d).value } }), "Release recorded. Download the audio from the player.") }] })));
 }
 
 async function articles(box, me) {

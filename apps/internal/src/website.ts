@@ -5,6 +5,7 @@ import { Hono } from "hono";
 import { audit } from "../../../packages/core/src/session";
 import { readJson, str } from "../../../packages/core/src/http";
 import { Env, User, atLeast, uid } from "./env";
+import { unsealBytes, unsealText } from "../../../packages/core/src/voiceseal";
 
 type V = { Bindings: Env; Variables: { user: User } };
 export const website = new Hono<V>();
@@ -93,6 +94,86 @@ website.post("/kay", async (c) => {
     .bind(id, q, a, str(b.voice, 600), status, now(), c.get("user").email).run();
   await audit(c, c.env.DB, c.get("user").id, `website.kay_${status}`, { id, question: q });
   return c.json({ id });
+});
+
+// ---------------- What Kay heard (voice recordings from www.kayaksa.com)
+// Kept only for validation and for training Kayak's AI. Administrators review them; nobody else in the
+// portal sees them. Only a super administrator can place a legal hold or release one, and only on a law
+// or a court order with its reference. Every listen, review, hold, release and deletion is audited.
+const VOICE_STATUSES = ["kept", "validated", "training", "rejected"];
+const admin = (c: any) => atLeast(c.get("user"), "admin");
+const voiceRow = async (c: any) => {
+  const r: any = await db(c).prepare("SELECT * FROM kay_recordings WHERE id = ?").bind(c.req.param("id")).first();
+  if (!r) throw Object.assign(new Error("No such recording."), { status: 404 });
+  return r;
+};
+website.get("/voice", async (c) => {
+  if (!admin(c)) return c.json({ error: "Administrators only." }, 403);
+  const status = str(c.req.query("status"), 20);
+  const rows = await db(c).prepare(`SELECT * FROM kay_recordings WHERE status != 'deleted' ${status ? "AND status = ?" : ""} ORDER BY at DESC LIMIT 100`).bind(...(status ? [status] : [])).all<any>();
+  const out: any[] = [];
+  for (const r of rows.results) {
+    let transcript = "";
+    try { transcript = await unsealText(c.env.KAY_VOICE_KEY, r.transcript); } catch { transcript = "[cannot be opened: KAY_VOICE_KEY is missing or different]"; }
+    out.push({ id: r.id, at: r.at, mode: r.mode, lang: r.lang, heardLang: r.heard_lang, durationMs: r.duration_ms, engine: r.engine, page: r.page, status: r.status, transcript, corrected: r.corrected, note: r.review_note, reviewedBy: r.reviewed_by, retainUntil: r.retain_until, holdReason: r.hold_reason, released: r.released_at ? { at: r.released_at, by: r.released_by, basis: r.release_basis, ref: r.release_ref, to: r.release_to } : null });
+  }
+  const counts = await db(c).prepare("SELECT status, COUNT(*) n FROM kay_recordings GROUP BY status").all<any>();
+  return c.json({ recordings: out, counts: counts.results, canHold: c.get("user").role === "superadmin", keyOk: (c.env.KAY_VOICE_KEY || "").length >= 32 && !!c.env.KAY_VOICE });
+});
+website.get("/voice/:id/audio", async (c) => {
+  if (!admin(c)) return c.json({ error: "Administrators only." }, 403);
+  const r = await voiceRow(c);
+  const o = r.status === "deleted" ? null : await c.env.KAY_VOICE?.get(r.r2_key);
+  if (!o) return c.json({ error: "The recording is no longer kept." }, 404);
+  const audio = await unsealBytes(c.env.KAY_VOICE_KEY, new Uint8Array(await o.arrayBuffer()));
+  await audit(c, c.env.DB, c.get("user").id, "website.voice_listened", { id: r.id });
+  return new Response(audio, { headers: { "Content-Type": r.mime || "audio/webm", "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
+});
+website.post("/voice/:id", async (c) => {
+  if (!admin(c)) return c.json({ error: "Administrators only." }, 403);
+  const r = await voiceRow(c);
+  if (["legal_hold", "released", "deleted"].includes(r.status)) return c.json({ error: "This recording is under a legal hold, released or deleted, so it cannot be reviewed." }, 409);
+  const b = await readJson<any>(c, 16384);
+  const status = VOICE_STATUSES.includes(b.status) ? b.status : r.status;
+  await db(c).prepare("UPDATE kay_recordings SET status = ?, corrected = ?, review_note = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?")
+    .bind(status, str(b.corrected, 2000), str(b.note, 500), c.get("user").email, now(), r.id).run();
+  await audit(c, c.env.DB, c.get("user").id, "website.voice_reviewed", { id: r.id, status });
+  return c.json({ ok: true });
+});
+website.post("/voice/:id/delete", async (c) => {
+  if (!admin(c)) return c.json({ error: "Administrators only." }, 403);
+  const r = await voiceRow(c);
+  if (r.status === "legal_hold") return c.json({ error: "This recording is under a legal hold. A super administrator must lift the hold first." }, 409);
+  await c.env.KAY_VOICE?.delete(r.r2_key);
+  await db(c).prepare("UPDATE kay_recordings SET status = 'deleted', transcript = '', corrected = '', deleted_at = ?, deleted_reason = 'staff' WHERE id = ?").bind(now(), r.id).run();
+  await audit(c, c.env.DB, c.get("user").id, "website.voice_deleted", { id: r.id });
+  return c.json({ ok: true });
+});
+// Legal hold: kept past its retention date and not deletable, while the law or a court requires it.
+website.post("/voice/:id/hold", async (c) => {
+  if (c.get("user").role !== "superadmin") return c.json({ error: "Only a super administrator can place or lift a legal hold." }, 403);
+  const r = await voiceRow(c);
+  if (r.status === "deleted") return c.json({ error: "The recording was already deleted." }, 409);
+  const b = await readJson<any>(c, 4096);
+  const reason = str(b.reason, 300);
+  if (b.on && !reason) return c.json({ error: "Give the reason for the hold (the law, notice or court order)." }, 400);
+  await db(c).prepare("UPDATE kay_recordings SET status = ?, hold_reason = ? WHERE id = ?").bind(b.on ? "legal_hold" : r.released_at ? "released" : "kept", b.on ? reason : "", r.id).run();
+  await audit(c, c.env.DB, c.get("user").id, b.on ? "website.voice_hold_placed" : "website.voice_hold_lifted", { id: r.id, reason });
+  return c.json({ ok: true });
+});
+// Release outside Kayak: only under a law or a court order, recorded with its reference and recipient.
+website.post("/voice/:id/release", async (c) => {
+  if (c.get("user").role !== "superadmin") return c.json({ error: "Only a super administrator can release a recording." }, 403);
+  const r = await voiceRow(c);
+  if (r.status === "deleted") return c.json({ error: "The recording was already deleted." }, 409);
+  const b = await readJson<any>(c, 4096);
+  const basis = b.basis === "law" || b.basis === "court_order" ? b.basis : "";
+  const ref = str(b.reference, 300), to = str(b.recipient, 200);
+  if (!basis || !ref || !to) return c.json({ error: "A release needs its legal basis (a law or a court order), the reference of the order or notice, and the recipient." }, 400);
+  await db(c).prepare("UPDATE kay_recordings SET status = 'legal_hold', hold_reason = COALESCE(NULLIF(hold_reason, ''), ?), released_at = ?, released_by = ?, release_basis = ?, release_ref = ?, release_to = ? WHERE id = ?")
+    .bind(`Released under ${ref}`, now(), c.get("user").email, basis, ref, to, r.id).run();
+  await audit(c, c.env.DB, c.get("user").id, "website.voice_released", { id: r.id, basis, reference: ref, recipient: to });
+  return c.json({ ok: true, download: `/api/website/voice/${r.id}/audio` });
 });
 
 // ---------------- Confluence articles
