@@ -1,6 +1,10 @@
-// Kay: the Kayak Strategic Advisors assistant on www.kayaksa.com. Text chat and two-way voice.
-// Nothing is stored on Kayak's servers unless the visitor chooses to leave a message for the team;
-// the conversation lives in this browser tab only (sessionStorage).
+// Kay: the Kayak Strategic Advisors assistant on www.kayaksa.com. Text chat and two-way voice in
+// 100+ languages, translation, read-aloud and Roman-letter typing (transliteration), on two engines:
+// Kayak AI (Kayak's own models) and Kayak AI+ (Claude and premium voices). What the site's client pack
+// switches on comes from /api/kay/config.
+// The text conversation lives in this browser tab only (sessionStorage). What Kay hears when the
+// visitor speaks is kept on Kayak's servers only after they accept the voice notice (see voiceNotice).
+import { toNative, toRoman, supports as xlitSupports } from "/assets/kay-xlit.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -22,6 +26,8 @@ const ico = {
   down: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 13V4h3v9Zm0 0-4 7a2 2 0 0 1-2-2v-4H5.5a2 2 0 0 1-2-2.3l1.2-6A2 2 0 0 1 6.7 4H17" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`,
   stop: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" fill="currentColor"/></svg>`,
   speaker: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
+  globe: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>`,
+  tr: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h9M7.5 3v2M5 5c1 4 4 7 7 8M10 5c-1 4-3.5 7-7 9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 21 4-10 4 10M14.5 17.5h5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`,
   mute: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2"/></svg>`,
 };
 
@@ -33,7 +39,32 @@ const SUGGEST = [
 ];
 
 let AV = "";
-const state = { msgs: store.get("kay-chat", []), open: false, busy: false, voice: false, muted: store.local("kay-muted") === "1", ctrl: null };
+const state = { msgs: store.get("kay-chat", []), open: false, busy: false, voice: false, muted: store.local("kay-muted") === "1", ctrl: null,
+  lang: store.local("kay-lang") || "auto", mode: store.local("kay-mode") || "", xlit: store.local("kay-xlit") === "1" };
+/** What this site's client pack switches on. Defaults keep the old behaviour if the call fails. */
+let CFG = { features: { kayak_ai_plus: true, voice_in: false, voice_out: true, read_aloud: true }, modes: ["kayak_ai_plus"], defaultMode: "kayak_ai_plus", languages: [{ code: "en", hear: true, text: true, voice: true }], notice: null };
+const on = (f) => !!CFG.features?.[f];
+const MODE_LABEL = { kayak_ai_plus: "Kayak AI+", kayak_ai: "Kayak AI" };
+const MODE_HINT = { kayak_ai_plus: "Claude, premium voices and AI4Bharat models", kayak_ai: "Kayak's own models on Kayak's cloud. Built with Llama" };
+function langName(code, inLang) {
+  if (!code || code === "auto") return "Auto";
+  try { return new Intl.DisplayNames([inLang || code], { type: "language" }).of(code) || code; } catch { return code; }
+}
+const langInfo = (code) => CFG.languages.find((l) => l.code === code);
+/** A best guess at a text's language from its script (Latin text counts as English). */
+function guessLang(t) {
+  const tests = [[/[\u0900-\u097F]/, "hi"], [/[\u0980-\u09FF]/, "bn"], [/[\u0A00-\u0A7F]/, "pa"], [/[\u0A80-\u0AFF]/, "gu"], [/[\u0B00-\u0B7F]/, "or"], [/[\u0B80-\u0BFF]/, "ta"], [/[\u0C00-\u0C7F]/, "te"], [/[\u0C80-\u0CFF]/, "kn"], [/[\u0D00-\u0D7F]/, "ml"], [/[\u0600-\u06FF]/, "ar"], [/[\u0590-\u05FF]/, "he"], [/[\u0400-\u04FF]/, "ru"], [/[\u0370-\u03FF]/, "el"], [/[\u3040-\u30FF]/, "ja"], [/[\uAC00-\uD7AF]/, "ko"], [/[\u4E00-\u9FFF]/, "zh"], [/[\u0E00-\u0E7F]/, "th"]];
+  for (const [re, c] of tests) if (re.test(t)) return c;
+  return "en";
+}
+const replyLang = (t) => (state.lang && state.lang !== "auto" ? state.lang : guessLang(t || ""));
+const nonLatin = (t) => /[^\u0000-\u024F\s\d\p{P}\p{S}]/u.test(t || "");
+function vid() {
+  let v = null;
+  try { v = JSON.parse(localStorage.getItem("ksa-vid") || "null"); } catch {}
+  if (!v) { v = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36); try { localStorage.setItem("ksa-vid", JSON.stringify(v)); } catch {} }
+  return v;
+}
 
 /** Light, safe markdown: bold, italics, links to https or site paths, bullets, paragraphs. */
 function md(t) {
@@ -69,6 +100,9 @@ const speakable = (t) => parseTags(t).clean.replace(/\[([^\]]+)\]\([^)]+\)/g, "$
 
 export async function mountKay() {
   if ($("#kay")) return;
+  try { const r = await fetch("/api/kay/config"); if (r.ok) CFG = await r.json(); } catch {}
+  if (!CFG.modes.includes(state.mode)) state.mode = CFG.defaultMode || CFG.modes[0] || "";
+  if (state.lang !== "auto" && !langInfo(state.lang)) state.lang = "auto";
   const css = document.createElement("link");
   css.rel = "stylesheet"; css.href = "/assets/kay.css";
   document.head.append(css);
@@ -82,10 +116,14 @@ export async function mountKay() {
     <header class="kay-head">
       <span class="kay-av sm" aria-hidden="true">${AV}</span>
       <div class="kay-title"><b>Kay</b><span>Kayak's AI assistant · replies in seconds</span></div>
+      ${on("languages") ? `<button class="kay-ib kay-langbtn" data-k="lang" aria-expanded="false" title="Language">${ico.globe}<small>${esc(state.lang === "auto" ? "Auto" : state.lang.toUpperCase())}</small><span class="sr">Choose Kay's language</span></button>` : ""}
       <button class="kay-ib" data-k="voice" aria-pressed="false" title="Talk with Kay">${ico.wave}<span class="sr">Talk with Kay</span></button>
       <button class="kay-ib" data-k="mute" aria-pressed="${state.muted}" title="Kay's voice on or off">${state.muted ? ico.mute : ico.speaker}<span class="sr">Kay's voice</span></button>
       <button class="kay-ib" data-k="close" title="Close">${ico.min}<span class="sr">Close</span></button>
     </header>
+    ${CFG.modes.length > 1 ? `<div class="kay-modes" role="radiogroup" aria-label="Kay's engine">${CFG.modes.map((m) => `<button role="radio" data-mode="${m}" aria-checked="${m === state.mode}" title="${esc(MODE_HINT[m])}">${MODE_LABEL[m]}<small>${esc(MODE_HINT[m])}</small></button>`).join("")}</div>` : ""}
+    <div class="kay-langs" hidden><label class="sr" for="kay-lq">Find a language</label><input id="kay-lq" type="search" placeholder="Find a language… (${CFG.languages.length} available)" autocomplete="off"><div class="kay-langlist" role="listbox" aria-label="Languages"></div></div>
+    <div class="kay-notice" role="dialog" aria-modal="true" aria-labelledby="kay-nt" hidden></div>
     <div class="kay-stage" hidden>
       <div class="kay-av xl" aria-hidden="true"><img src="/assets/kay-640.webp" alt="" width="640" height="640"><i class="kay-ring"></i><i class="kay-ring r2"></i></div>
       <p class="kay-status" aria-live="polite">Tap the microphone and speak.</p>
@@ -96,10 +134,11 @@ export async function mountKay() {
     <form class="kay-form" autocomplete="off">
       <label class="sr" for="kay-in">Message Kay</label>
       <textarea id="kay-in" rows="1" maxlength="2000" placeholder="Ask Kay anything…"></textarea>
+      ${on("transliterate") ? `<button type="button" class="kay-mic kay-xl" data-k="xlit" aria-pressed="${state.xlit}" title="Type in Roman letters, get the script of the chosen language" hidden>अ<span class="sr">Type in Roman letters</span></button>` : ""}
       <button type="button" class="kay-mic" data-k="dictate" aria-label="Speak your message">${ico.mic}</button>
       <button type="submit" class="kay-send" aria-label="Send">${ico.send}</button>
     </form>
-    <p class="kay-fine">Kay is an AI and can make mistakes. Please don't share confidential details. <a href="/legal" data-kaygo="1">Privacy</a></p>
+    <p class="kay-fine">Kay is an AI and can make mistakes. Please don't share confidential details. <a href="/legal" data-kaygo="1">Privacy</a>${on("recordings") ? ` · <button type="button" class="kay-link" data-k="forget">Delete my voice recordings</button>` : ""}</p>
   </section>`;
   document.body.append(root);
 
@@ -117,6 +156,7 @@ export async function mountKay() {
     setTimeout(() => input.focus(), 60);
   }
   function closePanel() {
+    const nb = $(".kay-notice", root); if (nb && !nb.hidden) $('[data-n="no"]', nb)?.click(); // closing counts as "no thanks"
     state.open = false; stopVoice(); panel.hidden = true; launch.setAttribute("aria-expanded", "false"); root.classList.remove("open"); launch.focus();
   }
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.open) closePanel(); });
@@ -128,16 +168,27 @@ export async function mountKay() {
   function greet() {
     const h = Number(new Intl.DateTimeFormat("en-IN", { hour: "numeric", hour12: false, timeZone: "Asia/Kolkata" }).format(new Date()));
     const part = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-    state.msgs.push({ role: "assistant", content: `${part}, and welcome to Kayak. I'm Kay.\n\nAsk me about our work, or about anything at all: a regulation that's bothering you, a board question, cricket, a recipe. I can also talk, if you'd rather; tap the sound-wave button above.` });
+    state.msgs.push({ role: "assistant", content: `${part}, and welcome to Kayak. I'm Kay.\n\nAsk me about our work, or about anything at all: a regulation that's bothering you, a board question, cricket, a recipe. I can also talk, if you'd rather; tap the sound-wave button above.${on("languages") && CFG.languages.length > 1 ? ` And I speak your language: write in it, or pick one of ${CFG.languages.length} with the globe button.` : ""}` });
     save(); renderAll();
   }
   function save() { store.set("kay-chat", state.msgs.slice(-40)); }
 
+  function tools(m, i, clean) {
+    const t = [];
+    if (on("read_aloud")) t.push(`<button data-act="read" data-i="${i}" title="Read aloud" aria-label="Read aloud">${ico.speaker}</button>`);
+    if (on("translate")) t.push(`<button data-act="tr" data-i="${i}" aria-pressed="${!!m.showTr}" title="${m.showTr ? "Show the original" : "Translate"}" aria-label="Translate">${ico.tr}</button>`);
+    if (on("transliterate") && nonLatin(clean) && xlitSupports(replyLang(clean))) t.push(`<button data-act="rom" data-i="${i}" aria-pressed="${!!m.showRom}" title="Show in Roman letters" aria-label="Show in Roman letters">Aa</button>`);
+    return t.length ? `<div class="kay-tools">${t.join("")}</div>` : "";
+  }
   function bubble(m, i) {
     let { clean, chips, handoff } = m.role === "assistant" ? parseTags(m.content) : { clean: m.content, chips: [], handoff: false };
+    const shown = m.showTr && m.tr ? m.tr.text : m.showRom && m.rom ? m.rom : m.showOrig && m.original ? m.original : clean;
+    const note = m.showTr && m.tr ? `<p class="kay-mt">Machine translation into ${esc(langName(m.tr.to, "en"))}.</p>` : m.original ? `<p class="kay-mt">Machine translated from English · <button class="kay-link" data-act="orig" data-i="${i}">${m.showOrig ? "Show translation" : "Show English"}</button></p>` : m.note ? `<p class="kay-mt">${esc(m.note)}</p>` : "";
+    const done = clean && !(state.busy && i === state.msgs.length - 1);
     if (m.role === "assistant" && !handoff && i > 0 && INTENT.test(state.msgs[i - 1]?.content || "") && !(state.busy && i === state.msgs.length - 1)) handoff = true;
     return `<div class="kay-msg ${m.role}" data-i="${i}">${m.role === "assistant" ? `<span class="kay-av xs" aria-hidden="true">${AV}</span>` : ""}
-      <div class="kay-b">${m.role === "assistant" ? md(clean) || '<span class="kay-typing"><i></i><i></i><i></i></span>' : `<p>${esc(clean).replace(/\n/g, "<br>")}</p>`}
+      <div class="kay-b" dir="auto">${m.role === "assistant" ? md(shown) || '<span class="kay-typing"><i></i><i></i><i></i></span>' : `<p>${esc(shown).replace(/\n/g, "<br>")}</p>`}${note}
+      ${done && m.role === "assistant" ? tools(m, i, clean) : ""}
       ${m.role === "assistant" && i > 0 && clean && !(state.busy && i === state.msgs.length - 1) ? `<div class="kay-rate" aria-label="Was this helpful?">${m.rated ? `<span>${m.rated > 0 ? "Thanks!" : "Thanks, I'll learn from that."}</span>` : `<button data-rate="1" data-i="${i}" title="Helpful" aria-label="Helpful">${ico.up}</button><button data-rate="-1" data-i="${i}" title="Not helpful" aria-label="Not helpful">${ico.down}</button>`}</div>` : ""}
       ${chips.length || handoff ? `<div class="kay-chips">${chips.map((c) => `<a class="kay-chip" href="${esc(c.p)}" data-kaygo="1">${esc(c.l)}</a>`).join("")}${handoff ? `<button class="kay-chip strong" data-k="handoff">Leave a message for the team</button>` : ""}</div>` : ""}</div></div>`;
   }
@@ -153,7 +204,33 @@ export async function mountKay() {
     log.scrollTop = log.scrollHeight;
   }
 
-  log.addEventListener("click", (e) => {
+  log.addEventListener("click", async (e) => {
+    const act = e.target.closest("[data-act]");
+    if (act) {
+      const i = Number(act.dataset.i), m = state.msgs[i];
+      if (!m) return;
+      const { clean } = parseTags(m.content);
+      const redraw = () => { const el = $(`.kay-msg[data-i="${i}"]`, log); if (el) el.outerHTML = bubble(m, i); };
+      if (act.dataset.act === "read") { speech.stop(); speech.unlock(); speech.say(speakable(m.showTr && m.tr ? m.tr.text : clean), { read: true, lang: m.showTr && m.tr ? m.tr.to : replyLang(clean) }); return; }
+      if (act.dataset.act === "orig") { m.showOrig = !m.showOrig; save(); return redraw(); }
+      if (act.dataset.act === "rom") { m.rom = m.rom || toRoman(clean, replyLang(clean)); m.showRom = !m.showRom; m.showTr = false; save(); return redraw(); }
+      if (act.dataset.act === "tr") {
+        if (m.showTr) { m.showTr = false; save(); return redraw(); }
+        // Into the chosen language; if the message is already in it (or no language is chosen), into English.
+        const from = guessLang(clean);
+        let to = state.lang !== "auto" ? state.lang : "en";
+        if (to === from) to = from === "en" ? (navigator.language || "hi").slice(0, 2) : "en";
+        if (m.tr?.to !== to) {
+          act.disabled = true;
+          const r = await fetch("/api/kay/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: clean, from, to, mode: state.mode }) }).then((x) => x.json()).catch(() => ({}));
+          act.disabled = false;
+          if (!r.text) { m.note = r.error || "That could not be translated just now."; save(); return redraw(); }
+          m.tr = { to, text: r.text };
+        }
+        m.showTr = true; m.showRom = false; save(); return redraw();
+      }
+      return;
+    }
     const s = e.target.closest("[data-s]");
     if (s) return send(s.dataset.s);
     if (e.target.closest('[data-k="handoff"]')) return handoffForm();
@@ -177,19 +254,113 @@ export async function mountKay() {
 
   input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $(".kay-form", root).requestSubmit(); } });
-  $(".kay-form", root).addEventListener("submit", (e) => { e.preventDefault(); const t = input.value.trim(); if (t) { input.value = ""; input.style.height = "auto"; send(t); } });
+  $(".kay-form", root).addEventListener("submit", async (e) => { e.preventDefault(); let t = input.value.trim(); if (t) { input.value = ""; input.style.height = "auto"; t = await finishTyping(t); send(t); } });
 
   root.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-k]");
     if (!b) return;
     const k = b.dataset.k;
     if (k === "close") closePanel();
+    if (k === "lang") toggleLangs();
+    if (k === "xlit") { state.xlit = !state.xlit; store.local("kay-xlit", state.xlit ? "1" : "0"); b.setAttribute("aria-pressed", String(state.xlit)); input.focus(); }
+    if (k === "forget") forgetVoice();
     if (k === "voice") state.voice ? stopVoice(true) : startVoice();
     if (k === "text") stopVoice(true);
     if (k === "talk") toggleListen();
     if (k === "dictate") dictate(b);
     if (k === "mute") { state.muted = !state.muted; store.local("kay-muted", state.muted ? "1" : "0"); b.setAttribute("aria-pressed", String(state.muted)); b.innerHTML = (state.muted ? ico.mute : ico.speaker) + '<span class="sr">Kay\'s voice</span>'; if (state.muted) speech.stop(); }
   });
+
+  // ------------------------------------------------------------ languages, engines and typing
+  const langs = $(".kay-langs", root), langList = $(".kay-langlist", root), lq = $("#kay-lq", root);
+  function langRow(l) {
+    const native = langName(l.code), en = langName(l.code, "en");
+    const caps = [l.hear && on("voice_in") ? "speak" : "", l.voice && on("voice_out") ? "voice" : "", l.xlit && on("transliterate") ? "Roman typing" : ""].filter(Boolean).join(" · ");
+    return `<button role="option" data-lang="${l.code}" aria-selected="${state.lang === l.code}" dir="auto"><b>${esc(native)}</b>${native !== en ? `<span>${esc(en)}</span>` : ""}${caps ? `<small>${caps}</small>` : ""}</button>`;
+  }
+  function renderLangs() {
+    const q = (lq.value || "").trim().toLowerCase();
+    const match = (l) => !q || l.code === q || langName(l.code).toLowerCase().includes(q) || langName(l.code, "en").toLowerCase().includes(q);
+    const all = CFG.languages.filter(match).sort((a, b) => langName(a.code, "en").localeCompare(langName(b.code, "en")));
+    const ind = all.filter((l) => l.indian || l.code === "en");
+    langList.innerHTML = (!q ? `<button role="option" data-lang="auto" aria-selected="${state.lang === "auto"}"><b>Auto</b><span>Reply in the language I write in</span></button>` : "")
+      + (ind.length ? `<p class="kay-lh">English and Indian languages</p>${ind.map(langRow).join("")}` : "")
+      + (all.length > ind.length ? `<p class="kay-lh">All languages</p>${all.filter((l) => !ind.includes(l)).map(langRow).join("")}` : "")
+      + (!all.length ? `<p class="kay-lh">No language matches "${esc(q)}".</p>` : "");
+  }
+  function toggleLangs(force) {
+    const open = force ?? langs.hidden;
+    langs.hidden = !open; $('[data-k="lang"]', root)?.setAttribute("aria-expanded", String(open));
+    if (open) { lq.value = ""; renderLangs(); setTimeout(() => lq.focus(), 30); }
+  }
+  lq?.addEventListener("input", renderLangs);
+  langList?.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-lang]");
+    if (!b) return;
+    state.lang = b.dataset.lang; store.local("kay-lang", state.lang);
+    const lb = $('[data-k="lang"] small', root); if (lb) lb.textContent = state.lang === "auto" ? "Auto" : state.lang.toUpperCase();
+    toggleLangs(false); syncXlit();
+    if (state.lang !== "auto") { state.msgs.push({ role: "assistant", content: `From now on I'll reply in ${langName(state.lang, "en")} (${langName(state.lang)}).${xlitSupports(state.lang) && on("transliterate") ? " You can type in Roman letters too: switch on the अ button and I'll turn them into the script as you type." : ""}` }); save(); renderAll(); }
+    input.focus();
+  });
+  root.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-mode]");
+    if (!b) return;
+    state.mode = b.dataset.mode; store.local("kay-mode", state.mode);
+    $$("[data-mode]", root).forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+  });
+  function syncXlit() {
+    const b = $('[data-k="xlit"]', root);
+    if (!b) return;
+    b.hidden = !(state.lang !== "auto" && (xlitSupports(state.lang) || nonLatin(langName(state.lang))));
+  }
+  syncXlit();
+  // Roman-letter typing: each word becomes the chosen script when it is finished (space, punctuation or send).
+  // Scripts the browser rules cannot write (Arabic, Urdu, Chinese...) are converted by Kayak AI on send.
+  input.addEventListener("keyup", (e) => {
+    if (!state.xlit || !xlitSupports(state.lang) || !/^( |Enter|[.,!?;:])$/.test(e.key)) return;
+    const pos = input.selectionStart, before = input.value.slice(0, pos), after = input.value.slice(pos);
+    const conv = before.replace(/([A-Za-z~]+)([\s.,!?;:]*)$/, (m, w, p) => toNative(w, state.lang) + p);
+    if (conv !== before) { input.value = conv + after; input.selectionStart = input.selectionEnd = conv.length; }
+  });
+  async function finishTyping(text) {
+    if (!state.xlit || state.lang === "auto" || !/[A-Za-z]/.test(text)) return text;
+    if (xlitSupports(state.lang)) return toNative(text, state.lang);
+    const r = await fetch("/api/kay/transliterate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, lang: state.lang, direction: "to_native", mode: state.mode }) }).then((x) => x.json()).catch(() => ({}));
+    return r.text || text;
+  }
+
+  async function forgetVoice() {
+    const r = await fetch("/api/kay/voice/forget", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vid: vid() }) }).then((x) => x.json()).catch(() => ({}));
+    store.local("kay-voice-notice", "");
+    state.msgs.push({ role: "assistant", content: r.ok ? `Done. I've deleted ${r.deleted || 0} voice recording${r.deleted === 1 ? "" : "s"} made in this browser${r.held ? `. ${r.held} must be kept for now because the law requires it` : ""}. I'll show you the notice again before I next listen.` : "I couldn't delete them just now. Please try again, or write to enquiries@kayaksa.com." });
+    save(); renderAll();
+  }
+
+  // ------------------------------------------------------------ the voice notice (accepted once, per version)
+  function voiceConsent() {
+    const n = CFG.notice;
+    if (!on("voice_in") || !n) return Promise.resolve(true);
+    if (store.local("kay-voice-notice") === n.version) return Promise.resolve(true);
+    const box = $(".kay-notice", root);
+    box.innerHTML = `<div class="kay-notice-in"><b id="kay-nt">${esc(n.title)}</b><ul>${n.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>
+      <p class="kay-mt">Notice ${esc(n.version)} · <a href="/legal#kay-voice" data-kaygo="1">Privacy notice</a></p>
+      <div class="kay-notice-acts"><button class="kay-chip strong" data-n="yes">${esc(n.accept)}</button><button class="kay-chip" data-n="no">${esc(n.decline)}</button></div></div>`;
+    box.hidden = false;
+    $('[data-n="yes"]', box).focus();
+    return new Promise((res) => {
+      box.onclick = async (e) => {
+        const b = e.target.closest("[data-n]");
+        if (!b) return;
+        const yes = b.dataset.n === "yes";
+        box.hidden = true; box.onclick = null;
+        const r = await fetch("/api/kay/voice/consent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vid: vid(), version: n.version, granted: yes, page: location.pathname }) }).catch(() => null);
+        if (yes && r?.ok) { store.local("kay-voice-notice", n.version); return res(true); }
+        if (yes && r?.status === 409) { try { const c = await fetch("/api/kay/config"); if (c.ok) CFG = await c.json(); } catch {} }
+        res(false);
+      };
+    });
+  }
 
   // ------------------------------------------------------------ chat
   async function send(text) {
@@ -211,7 +382,7 @@ export async function mountKay() {
     try {
       const r = await fetch("/api/kay/chat", {
         method: "POST", headers: { "Content-Type": "application/json" }, signal: ctrl.signal,
-        body: JSON.stringify({ messages: state.msgs.slice(0, -1).slice(-20).map(({ role, content }) => ({ role, content: role === "assistant" ? parseTags(content).clean : content })), page: location.pathname, voice: state.voice }),
+        body: JSON.stringify({ messages: state.msgs.slice(0, -1).slice(-20).map(({ role, content }) => ({ role, content: role === "assistant" ? parseTags(content).clean : content })), page: location.pathname, voice: state.voice, lang: state.lang, mode: state.mode }),
       });
       if (!r.ok || !r.body) { const d = await r.json().catch(() => ({})); throw new Error(d.error || "I'm having trouble connecting just now."); }
       const reader = r.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -227,6 +398,7 @@ export async function mountKay() {
           if (!data) continue;
           const d = JSON.parse(data);
           if (ev === "delta") { ai.content += d.t; renderLast(); speakNew(false); }
+          if (ev === "meta") { if (d.original) ai.original = d.original; if (d.note) ai.note = d.note; }
           if (ev === "error") throw new Error(d.error);
         }
       }
@@ -276,12 +448,16 @@ export async function mountKay() {
 
   // ------------------------------------------------------------ voice
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const lang = /^hi/i.test(navigator.language) ? "hi-IN" : "en-IN";
+  // The browser's own recogniser is used only when the pack has no server speech to text: it cannot keep
+  // what it hears for validation, and it covers far fewer languages than Whisper.
+  const srLang = () => (state.lang !== "auto" ? state.lang : /^hi/i.test(navigator.language) ? "hi-IN" : "en-IN");
+  const serverEars = () => on("voice_in");
   let rec = null, listening = false, mediaRec = null;
   const status = (t) => { $(".kay-status", root).textContent = t; };
   const heard = (t) => { $(".kay-heard", root).textContent = t; };
 
-  function startVoice() {
+  async function startVoice() {
+    if (serverEars() && !(await voiceConsent())) { input.focus(); return; }
     state.voice = true; root.classList.add("voice");
     $('[data-k="voice"]', root).setAttribute("aria-pressed", "true");
     $(".kay-stage", root).hidden = false;
@@ -300,11 +476,38 @@ export async function mountKay() {
   function toggleListen() { listening ? stopListening(true) : (speech.stop(), listen()); }
   function setListening(on) { listening = on; root.classList.toggle("listening", on); const b = $('[data-k="talk"]', root); b.innerHTML = on ? ico.stop : ico.mic; b.setAttribute("aria-label", on ? "Stop listening" : "Start speaking"); }
 
+  /** Records until the visitor stops talking, then Whisper turns it into text on Kayak's server. */
+  async function record(onText, onStatus) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    const chunks = [];
+    const mr = (mediaRec = new MediaRecorder(stream));
+    const started = performance.now();
+    mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+    mr.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop()); setListening(false);
+      const blob = new Blob(chunks, { type: mr.mimeType || "audio/webm" });
+      if (blob.size < 2000) { onStatus("I didn't catch anything. Tap the microphone to try again."); return; }
+      onStatus("Got it. One moment…");
+      const q = new URLSearchParams({ lang: state.lang, mode: state.mode });
+      const res = await fetch("/api/kay/listen?" + q, { method: "POST", headers: { "Content-Type": blob.type.split(";")[0], "X-Kay-Vid": vid(), "X-Kay-Duration": String(Math.round(performance.now() - started)), "X-Kay-Page": location.pathname }, body: blob }).catch(() => null);
+      const r = res ? await res.json().catch(() => ({})) : {};
+      if (res?.status === 428) { store.local("kay-voice-notice", ""); if (r.notice) CFG.notice = r.notice; onStatus("Please accept the notice first."); if (await voiceConsent()) onStatus("Thanks. Tap the microphone and speak."); return; }
+      if (r.text) onText(r.text, r.language); else onStatus(r.error || "Sorry, I couldn't make that out. Try again, or type below.");
+    };
+    mr.start(); setListening(true); onStatus("Listening… I'll stop when you pause.");
+    silenceStop(stream, () => mr.state === "recording" && mr.stop());
+  }
+
   async function listen() {
     if (!state.voice || listening || state.busy) return;
     heard("");
+    if (serverEars() || !SR) {
+      try { await record((t) => { heard(t); status("Thinking…"); send(t); }, status); }
+      catch { setListening(false); status("I need permission to use your microphone. You can still type below."); }
+      return;
+    }
     if (SR) {
-      rec = new SR(); rec.lang = lang; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+      rec = new SR(); rec.lang = srLang(); rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
       let final = "";
       rec.onresult = (e) => { let t = ""; for (const r of e.results) { t += r[0].transcript; if (r.isFinal) final = t; } heard(t); };
       rec.onerror = (e) => { setListening(false); if (e.error === "not-allowed" || e.error === "service-not-allowed") status("I need permission to use your microphone. You can still type below."); else if (e.error === "no-speech") status("I didn't catch anything. Tap the microphone to try again."); };
@@ -349,8 +552,17 @@ export async function mountKay() {
     tick();
   }
   async function dictate(btn) {
+    if (serverEars()) {
+      if (listening) { stopListening(true); return; }
+      if (!(await voiceConsent())) return;
+      btn.classList.add("on");
+      const done = () => btn.classList.remove("on");
+      try { await record((t) => { done(); input.value = (input.value ? input.value + " " : "") + t; input.dispatchEvent(new Event("input")); input.focus(); }, (m) => { if (!listening) done(); input.placeholder = m; setTimeout(() => (input.placeholder = "Ask Kay anything…"), 4000); }); }
+      catch { done(); input.placeholder = "Microphone permission is needed to dictate."; }
+      return;
+    }
     if (!SR) { startVoice(); return; }
-    const r = new SR(); r.lang = lang; r.interimResults = true;
+    const r = new SR(); r.lang = srLang(); r.interimResults = true;
     btn.classList.add("on");
     r.onresult = (e) => { input.value = [...e.results].map((x) => x[0].transcript).join(""); input.dispatchEvent(new Event("input")); };
     r.onend = () => { btn.classList.remove("on"); input.focus(); };
@@ -369,9 +581,9 @@ export async function mountKay() {
     return {
       saying(t) { said += " " + t; },
       start() {
-        if (!SR || !state.voice || r) return;
+        if (!SR || !state.voice || r || serverEars()) return; // with server listening, tap the microphone to interrupt
         said = ""; heardText = ""; interrupted = false;
-        r = new SR(); r.lang = lang; r.interimResults = true; r.continuous = true;
+        r = new SR(); r.lang = srLang(); r.interimResults = true; r.continuous = true;
         r.onresult = (e) => {
           let t = ""; for (const x of e.results) t += x[0].transcript;
           if (!interrupted && words(t).length >= 2 && !isEcho(t)) { interrupted = true; speech.stop(); heard(t); status("Listening…"); setListening(true); }
@@ -395,15 +607,16 @@ export async function mountKay() {
       root.classList.toggle("speaking", level > 0.04 || playing);
     };
     function unlock() { try { ctx = ctx || new AudioContext(); ctx.resume(); } catch {} }
-    function pickVoice() {
+    function pickVoice(lg) {
       const vs = speechSynthesis.getVoices();
+      if (lg && lg !== "en") return vs.find((x) => x.lang.toLowerCase().startsWith(lg + "-in")) || vs.find((x) => x.lang.toLowerCase().split("-")[0] === lg) || null;
       const pref = [/Rishi/i, /Ravi/i, /Prabhat/i, /en-IN.*Male/i, /Google UK English Male/i, /Daniel/i, /Arthur/i, /Guy/i, /Ryan/i, /Male/i];
       for (const p of pref) { const v = vs.find((x) => p.test(x.name) && /^en/i.test(x.lang)); if (v) return v; }
       return vs.find((x) => x.lang === "en-IN") || vs.find((x) => /^en-GB/.test(x.lang)) || vs.find((x) => /^en/.test(x.lang));
     }
-    async function playServer(text) {
-      const r = await fetch("/api/kay/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
-      if (!r.ok) { serverOk = false; throw new Error("no server voice"); }
+    async function playServer(text, lg, read) {
+      const r = await fetch("/api/kay/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, lang: lg, mode: state.mode, read: !!read }) });
+      if (!r.ok) { if (r.status === 503 || r.status === 403) serverOk = false; throw new Error("no server voice"); }
       const buf = await r.arrayBuffer();
       unlock();
       const audio = await ctx.decodeAudioData(buf);
@@ -417,11 +630,11 @@ export async function mountKay() {
         cur.src = src; tick();
       });
     }
-    function playBrowser(text) {
+    function playBrowser(text, lg) {
       return new Promise((res) => {
         if (!("speechSynthesis" in window)) return res();
         const u = new SpeechSynthesisUtterance(text);
-        const v = pickVoice(); if (v) { u.voice = v; u.lang = v.lang; }
+        const v = pickVoice(lg); if (v) { u.voice = v; u.lang = v.lang; } else if (lg) u.lang = lg;
         u.rate = 1.02; u.pitch = 0.92;
         let t = null;
         u.onstart = () => { t = setInterval(() => setMouth(reduced ? 0.3 : 0.2 + Math.random() * 0.6), 120); };
@@ -432,13 +645,13 @@ export async function mountKay() {
     }
     async function pump() {
       if (playing) return;
-      playing = true; status("Speaking… (just talk to interrupt)");
+      playing = true; status(serverEars() ? "Speaking… (tap the microphone to interrupt)" : "Speaking… (just talk to interrupt)");
       bargeIn.start();
       while (q.length) {
-        const text = q.shift();
+        const { text, lg, read } = q.shift();
         bargeIn.saying(text);
-        try { if (serverOk) await playServer(text); else await playBrowser(text); }
-        catch { await playBrowser(text); }
+        try { if (serverOk) await playServer(text, lg, read); else await playBrowser(text, lg); }
+        catch { await playBrowser(text, lg); }
       }
       playing = false; cur = null; setMouth(0); bargeIn.stop();
       if (state.voice && !listening) status("Tap the microphone to reply, or just keep talking.");
@@ -446,7 +659,7 @@ export async function mountKay() {
     }
     return {
       unlock,
-      say(text) { if (!text || state.muted) return; q.push(text.slice(0, 600)); pump(); },
+      say(text, o = {}) { if (!text || (state.muted && !o.read)) return; q.push({ text: text.slice(0, 600), lg: o.lang || replyLang(text), read: !!o.read }); pump(); },
       stop() { q.length = 0; cur?.stop(); if ("speechSynthesis" in window) speechSynthesis.cancel(); playing = false; setMouth(0); },
       whenDone(f) { if (!playing && !q.length) setTimeout(f, 150); else waiters.push(f); },
     };

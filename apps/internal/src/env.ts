@@ -11,6 +11,8 @@ export interface Env extends AiEnv, MailEnv {
   MEET_DB?: D1Database; // Kayak Meet meetings, transcripts and feedback
   MEET_REC?: R2Bucket; // Kayak Meet recordings
   CAREERS?: R2Bucket; // résumés from the careers page on www (private)
+  KAY_VOICE?: R2Bucket; // what Kay heard on www (sealed), reviewed under Website > Voice recordings
+  KAY_VOICE_KEY?: string; // shared with www; opens those recordings
   VAULT?: R2Bucket; // Document Drive: encrypted identity, KYC, KYB and KYV documents
   MEET_SIGNING_KEY?: string;
   GRAPHIQ_SIGNING_KEY?: string; // single sign-on to Kayak GraphIQ (shared with graphiq.kayaksa.com)

@@ -1,9 +1,11 @@
 // Kay: Kayak's website assistant. Server side only: model keys never reach the browser.
 import { Hono } from "hono";
 import { pickProvider, streamText, ProviderId, ChatMessage, availableProviders } from "../../../packages/core/src/ai";
-import { rateLimit, clientIp, HttpError } from "../../../packages/core/src/http";
+import { rateLimit, clientIp } from "../../../packages/core/src/http";
 import type { Env } from "./env";
 import SERVICES from "../public/assets/services.json";
+import { kayLanguageApi, modeFor, pack, translateText } from "./kay-voice";
+import { norm, known, LLAMA_NATIVE, guessLanguage } from "./kay-languages";
 
 type SiteData = any;
 
@@ -36,7 +38,10 @@ export function kayKnowledge(d: SiteData): string {
   return L.join("\n");
 }
 
-export function kaySystem(d: SiteData, page: string, voice: boolean): string {
+const langName = (code: string) => { try { return new Intl.DisplayNames(["en"], { type: "language" }).of(code) || code; } catch { return code; } };
+
+export function kaySystem(d: SiteData, page: string, voice: boolean, lang = ""): string {
+  const L = lang && lang !== "auto" && lang !== "en" ? langName(lang) : "";
   return `You are Kay, the AI assistant on the website of Kayak Strategic Advisors, an Indian advisory firm. You are a warm, sharp, well-read and confident companion: the visitor's most capable friend, who happens to know Kayak inside out. You speak with precision.
 
 PERSONALITY
@@ -65,10 +70,10 @@ HELPING WITH KAYAK
 
 FORMAT
 ${voice
-  ? "- The visitor is TALKING to you by voice and will hear your reply spoken in an Indian English voice. Reply in 1 to 3 short spoken sentences, natural and conversational, like a phone call. No lists, no markdown, no links, no emojis. Spell out symbols (say 'per cent', 'rupees'). You may still add a [[go:...]] chip or [[handoff]] at the very end."
+  ? `- The visitor is TALKING to you by voice and will hear your reply spoken aloud${L ? ` in ${L}` : " in an Indian English voice"}. Reply in 1 to 3 short spoken sentences, natural and conversational, like a phone call. No lists, no markdown, no links, no emojis. Spell out symbols (say 'per cent', 'rupees'). You may still add a [[go:...]] chip or [[handoff]] at the very end.`
   : "- Keep replies short: usually 2 to 5 sentences, or a few bullets when listing. Use **bold** sparingly. Links as [text](https://...) only when truly useful. No headings. No emojis unless the visitor uses them first."}
 
-The visitor is currently on this page of the website: ${page || "/"}.
+${L ? `LANGUAGE\n- The visitor has chosen ${L}. Write every reply in ${L}, in its usual script, whatever language the knowledge below is in. Keep Kayak's names, product names, laws and page paths as they are. Tags such as [[go:...]] and [[handoff]] stay in English.\n\n` : ""}The visitor is currently on this page of the website: ${page || "/"}.
 Today is ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" })} (IST).
 
 KNOWLEDGE ABOUT KAYAK
@@ -76,7 +81,7 @@ ${kayKnowledge(d)}`;
 }
 
 const sha = async (t: string) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map((x) => x.toString(16).padStart(2, "0")).join("");
-function usage(c: any, col: "chats" | "voice" | "tts_chars" | "tts_cached" | "memory_hits" | "lite" | "claude", n = 1) {
+function usage(c: any, col: "chats" | "voice" | "tts_chars" | "tts_cached" | "memory_hits" | "lite" | "claude" | "kayak_ai", n = 1) {
   const day = new Date().toISOString().slice(0, 10);
   c.executionCtx.waitUntil(c.env.DB.prepare(`INSERT INTO kay_usage (day, ${col}) VALUES (?, ?) ON CONFLICT(day) DO UPDATE SET ${col} = ${col} + excluded.${col}`).bind(day, n).run().catch(() => {}));
 }
@@ -94,14 +99,16 @@ function wav(pcm: ArrayBuffer, rate = 24000) {
   const out = new Uint8Array(44 + pcm.byteLength); out.set(new Uint8Array(h.buffer), 0); out.set(new Uint8Array(pcm), 44); return out.buffer;
 }
 
-async function geminiSpeak(env: Env, text: string, voice: string) {
+const styleFor = (lang?: string) => !lang || lang === "en" ? KAY_STYLE : `A confident, warm young Indian man from Mumbai speaking natural, fluent ${langName(lang)} with clear, precise diction and a relaxed but crisp pace.`;
+export async function geminiSpeak(env: Env, text: string, voice: string, lang?: string) {
+  const style = styleFor(lang);
   const models = [env.KAY_TTS_MODEL, "gemini-3.8-flash-tts", "gemini-3.8-flash-lite-tts", "gemini-2.5-flash-preview-tts"].filter(Boolean) as string[];
   let last = "";
   for (const model of [...new Set(models)]) {
     // The current API takes voiceConfig.voice and speech_metadata; older models take prebuiltVoiceConfig and a style line.
     const bodies = [
-      { contents: [{ role: "user", parts: [{ text, speech_metadata: { style: KAY_STYLE } }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { voice } } } },
-      { contents: [{ role: "user", parts: [{ text: `Say in a confident, warm, polished Indian English accent: ${text}` }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } },
+      { contents: [{ role: "user", parts: [{ text, speech_metadata: { style } }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { voice } } } },
+      { contents: [{ role: "user", parts: [{ text: !lang || lang === "en" ? `Say in a confident, warm, polished Indian English accent: ${text}` : `${style} Say: ${text}` }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } },
     ];
     for (const body of bodies) {
       const r = await fetch(`${GEMINI}/${model}:generateContent`, { method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY!, "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -119,15 +126,15 @@ async function geminiSpeak(env: Env, text: string, voice: string) {
   }
   throw new Error(last || "Gemini speech failed");
 }
-async function openaiSpeak(env: Env, text: string) {
+export async function openaiSpeak(env: Env, text: string, lang?: string) {
   const r = await fetch("https://api.openai.com/v1/audio/speech", {
     method: "POST", headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "gpt-4o-mini-tts", voice: "ash", input: text, response_format: "mp3", instructions: KAY_STYLE }),
+    body: JSON.stringify({ model: "gpt-4o-mini-tts", voice: "ash", input: text, response_format: "mp3", instructions: styleFor(lang) }),
   });
   if (!r.ok) throw new Error(`openai ${r.status}`);
   return { bytes: await r.arrayBuffer(), type: "audio/mpeg" };
 }
-async function geminiTranscribe(env: Env, buf: ArrayBuffer, type: string) {
+export async function geminiTranscribe(env: Env, buf: ArrayBuffer, type: string) {
   const r = await fetch(`${GEMINI}/gemini-flash-lite-latest:generateContent`, {
     method: "POST", headers: { "x-goog-api-key": env.GEMINI_API_KEY!, "Content-Type": "application/json" },
     body: JSON.stringify({ contents: [{ role: "user", parts: [{ inlineData: { mimeType: type, data: b64(buf) } }, { text: "Transcribe exactly what the speaker says, in the language and script they use (Indian English, Hindi or Hinglish are common). Names you may hear: Kayak, Kay, SayUsNow, SeeCounter, NexaPair, DocuVow, DPDP, SEBI, RBI. Reply with the transcript only, nothing else. If there is no speech, reply with nothing." }] }], generationConfig: { temperature: 0 } }),
@@ -136,7 +143,7 @@ async function geminiTranscribe(env: Env, buf: ArrayBuffer, type: string) {
   const j: any = await r.json();
   return String(j?.candidates?.[0]?.content?.parts?.map((p: any) => p.text || "").join("") || "").trim();
 }
-async function openaiTranscribe(env: Env, buf: ArrayBuffer, type: string) {
+export async function openaiTranscribe(env: Env, buf: ArrayBuffer, type: string) {
   const form = new FormData();
   const ext = type.split("/")[1].replace("x-m4a", "m4a").replace("mpeg", "mp3");
   form.append("file", new File([buf], `speech.${ext}`, { type }));
@@ -197,6 +204,28 @@ async function recall(env: Env, q: string): Promise<{ answer: string; voice?: st
   return { answer: row.answer, voice: row.voice_answer || undefined };
 }
 
+/** Kayak AI: Llama 3.3 70B on Workers AI (Kayak's own Cloudflare account), streamed. */
+const OWN_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+async function* ownModel(env: Env, system: string, messages: ChatMessage[], maxTokens: number): AsyncGenerator<string> {
+  if (!env.AI) throw new Error("Workers AI is not connected");
+  const stream: any = await env.AI.run(OWN_MODEL as any, { messages: [{ role: "system", content: system }, ...messages], max_tokens: maxTokens, temperature: 0.6, stream: true } as any);
+  const reader = (stream as ReadableStream).pipeThrough(new TextDecoderStream()).getReader();
+  let buf = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += value;
+    let i: number;
+    while ((i = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+      if (!line.startsWith("data:")) continue;
+      const d = line.slice(5).trim();
+      if (!d || d === "[DONE]") continue;
+      try { const j = JSON.parse(d); if (j.response) yield j.response; } catch {}
+    }
+  }
+}
+
 const sse = (event: string, data: unknown) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 
 export function kayApi(getData: (c: any) => Promise<SiteData>) {
@@ -220,7 +249,11 @@ export function kayApi(getData: (c: any) => Promise<SiteData>) {
     }
     while (msgs.length && msgs[0].role !== "user") msgs.shift();
     if (!msgs.length || msgs[msgs.length - 1].role !== "user") return c.json({ error: "Say something and I'll answer." }, 400);
-    if (!availableProviders(c.env).length) return c.json({ error: "I'm not connected to my AI service yet." }, 503);
+    const mode = modeFor(c.env, b.mode);
+    if (!mode) return c.json({ error: "I'm not connected to my AI service yet." }, 503);
+    // The reply language: "" means "the visitor's own language" (Kay mirrors whatever they write in).
+    let lang = norm(b.lang);
+    if (!lang || lang === "auto" || !known(lang) || !pack(c.env).has("languages")) lang = "";
     const question = msgs[msgs.length - 1].content;
     const userTurns = msgs.filter((m) => m.role === "user").length;
     const voice = !!b.voice;
@@ -235,7 +268,7 @@ export function kayApi(getData: (c: any) => Promise<SiteData>) {
       try {
         // 1. Answer memory: vetted answers to common questions, found by meaning, at no model cost.
         //    Only for self-contained questions early in a conversation, where context cannot change the answer.
-        const mem = userTurns <= 2 && question.length < 400 ? await recall(c.env, question).catch(() => null) : null;
+        const mem = userTurns <= 2 && question.length < 400 && (!lang || lang === "en") ? await recall(c.env, question).catch(() => null) : null;
         if (mem) {
           answeredBy = "memory";
           usage(c, "memory_hits", 1);
@@ -243,14 +276,37 @@ export function kayApi(getData: (c: any) => Promise<SiteData>) {
           for (const part of text.match(/[\s\S]{1,48}(\s|$)/g) || [text]) { await send("delta", { t: part }); await new Promise((r) => setTimeout(r, 12)); }
           return;
         }
-        // 2. Model routing: small talk goes to a fast, low-cost model; substance goes to Claude.
+        const data = await getData(c);
+        const page = String(b.page || "/").slice(0, 120);
+        // 2a. Kayak AI: Kayak's own model on its Cloudflare account. Llama 3.3 writes directly in the
+        //     languages it supports; for the rest it writes English and IndicTrans2 / M2M-100 translate it.
+        if (mode === "kayak_ai") {
+          // "Auto": the language the visitor wrote in, read from its script.
+          const want = lang || (guessLanguage(question) !== "en" ? guessLanguage(question) : "");
+          const direct = !want || LLAMA_NATIVE.includes(want);
+          const system = kaySystem(data, page, voice, direct ? want : "en");
+          if (direct) {
+            for await (const t of ownModel(c.env, system, msgs, voice ? 400 : 900)) await send("delta", { t });
+          } else {
+            let en = "";
+            for await (const t of ownModel(c.env, system, msgs, voice ? 400 : 900)) en += t;
+            const tags = (en.match(/\[\[[^\]]+\]\]/g) || []).join(" ");
+            const body = en.replace(/\[\[[^\]]+\]\]/g, "").trim();
+            const tr = await translateText(c.env, body, "en", want, mode).catch(() => null);
+            await send("delta", { t: (tr?.text || body) + (tags ? "\n\n" + tags : "") });
+            await send("meta", tr ? { translated: true, from: "en", to: want, original: body } : { translated: false, note: "Shown in English: translation is unavailable just now." });
+          }
+          answeredBy = "kayak_ai";
+          usage(c, "kayak_ai", 1);
+          return;
+        }
+        // 2b. Kayak AI+. Model routing: small talk goes to a fast, low-cost model; substance goes to Claude.
         const light = isSmallTalk(question, userTurns);
         const plan: { id: ProviderId; model?: string }[] = [];
         if (light && c.env.GEMINI_API_KEY) plan.push({ id: "google", model: c.env.KAY_LITE_MODEL || "gemini-flash-lite-latest" });
         for (const id of [pickProvider(c.env), ...availableProviders(c.env).map((p) => p.id)]) if (id && !plan.some((p) => p.id === id && !p.model)) plan.push({ id });
         if (!plan.length) { await send("error", { error: "I'm not connected to my AI service yet." }); return; }
-        const data = await getData(c);
-        const system = kaySystem(data, String(b.page || "/").slice(0, 120), voice);
+        const system = kaySystem(data, page, voice, lang);
         let sent = false;
         for (const p of plan) {
           try {
@@ -267,6 +323,9 @@ export function kayApi(getData: (c: any) => Promise<SiteData>) {
           }
         }
         if (!sent) await send("error", { error: "I'm having trouble thinking just now. Please try again in a moment." });
+      } catch (e: any) {
+        console.error("kay chat", mode, e?.message);
+        await send("error", { error: "I'm having trouble thinking just now. Please try again in a moment." });
       } finally {
         await send("done", {});
         await w.close();
@@ -278,44 +337,12 @@ export function kayApi(getData: (c: any) => Promise<SiteData>) {
     return new Response(readable, { headers: { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-store", "X-Accel-Buffering": "no" } });
   });
 
-  // Kay's voice: an Indian-English male voice. Gemini first (GEMINI_API_KEY), OpenAI as a fallback.
-  // Spoken sentences are cached at the edge, so repeated lines (greetings, common answers) cost nothing.
-  app.post("/speak", async (c) => {
-    if (!c.env.GEMINI_API_KEY && !c.env.OPENAI_API_KEY) return c.json({ error: "Voice is not configured." }, 503);
-    const ip = clientIp(c);
-    if (!(await rateLimit(c.env.DB, `kayspeak:${ip}`, 120, 600))) return c.json({ error: "Too many requests." }, 429);
-    const b: any = await c.req.json().catch(() => ({}));
-    const text = typeof b.text === "string" ? b.text.trim().slice(0, 600) : "";
-    if (!text) return c.json({ error: "Nothing to say." }, 400);
-    const voice = c.env.KAY_VOICE || "Iapetus";
-    const cacheKey = new Request(`https://kay-voice.cache/${encodeURIComponent(voice)}/${await sha(text)}`);
-    const cache = (caches as any).default as Cache;
-    const hit = await cache.match(cacheKey);
-    if (hit) { usage(c, "tts_cached", 1); return new Response(hit.body, { headers: { "Content-Type": hit.headers.get("Content-Type") || "audio/wav", "Cache-Control": "no-store", "X-Kay-Cache": "hit" } }); }
-    let audio: { bytes: ArrayBuffer; type: string } | null = null;
-    if (c.env.GEMINI_API_KEY) audio = await geminiSpeak(c.env, text, voice).catch((e) => { console.error("gemini tts", e?.message); return null; });
-    if (!audio && c.env.OPENAI_API_KEY) audio = await openaiSpeak(c.env, text).catch((e) => { console.error("openai tts", e?.message); return null; });
-    if (!audio) return c.json({ error: "Voice is unavailable just now." }, 502);
-    usage(c, "tts_chars", text.length);
-    c.executionCtx.waitUntil(cache.put(cacheKey, new Response(audio.bytes, { headers: { "Content-Type": audio.type, "Cache-Control": "public, max-age=2592000" } })));
-    return new Response(audio.bytes, { headers: { "Content-Type": audio.type, "Cache-Control": "no-store" } });
-  });
-
-  // Speech to text for browsers without built-in speech recognition (for example Firefox).
-  app.post("/listen", async (c) => {
-    if (!c.env.GEMINI_API_KEY && !c.env.OPENAI_API_KEY) return c.json({ error: "Voice input is not configured. Please type instead." }, 503);
-    const ip = clientIp(c);
-    if (!(await rateLimit(c.env.DB, `kaylisten:${ip}`, 60, 600))) return c.json({ error: "Too many requests." }, 429);
-    const type = (c.req.header("Content-Type") || "audio/webm").split(";")[0];
-    if (!/^audio\/(webm|ogg|mp4|mpeg|wav|x-m4a|aac)$/.test(type)) return c.json({ error: "Unsupported audio." }, 415);
-    const buf = await c.req.arrayBuffer();
-    if (buf.byteLength > 5_000_000) throw new HttpError(413, "That recording is too long.");
-    let text = "";
-    if (c.env.GEMINI_API_KEY) text = await geminiTranscribe(c.env, buf, type).catch((e) => { console.error("gemini stt", e?.message); return ""; });
-    if (!text && c.env.OPENAI_API_KEY) text = await openaiTranscribe(c.env, buf, type).catch(() => "");
-    if (!text) return c.json({ error: "I couldn't make that out. Please try again or type." }, 502);
-    return c.json({ text: text.slice(0, 2000) });
-  });
+  // Speech to text, spoken replies, translation and transliteration in many languages (kay-voice.ts).
+  // Gemini and OpenAI stay as Kayak AI+ fallbacks; Kay's English voice is still Gemini "Iapetus".
+  app.route("/", kayLanguageApi((env) => ({
+    transcribe: { gemini: (b, t) => geminiTranscribe(env, b, t), openai: (b, t) => openaiTranscribe(env, b, t) },
+    voices: (e) => ({ gemini: (t, l) => geminiSpeak(e, t, e.KAY_VOICE || "Iapetus", l), openai: (t, l) => openaiSpeak(e, t, l) }),
+  })));
 
   return app;
 }

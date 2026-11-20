@@ -13,6 +13,7 @@ import STATIC_DATA from "./site-data.json";
 import { scanResume } from "./scan";
 import SERVICES from "../public/assets/services.json";
 import { kayApi, redact } from "./kay";
+import { purgeRecordings, pack as kayPack, engineOn as kayEngineOn, recordingsOn as kayRecordingsOn } from "./kay-voice";
 import { syncMemory, weeklyDrafts, dailyCleanup, seedMemory } from "./learning";
 import type { Env } from "./env";
 
@@ -263,7 +264,7 @@ ${meta.status === 200 ? `<script type="application/ld+json">${JSON.stringify(gra
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=0, s-maxage=120, must-revalidate" },
   });
 }
-const VERSION = "2026-11-12c";
+const VERSION = "2026-11-20a";
 
 // ------------------------------------------------------------------ consent (DPDP Act, 2023)
 // Kay asks for consent at the moment a purpose becomes relevant, one purpose at a time. Each
@@ -459,7 +460,7 @@ app.post("/api/kay/feedback", async (c) => {
   return c.json({ ok: true });
 });
 app.route("/api/kay", kayApi(siteData));
-app.get("/api/health", (c) => c.json({ ok: true, site: "www", kay: !!(c.env.ANTHROPIC_API_KEY || c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY || c.env.XAI_API_KEY), voice: !!(c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY) }));
+app.get("/api/health", (c) => c.json({ ok: true, site: "www", kay: !!(c.env.ANTHROPIC_API_KEY || c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY || c.env.XAI_API_KEY), voice: !!(c.env.GEMINI_API_KEY || c.env.OPENAI_API_KEY || c.env.AI), kayAi: !!c.env.AI, languageEngine: kayEngineOn(c.env), recordings: kayRecordingsOn(c.env), pack: [...kayPack(c.env)] }));
 app.all("/api/*", (c) => c.json({ error: "Not found." }, 404));
 
 // Brand Defence & Integrity's official logo, served from its own website and cached at the edge.
@@ -571,5 +572,7 @@ export default {
     ]);
     await dailyCleanup(env);
     await pruneSecurity(env.DB);
+    // What Kay heard: deleted when its retention date passes, unless under a legal hold.
+    await purgeRecordings(env).catch((x) => console.error("kay recordings purge", x?.message));
   },
 };

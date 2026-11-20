@@ -101,3 +101,36 @@
 .kay-ask-form input{flex:1 1 160px;min-width:0;padding:8px 10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit}
 .kay-ask-err{color:#B4472F;font-size:.82rem}
 @media (prefers-reduced-motion:reduce){.kay-ask{animation:none}}
+/* Languages, engines, tools and the voice notice */
+.kay-langbtn{width:auto;min-width:36px;padding:0 6px;grid-auto-flow:column;gap:3px}
+.kay-langbtn small{font:700 .62rem/1 var(--sans);letter-spacing:.04em}
+.kay-modes{display:flex;gap:0;background:var(--deep);padding:0 12px 10px}
+.kay-modes button{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 10px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#DCE7E6;font:700 .78rem/1.1 var(--sans);cursor:pointer;text-align:left}
+.kay-modes button+button{border-left:0}
+.kay-modes button small{font-weight:400;font-size:.64rem;color:var(--on-deep-muted)}
+.kay-modes button[aria-checked="true"]{background:rgba(255,255,255,.1);border-color:var(--saffron);color:#fff;box-shadow:inset 0 -2px 0 var(--saffron)}
+.kay-langs{display:flex;flex-direction:column;max-height:55%;border-bottom:1px solid var(--line);background:var(--surface)}
+.kay-langs[hidden]{display:none}
+.kay-langs input{margin:10px;padding:8px 10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:.9rem}
+.kay-langlist{overflow-y:auto;padding:0 10px 10px;display:flex;flex-direction:column}
+.kay-langlist button{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:0 8px;padding:7px 8px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--fg);font:inherit;font-size:.88rem;text-align:start;cursor:pointer}
+.kay-langlist button:hover,.kay-langlist button[aria-selected="true"]{background:var(--bg)}
+.kay-langlist button[aria-selected="true"] b{color:var(--link-strong)}
+.kay-langlist button span{font-size:.76rem;color:var(--muted)}
+.kay-langlist button small{grid-column:1/-1;font-size:.68rem;color:var(--muted)}
+.kay-lh{margin:10px 0 4px;font:700 .68rem/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kay-tools{display:flex;gap:4px;margin-top:8px}
+.kay-tools button{display:grid;place-items:center;min-width:28px;height:26px;padding:0 5px;border:1px solid var(--line);background:transparent;color:var(--muted);font:700 .72rem/1 var(--sans);cursor:pointer}
+.kay-tools button svg{width:15px;height:15px}
+.kay-tools button:hover,.kay-tools button[aria-pressed="true"]{color:var(--link-strong);border-color:var(--water,#17807E)}
+.kay-mt{margin:6px 0 0!important;font-size:.72rem;color:var(--muted)}
+.kay-link{padding:0;border:0;background:none;color:inherit;font:inherit;text-decoration:underline;cursor:pointer}
+.kay-xl{font:700 1rem/1 var(--sans)}
+.kay-xl[aria-pressed="true"]{background:var(--deep);border-color:var(--saffron);color:#fff}
+.kay-notice{position:absolute;inset:0;z-index:3;display:grid;place-items:end stretch;background:rgba(6,23,30,.55)}
+.kay-notice[hidden]{display:none}
+.kay-notice-in{background:var(--surface);border-top:4px solid var(--saffron);padding:16px;font-size:.86rem;max-height:90%;overflow-y:auto}
+.kay-notice-in b{font:800 1rem/1.2 var(--display)}
+.kay-notice-in ul{margin:10px 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.kay-notice-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.kay-xl[hidden]{display:none}
