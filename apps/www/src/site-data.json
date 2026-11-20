@@ -1110,6 +1110,103 @@
    ]
   },
   {
+   "id": "dpdp-six-months-to-go",
+   "section": "Regulatory Radar",
+   "cluster": "tax-legal-regulatory",
+   "mins": 4,
+   "published_at": "2026-11-20",
+   "title": "Data protection: six months to go",
+   "dek": "Consent managers could apply for registration from 13 November 2026. On 13 May 2027 the core duties of the Digital Personal Data Protection Act apply to every business that handles personal data in India. Six months is less time than it sounds.",
+   "body": [
+    "India's Digital Personal Data Protection Rules, 2025 were notified on 13 November 2025 and phase the Digital Personal Data Protection Act, 2023 in over eighteen months. The first milestone passed last week. From 13 November 2026, the provisions on consent managers apply: a company incorporated in India with a net worth of at least ₹2 crore may apply to the Data Protection Board to be registered as one.",
+    "The Board itself is not yet fully in place. The Ministry of Electronics and Information Technology invited applications for its Chairperson and four Members in May 2026, and as of mid-November no appointments had been announced, according to public reports. No consent manager is reported to have been registered yet.",
+    "## What applies on 13 May 2027",
+    "The core duties of Data Fiduciaries: a clear, itemised notice for every purpose; consent that is as easy to withdraw as it was to give; reasonable security safeguards; breach intimation to the Board and to affected people; retention and erasure rules; verifiable parental consent for children's data; and additional duties for Significant Data Fiduciaries. The Board's inquiry powers and the penalties also start then. Under the Act, failing to take reasonable security safeguards can cost up to ₹250 crore.",
+    "In January 2026 the Ministry floated shortening part of the transition at a stakeholder meeting. As far as we can establish, nothing has been notified to change the dates. Plan to 13 May 2027, and keep watching.",
+    "## Why six months is short",
+    "The notice is the easy part. The work sits underneath it: knowing what personal data you hold, why, where it sits and who receives it; changing systems so that a withdrawal of consent actually stops processing; rewriting vendor contracts; and rehearsing a breach so you can report within the timelines. Each depends on the one before, and most involve IT changes that queue behind other projects.",
+    "## Where to start this quarter",
+    "Name an owner who reports to the board. Map the personal data that matters most: customers, employees, patients, students or users. Rank the gaps by the penalty and the effort to close them. Start the vendor contract changes now, because they take the longest. Schedule a breach drill before March.",
+    "We work alongside your legal counsel on these programmes. They advise on the law; we help you build the data map, the processes and the evidence that you follow them."
+   ],
+   "sources": [
+    [
+     "Digital Personal Data Protection Rules, 2025: commencement and timeline (TaxGuru, 18 November 2026)",
+     "https://taxguru.in/corporate-law/dpdp-act-status-2027-readiness.html"
+    ],
+    [
+     "DPDP: what changes between 13 November 2026 and 13 May 2027 (dpdpactindia.in)",
+     "https://dpdpactindia.in/blog/dpdp-13-november-2026-to-13-may-2027/"
+    ],
+    [
+     "Consent manager registration under Rule 4 (TruePrivacy)",
+     "https://trueprivacy.io/blog/dpdp-consent-manager-registration"
+    ]
+   ]
+  },
+  {
+   "id": "listing-abroad-wider-door",
+   "section": "Deal Water",
+   "cluster": "strategy-deals",
+   "mins": 4,
+   "published_at": "2026-11-19",
+   "title": "Listing abroad: the door is wider than it was",
+   "dek": "Amendments notified in November 2026 let Indian companies list more than equity shares on an overseas exchange, open the route to companies with negative net worth if institutions take most of the offer, and bring unlisted public companies in GIFT City's IFSC within the framework.",
+   "body": [
+    "In January 2024 the Ministry of Corporate Affairs notified the Companies (Listing of Equity Shares in Permissible Jurisdictions) Rules, the framework that lets an Indian public company list directly on an international exchange. In practice, the route has meant the international exchanges in GIFT City's International Financial Services Centre. The amendments notified in the first week of November 2026 (G.S.R. 968(E)), in force on publication, widen it.",
+    "## What changed",
+    "Equity instruments, not just shares. The rules now cover 'equity instruments': equity shares, convertible debentures and preference shares issued by an Indian company. A company can now consider listing a convertible or preference instrument abroad, not only its equity.",
+    "A route for loss-making companies. A company with negative net worth is now eligible, provided it undertakes to allot at least 75% of the net offer to qualified institutional buyers, as defined by the securities regulator of the jurisdiction where it lists. That matters for growth companies that have burned capital and for businesses coming out of restructuring.",
+    "GIFT City companies. Unlisted public companies in the IFSC are brought within the framework, provided they comply with the International Financial Services Centres Authority Act, 2019 and its regulations.",
+    "Cured defaults no longer count. A past default that has been made good no longer counts against eligibility.",
+    "More disclosure. A new Form LEAP-1 asks the company to disclose any inspection, investigation or inquiry against it, and must be certified by a practising chartered accountant, cost accountant or company secretary.",
+    "## What it means for a board",
+    "The amendments widen who can list and what they can list. They do not change the work a listing demands: governance that will stand up to foreign investors, financial statements and disclosures that survive their diligence, and a clear story on why this market and not an Indian exchange. Negative-net-worth issuers will face the hardest questions, because the institutions taking 75% of the offer will want to know exactly how the business turns.",
+    "## Before you decide",
+    "Test the alternatives: an Indian listing, a private round, a structured instrument. Prepare the disclosure file as if the inspection question will be asked, because it now is. Build the investor case with the diligence questions already answered. We help boards and promoters weigh the route, prepare for diligence and run the process, alongside their legal and listing advisers."
+   ],
+   "sources": [
+    [
+     "MCA Overseas Listing Amendment Rules 2026 (G.S.R. 968(E)): Equity Instruments, IFSC Companies and the 75% QIB Route (CorpLawUpdates)",
+     "https://www.corplawupdates.in/updates/mca-overseas-listing-amendment-rules-2026-gsr-968e"
+    ],
+    [
+     "MCA notification on the Companies (Listing of equity instruments in permissible jurisdictions) Amendment Rules, 2026 (ca2013.com)",
+     "https://ca2013.com/notifications/mca-notification-dated-03-11-2026-regarding-the-companies-listing-of-equity-instruments-in-permissible-jurisdictions-amendment-rules-2026/"
+    ]
+   ]
+  },
+  {
+   "id": "uae-e-invoicing-january",
+   "section": "Across the Water",
+   "cluster": "international-desk",
+   "mins": 3,
+   "published_at": "2026-11-18",
+   "title": "UAE e-invoicing goes live on 1 January",
+   "dek": "Larger businesses in the UAE must issue structured electronic invoices through an accredited service provider from 1 January 2027. Indian groups with UAE entities have six weeks to be ready, and smaller entities until July.",
+   "body": [
+    "The UAE's e-invoicing system replaces PDF and paper invoices between businesses with structured electronic invoices exchanged through accredited service providers on the Peppol network, using a UAE data standard, PINT AE. The Ministry of Finance has phased it in by size.",
+    "## The dates",
+    "Businesses with revenue of AED 50 million or more had to appoint an accredited service provider by the end of October 2026 and must issue e-invoices from 1 January 2027. Businesses below AED 50 million must appoint a provider by 31 March 2027 and go live on 1 July 2027. Government entities have the same 31 March 2027 deadline for a provider and go live on 1 October 2027. Sales only to consumers stay outside the system until a further ministerial decision.",
+    "## Why it matters to Indian groups",
+    "Many Indian groups run trading, holding or regional companies in the UAE. Their invoices often come out of an ERP managed from India, and intercompany billing is a large share of the volume. E-invoicing touches all of it: master data, tax codes, invoice numbering, credit notes and the interface between the ERP and the service provider. Indian finance teams know GST e-invoicing, but the UAE model routes invoices through private accredited providers on Peppol rather than through a government registration portal, so the integration is different.",
+    "Penalties apply for failing to implement the system, including failing to appoint a provider on time, and a 2026 Cabinet Decision on e-invoicing penalties has replaced the 2025 one. Check the current schedule with your adviser.",
+    "## Six weeks, then six months",
+    "For entities over AED 50 million: confirm the provider contract is signed, test end to end with real invoices, clean customer and supplier master data, and agree who fixes rejections in January. For smaller entities: choose a provider before March and plan the ERP work now. In both cases, decide how intercompany invoices between India and the UAE will be handled.",
+    "Our International Desk helps Indian groups organise their UAE operations and their controls. We work with your tax adviser and your technology provider on the rollout."
+   ],
+   "sources": [
+    [
+     "UAE e-Invoicing deadlines and readiness checklist (VATit, November 2026)",
+     "https://vatit.com/blog/uae-e-invoicing-deadlines-readiness-checklist/"
+    ],
+    [
+     "UAE e-invoicing deadline: appointing a provider (Vivos Group)",
+     "https://vivosgroup.com/blog/insights/uae-e-invoicing-deadline-2026/"
+    ]
+   ]
+  },
+  {
    "id": "diligence-is-the-decision",
    "section": "Deal Water",
    "cluster": "strategy-deals",

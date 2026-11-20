@@ -199,7 +199,7 @@ function render(path: string, data: any): PageMeta {
   if ((m = p.match(/^\/insights\/([\w-]+)$/)) && A(m[1])) {
     const a = A(m[1]);
     const body = (a.body || []).map((x: string) => (x.startsWith("## ") ? `<h2>${esc(x.slice(3))}</h2>` : `<p>${esc(x)}</p>`)).join("");
-    return { status: 200, title: a.title, desc: (a.dek || "").slice(0, 300), type: "article", crumbs: [["Insights", "/insights"], [a.title, `/insights/${a.id}`]], ssr: `<article><p>${esc(a.section)} · Confluence</p><h1>${esc(a.title)}</h1><p><em>${esc(a.dek)}</em></p>${body}</article>`,
+    return { status: 200, title: a.title, desc: (a.dek || "").slice(0, 300), type: "article", crumbs: [["Insights", "/insights"], [a.title, `/insights/${a.id}`]], ssr: `<article><p>${esc(a.section)} · Confluence</p><h1>${esc(a.title)}</h1><p><em>${esc(a.dek)}</em></p>${body}${(a.sources || []).length ? `<h2>Sources</h2><ul>${a.sources.map((x: string[]) => `<li><a href="${esc(x[1])}">${esc(x[0])}</a></li>`).join("")}</ul>` : ""}</article>`,
       ld: { "@type": "Article", "@id": `${BASE}/insights/${a.id}#article`, author: { "@id": ORG_ID }, isPartOf: { "@id": SITE_ID }, inLanguage: "en-IN", image: `${BASE}/assets/og.png`, articleSection: a.section, headline: a.title, description: a.dek, datePublished: a.published_at || "2026-11-03", publisher: { "@type": "Organization", name: "Kayak Strategic Advisors", logo: { "@type": "ImageObject", url: "https://www.kayaksa.com/assets/kayak-logo.svg" } }, mainEntityOfPage: `https://www.kayaksa.com/insights/${a.id}` } };
   }
   if ((m = p.match(/^\/careers\/practice\/([\w-]+)$/)) && C(m[1])) {
