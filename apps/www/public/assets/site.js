@@ -454,7 +454,7 @@ P.article = (a) => {
   <div class="byline"><span>Confluence · Issue 01</span><span>${a.mins} min read</span>${c ? `<a class="chip" href="#${c.id}" style="--c:${c.color}"><i></i>${esc(c.name)}</a>` : `<span>Kayak Strategic Advisors</span>`}</div>
 </div></header>
 <div class="art-cover">${cover(a.cluster, a.section, artIcon(a), "blade", a.id)}</div>
-<div class="wrap prose">${body}</div>
+<div class="wrap prose">${body}${(a.sources || []).length ? `<h2>Sources</h2><ul class="art-sources">${a.sources.map((x) => `<li><a href="${esc(x[1])}" target="_blank" rel="noopener">${esc(x[0])}</a></li>`).join("")}</ul><p class="art-note">${a.published_at ? `Published ${esc(new Date(a.published_at + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }))}. ` : ""}General information, not legal advice; check the current text of the law before acting.</p>` : ""}</div>
 <div class="wrap" style="max-width:calc(68ch + 2*var(--gut))"><div class="share"><button class="btn btn-ghost" type="button" data-copy-link="insight-${a.id}">${ic("share")} Copy link</button><a class="btn btn-primary" href="#contact" data-cluster="${a.cluster || ""}">Discuss this with us ${arrow}</a></div></div>
 </article>
 <section class="sec alt"><div class="wrap"><div class="sec-head"><div><span class="eyebrow">More from this issue</span></div><a class="textlink" href="#insights">All insights ${arrow}</a></div><div class="agrid">${more.map(acard).join("")}</div></div></section>`;
